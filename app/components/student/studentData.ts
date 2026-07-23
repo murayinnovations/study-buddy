@@ -1,0 +1,75 @@
+export const COURSES = [
+  { code:'SBS 201', name:'Financial Accounting', lecturer:'Prof. Mwangi', credits:3, progress:72, color:'#2563EB' },
+  { code:'SBS 102', name:'Business Statistics',  lecturer:'Prof. Kariuki', credits:3, progress:45, color:'#0D9488' },
+  { code:'SBS 110', name:'Principles of Management', lecturer:'Dr. Omondi', credits:3, progress:58, color:'#7C3AED' },
+  { code:'ECO 201', name:'Microeconomics',       lecturer:'Dr. Njagi',   credits:3, progress:30, color:'#D97706' },
+]
+
+export const TOPIC_PROGRESS: Record<string, {topic:string; score:number; sessions:number; lastStudied:string}[]> = {
+  'SBS 201': [
+    { topic:'Accounting equation',    score:92, sessions:4, lastStudied:'2 days ago' },
+    { topic:'Double-entry system',    score:85, sessions:5, lastStudied:'3 days ago' },
+    { topic:'Ledger accounts',        score:78, sessions:3, lastStudied:'4 days ago' },
+    { topic:'Trial balance',          score:65, sessions:4, lastStudied:'Yesterday' },
+    { topic:'Income statement',       score:70, sessions:3, lastStudied:'Today' },
+    { topic:'Balance sheet',          score:60, sessions:2, lastStudied:'5 days ago' },
+    { topic:'Accruals & prepayments', score:42, sessions:2, lastStudied:'1 week ago' },
+    { topic:'Depreciation',           score:38, sessions:1, lastStudied:'1 week ago' },
+    { topic:'Cash flow statements',   score:25, sessions:1, lastStudied:'2 weeks ago' },
+    { topic:'Bank reconciliation',    score:15, sessions:0, lastStudied:'Not yet started' },
+  ],
+  'SBS 102': [
+    { topic:'Descriptive statistics', score:78, sessions:4, lastStudied:'3 days ago' },
+    { topic:'Probability theory',     score:55, sessions:3, lastStudied:'4 days ago' },
+    { topic:'Normal distribution',    score:45, sessions:2, lastStudied:'1 week ago' },
+    { topic:'Hypothesis testing',     score:30, sessions:1, lastStudied:'1 week ago' },
+    { topic:'Regression & correlation',score:20,sessions:0, lastStudied:'Not yet started' },
+  ],
+  'SBS 110': [
+    { topic:'Classical management',   score:82, sessions:5, lastStudied:'2 days ago' },
+    { topic:'Motivation theories',    score:70, sessions:4, lastStudied:'3 days ago' },
+    { topic:'Leadership styles',      score:65, sessions:3, lastStudied:'4 days ago' },
+    { topic:'Organisational design',  score:50, sessions:2, lastStudied:'1 week ago' },
+    { topic:'Corporate governance',   score:35, sessions:1, lastStudied:'1 week ago' },
+  ],
+  'ECO 201': [
+    { topic:'Supply & demand',        score:72, sessions:4, lastStudied:'Yesterday' },
+    { topic:'Price elasticity',       score:55, sessions:2, lastStudied:'3 days ago' },
+    { topic:'Consumer theory',        score:40, sessions:1, lastStudied:'1 week ago' },
+    { topic:'Market structures',      score:25, sessions:1, lastStudied:'1 week ago' },
+    { topic:'Market failure',         score:10, sessions:0, lastStudied:'Not yet started' },
+  ],
+}
+
+export const QUICK_STARTERS: Record<string, {label:string; prompt:string}[]> = {
+  'SBS 201': [
+    { label:'Explain depreciation',          prompt:'Can you explain depreciation methods — straight-line vs reducing balance? I have an exam question on this.' },
+    { label:'Trial balance practice',        prompt:'Give me a practice trial balance question at the level of a Strathmore CAT.' },
+    { label:'Accruals — I\'m confused',      prompt:'I don\'t understand the difference between accruals and prepayments. Can you walk me through it?' },
+    { label:'Income statement walkthrough',  prompt:'Walk me through how to prepare an income statement step by step.' },
+    { label:'Past paper style question',     prompt:'Give me a past-paper style question on double-entry bookkeeping.' },
+  ],
+  'SBS 102': [
+    { label:'Standard deviation explained', prompt:'Explain standard deviation in plain language with a Kenyan example.' },
+    { label:'Hypothesis testing steps',     prompt:'Walk me through the steps of a hypothesis test.' },
+    { label:'Practice: normal distribution',prompt:'Give me a practice question on the normal distribution.' },
+    { label:'Regression vs correlation',    prompt:'What\'s the difference between regression and correlation?' },
+  ],
+  'SBS 110': [
+    { label:'Maslow vs Herzberg',           prompt:'Compare Maslow\'s hierarchy of needs with Herzberg\'s two-factor theory.' },
+    { label:'Leadership styles quiz',       prompt:'Quiz me on the different leadership styles.' },
+    { label:'Safaricom case study',         prompt:'Use Safaricom as an example to explain transformational leadership.' },
+  ],
+  'ECO 201': [
+    { label:'Elasticity explained',         prompt:'Explain price elasticity of demand with a Kenyan market example.' },
+    { label:'Market structures quiz',       prompt:'Quiz me on the four market structures.' },
+    { label:'Consumer theory walkthrough',  prompt:'Walk me through indifference curves and budget constraints.' },
+  ],
+}
+
+export const WELCOME_MESSAGES: Record<string, string> = {
+  'SBS 201': `Hi Sara 👋 Good to see you again.\n\nI've been keeping track of your progress in **Financial Accounting**. You're doing well on the fundamentals — your accounting equation and double-entry scores are strong.\n\nI notice you haven't spent much time on **Depreciation** yet, and your Accruals score has room to grow. Those two topics come up every semester in the final exam.\n\nWhat would you like to work on today?`,
+  'SBS 102': `Welcome back to **Business Statistics**, Sara.\n\nYou're making solid progress on descriptive statistics. Hypothesis testing is your next frontier — it builds on the probability work you've been doing.\n\nWhat shall we tackle?`,
+  'SBS 110': `Hi Sara! **Principles of Management** — let's go.\n\nYour classical management theory is looking good. Leadership styles and corporate governance are worth revisiting before the next CAT.\n\nWhat are you working on today?`,
+  'ECO 201': `Good to see you, Sara. **Microeconomics** is where we are.\n\nSupply and demand is your strongest area so far. Market structures and consumer theory need more sessions — let's build on those.\n\nWhat would you like to explore?`,
+}
