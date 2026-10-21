@@ -1,21 +1,24 @@
 'use client'
-import { TOPIC_PROGRESS } from './studentData'
+import type { Course } from './studentData'
+import { useStore } from '../../lib/demoStore'
+import { average, daysAgoLabel, masteryColor } from '../../lib/format'
 
 function MasteryBar({ score }: { score: number }) {
-  const color = score >= 75 ? '#059669' : score >= 50 ? '#D97706' : '#DC2626'
   return (
     <div style={{ height:'5px', background:'#F1F5F9', borderRadius:'3px', overflow:'hidden', width:'100%' }}>
-      <div style={{ height:'5px', width:`${score}%`, background:color, borderRadius:'3px', transition:'width .5s ease' }}/>
+      <div style={{ height:'5px', width:`${score}%`, background:masteryColor(score), borderRadius:'3px', transition:'width .5s ease' }}/>
     </div>
   )
 }
 
-export default function StudentProgress({ selectedCourse, onClose }: any) {
-  const topics = TOPIC_PROGRESS[selectedCourse.code] || []
+export default function StudentProgress({ selectedCourse, onClose }: { selectedCourse: Course; onClose: () => void }) {
+  const { state } = useStore()
+  const topics = state.mastery[selectedCourse.code] || []
   const sorted = [...topics].sort((a,b) => a.score - b.score)
-  const weakTopics = sorted.filter(t => t.score < 60)
+  const weakTopics = sorted.filter(t => t.score < 60 && t.sessions > 0)
   const strongTopics = sorted.filter(t => t.score >= 75).reverse()
-  const avgScore = Math.round(topics.reduce((s,t) => s+t.score,0)/topics.length)
+  const avgScore = average(topics.map(t => t.score))
+  const practice = state.practiceLog.filter(p => p.course === selectedCourse.code)
 
   return (
     <aside style={{
@@ -42,6 +45,11 @@ export default function StudentProgress({ selectedCourse, onClose }: any) {
           <div style={{ fontSize:'11px', color:'#64748B', marginTop:'8px' }}>
             {avgScore >= 75 ? '✓ On track for the exam' : avgScore >= 50 ? '⚠ Some areas need work' : '↗ Focus on your weak topics'}
           </div>
+          {practice.length > 0 && (
+            <div style={{ fontSize:'11px', color:'#2563EB', marginTop:'6px', fontWeight:500 }}>
+              {practice.length} practice question{practice.length === 1 ? '' : 's'} this session · {practice.filter(p => p.correct).length} correct
+            </div>
+          )}
         </div>
 
         {/* Arthur gap alert (S11) */}
@@ -57,7 +65,7 @@ export default function StudentProgress({ selectedCourse, onClose }: any) {
               </div>
             ))}
             <div style={{ fontSize:'11px', color:'#92400E', marginTop:'6px', fontStyle:'italic' }}>
-              These topics appear in every past paper. Arthur recommends starting here.
+              Ask Arthur for a practice question on any of these to move your score.
             </div>
           </div>
         )}
@@ -69,20 +77,20 @@ export default function StudentProgress({ selectedCourse, onClose }: any) {
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
             {topics.map(t => {
-              const color = t.score >= 75 ? '#059669' : t.score >= 50 ? '#D97706' : '#DC2626'
-              const label = t.score >= 75 ? 'Strong' : t.score >= 50 ? 'Learning' : t.score === 0 ? 'Not started' : 'Needs work'
+              const color = masteryColor(t.score)
+              const label = t.sessions === 0 ? 'Not started' : t.score >= 75 ? 'Strong' : t.score >= 50 ? 'Learning' : 'Needs work'
               return (
                 <div key={t.topic} style={{ background:'#F8FAFC', borderRadius:'8px', padding:'10px 12px' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>
                     <span style={{ fontSize:'12px', fontWeight:500, color:'#0F172A' }}>{t.topic}</span>
-                    <span style={{ fontSize:'10px', fontWeight:600, color, background: t.score>=75?'#ECFDF5':t.score>=50?'#FFFBEB':'#FEF2F2', padding:'2px 7px', borderRadius:'10px' }}>
+                    <span style={{ fontSize:'10px', fontWeight:600, color: t.sessions === 0 ? '#64748B' : color, background: t.sessions === 0 ? '#F1F5F9' : t.score>=75?'#ECFDF5':t.score>=50?'#FFFBEB':'#FEF2F2', padding:'2px 7px', borderRadius:'10px' }}>
                       {label}
                     </span>
                   </div>
                   <MasteryBar score={t.score}/>
                   <div style={{ display:'flex', justifyContent:'space-between', marginTop:'5px', fontSize:'10px', color:'#94A3B8' }}>
                     <span>{t.score}% mastered</span>
-                    <span>{t.lastStudied}</span>
+                    <span>{daysAgoLabel(t.daysAgo)}</span>
                   </div>
                 </div>
               )

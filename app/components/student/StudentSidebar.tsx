@@ -1,5 +1,8 @@
 'use client'
-import { COURSES } from './studentData'
+import { useState } from 'react'
+import { COURSES, STUDENT, CURRENT_WEEK, type Course } from './studentData'
+import { useStore } from '../../lib/demoStore'
+import { average } from '../../lib/format'
 
 function ProgressRing({ value, color, size = 36 }: { value: number; color: string; size?: number }) {
   const r = (size - 6) / 2
@@ -22,9 +25,27 @@ function ProgressRing({ value, color, size = 36 }: { value: number; color: strin
   )
 }
 
-export default function StudentSidebar({ selectedCourse, setSelectedCourse }: any) {
+export default function StudentSidebar({ selectedCourse, setSelectedCourse, onStartSession }: {
+  selectedCourse: Course
+  setSelectedCourse: (c: Course) => void
+  onStartSession: (c: Course, topic: string) => void
+}) {
+  const { state, markRepliesSeen } = useStore()
+  const [showReplies, setShowReplies] = useState(false)
+
+  const courseProgress = (code: string) => average((state.mastery[code] || []).map(t => t.score))
   const totalCredits = COURSES.reduce((s,c) => s + c.credits, 0)
-  const avgProgress = Math.round(COURSES.reduce((s,c) => s + c.progress, 0) / COURSES.length)
+  const avgProgress = average(COURSES.map(c => courseProgress(c.code)))
+
+  // Weakest topic the student has started and the class has been taught, across all courses.
+  const suggestion = COURSES
+    .flatMap(c => (state.mastery[c.code] || [])
+      .filter(t => t.sessions > 0 && (t.week ?? 0) <= CURRENT_WEEK)
+      .map(t => ({ course: c, ...t })))
+    .sort((a, b) => a.score - b.score)[0]
+
+  const replies = state.questions.filter(q => q.studentId === STUDENT.id && q.reply)
+  const unseen = replies.filter(q => !q.seenByStudent).length
 
   return (
     <aside style={{
@@ -37,10 +58,10 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse }: an
           <div style={{
             width:'40px', height:'40px', borderRadius:'50%', background:'linear-gradient(135deg,#3B82F6,#1D4ED8)',
             display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:'14px',
-          }}>SK</div>
+          }}>{STUDENT.initials}</div>
           <div>
-            <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A' }}>Sara Kamau</div>
-            <div style={{ fontSize:'11px', color:'#94A3B8' }}>Year 2 · BCom · SBS</div>
+            <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A' }}>{STUDENT.name}</div>
+            <div style={{ fontSize:'11px', color:'#94A3B8' }}>{STUDENT.programme}</div>
           </div>
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
@@ -77,7 +98,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse }: an
               onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background='transparent' }}
             >
               <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                <ProgressRing value={c.progress} color={isActive ? '#2563EB' : c.color} />
+                <ProgressRing value={courseProgress(c.code)} color={isActive ? '#2563EB' : c.color} />
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:'13px', fontWeight:600, color: isActive ? '#1D4ED8' : '#0F172A', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                     {c.name}
@@ -91,26 +112,54 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse }: an
           )
         })}
 
-        {/* Arthur insight */}
-        <div style={{
-          marginTop:'16px', padding:'12px', borderRadius:'10px',
-          background:'linear-gradient(135deg,#EFF6FF,#F0F9FF)',
-          border:'1px solid #BFDBFE',
-        }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'6px' }}>
-            <span className="ai-pulse" style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#2563EB', display:'inline-block' }}/>
-            <span style={{ fontSize:'10px', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'.5px' }}>Arthur suggests</span>
+        {/* Lecturer replies (S10) */}
+        {replies.length > 0 && (
+          <div style={{ marginTop:'16px', padding:'12px', borderRadius:'10px', background:'#F0FDF4', border:'1px solid #A7F3D0' }}>
+            <button
+              onClick={() => { setShowReplies(!showReplies); if (unseen) markRepliesSeen() }}
+              style={{ width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center', background:'none', border:'none', padding:0, cursor:'pointer', fontFamily:'inherit' }}
+            >
+              <span style={{ fontSize:'10px', fontWeight:700, color:'#065F46', textTransform:'uppercase', letterSpacing:'.5px' }}>
+                Lecturer replies
+              </span>
+              {unseen > 0
+                ? <span className="badge badge-green" style={{ fontSize:'10px' }}>{unseen} new</span>
+                : <span style={{ fontSize:'11px', color:'#059669' }}>{showReplies ? 'Hide' : 'Show'}</span>}
+            </button>
+            {showReplies && replies.map(q => (
+              <div key={q.id} style={{ marginTop:'10px', fontSize:'12px', lineHeight:1.5 }}>
+                <div style={{ color:'#64748B', fontStyle:'italic' }}>“{q.question.length > 90 ? q.question.slice(0, 90) + '…' : q.question}”</div>
+                <div style={{ color:'#064E3B', marginTop:'4px' }}>{q.reply}</div>
+                <div style={{ fontSize:'10px', color:'#059669', marginTop:'3px' }}>
+                  {COURSES.find(c => c.code === q.course)?.lecturer} · {q.topic}
+                </div>
+              </div>
+            ))}
           </div>
-          <p style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.5, margin:0 }}>
-            Your <strong>Depreciation</strong> score in SBS 201 is 38%. This comes up in every final exam. Let's work on it today.
-          </p>
-          <button
-            style={{ marginTop:'8px', fontSize:'11px', fontWeight:600, color:'#2563EB', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}
-            onClick={() => {}}
-          >
-            Start a session →
-          </button>
-        </div>
+        )}
+
+        {/* Arthur insight */}
+        {suggestion && (
+          <div style={{
+            marginTop:'16px', padding:'12px', borderRadius:'10px',
+            background:'linear-gradient(135deg,#EFF6FF,#F0F9FF)',
+            border:'1px solid #BFDBFE',
+          }}>
+            <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'6px' }}>
+              <span className="ai-pulse" style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#2563EB', display:'inline-block' }}/>
+              <span style={{ fontSize:'10px', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'.5px' }}>Arthur suggests</span>
+            </div>
+            <p style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.5, margin:0 }}>
+              Your <strong>{suggestion.topic}</strong> score in {suggestion.course.code} is {suggestion.score}%, your lowest so far. Let&apos;s work on it today.
+            </p>
+            <button
+              style={{ marginTop:'8px', fontSize:'11px', fontWeight:600, color:'#2563EB', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}
+              onClick={() => onStartSession(suggestion.course, suggestion.topic)}
+            >
+              Start a session →
+            </button>
+          </div>
+        )}
 
         {/* Upcoming assessment */}
         <div style={{ marginTop:'12px', padding:'12px', borderRadius:'10px', background:'#FFFBEB', border:'1px solid #FDE68A' }}>
@@ -118,7 +167,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse }: an
             ⏰ Upcoming
           </div>
           <div style={{ fontSize:'12px', color:'#78350F', fontWeight:500 }}>SBS 201 CAT 2</div>
-          <div style={{ fontSize:'11px', color:'#92400E', marginTop:'2px' }}>In 6 days · Chapters 4–7</div>
+          <div style={{ fontSize:'11px', color:'#92400E', marginTop:'2px' }}>In 6 days · Weeks 5–10</div>
         </div>
       </div>
 
@@ -126,7 +175,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse }: an
       <div style={{ padding:'12px 16px', borderTop:'1px solid #E2E8F0' }}>
         <div style={{ fontSize:'11px', color:'#94A3B8', display:'flex', alignItems:'center', gap:'5px' }}>
           <span className="ai-pulse" style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#059669', display:'inline-block' }}/>
-          Arthur is grounded in your suLMS materials
+          Arthur uses your lecturers&apos; approved materials
         </div>
       </div>
     </aside>

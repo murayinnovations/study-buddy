@@ -80,6 +80,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface-2)
 .chat-prose ul { padding-left: 1.25rem; margin: .4rem 0; }
 .chat-prose li { margin-bottom: .2rem; }
 .chat-prose p+p { margin-top: .5rem; }
+.chat-prose sup.cite { font-size: .65em; font-weight: 700; color: #2563EB; background: #EFF6FF; border-radius: 4px; padding: 0 4px; margin-left: 2px; }
 .chat-prose h3 { font-weight: 600; font-size: .9rem; margin: .6rem 0 .2rem; color: var(--text-1); }
 
 /* Topic pills */

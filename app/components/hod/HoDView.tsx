@@ -85,12 +85,16 @@ export default function HoDView() {
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div>
             <h1 style={{ fontSize:'16px', fontWeight:700, color:'#0F172A', margin:0 }}>Department Overview (H1–H10)</h1>
-            <p style={{ fontSize:'12px', color:'#94A3B8', margin:'3px 0 0' }}>Strathmore Business School · Dr. N. Njoroge, Head · Semester 2, 2025/26</p>
+            <p style={{ fontSize:'12px', color:'#94A3B8', margin:'3px 0 0' }}>Strathmore Business School · Dr. N. Njoroge, Head · Current semester</p>
           </div>
           <div style={{ display:'flex', gap:'8px' }}>
             <span className="badge badge-blue">4 active courses</span>
             <span className="badge badge-amber">{unanswered} unanswered student questions</span>
           </div>
+        </div>
+
+        <div style={{ padding:'12px 16px', background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:'10px', fontSize:'12px', color:'#78350F', lineHeight:1.5 }}>
+          <strong>Illustrative data.</strong> This view shows what the Head of Department dashboard will report during the pilot. None of these figures are measured yet; the student and lecturer views show the working system.
         </div>
 
         {/* Dept metrics (H3, H5, H7) */}
@@ -152,19 +156,42 @@ export default function HoDView() {
 
           <div className="card" style={{ padding:'20px' }}>
             <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A', marginBottom:'4px' }}>Comprehension vs engagement (H4)</div>
-            <div style={{ fontSize:'12px', color:'#94A3B8', marginBottom:'14px' }}>Cross-course comparison · Semester 2</div>
+            <div style={{ fontSize:'12px', color:'#94A3B8', marginBottom:'14px' }}>Cross-course comparison · This semester</div>
             <div style={{ position:'relative', height:'220px' }}>
               <canvas ref={chartRef} role="img" aria-label="Bar chart comparing comprehension and engagement across 4 courses"/>
             </div>
           </div>
         </div>
 
+        {/* Course drill-in (H4) */}
+        {selectedCourse && (
+          <div className="card fade-up" style={{ padding:'20px', display:'grid', gridTemplateColumns:'1.2fr repeat(4,1fr)', gap:'16px', alignItems:'center' }}>
+            <div>
+              <div style={{ fontSize:'15px', fontWeight:700, color:'#0F172A' }}>{selectedCourse.code} · {selectedCourse.name}</div>
+              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>{selectedCourse.lecturer}</div>
+              <button onClick={() => setSelectedCourse(null)} className="btn-ghost" style={{ fontSize:'11px', padding:'4px 10px', marginTop:'10px' }}>Close</button>
+            </div>
+            {[
+              { label:'Enrolled', val:`${selectedCourse.students}`, sub:`${selectedCourse.active} active this week` },
+              { label:'Avg comprehension', val:`${selectedCourse.avg}%`, sub:`Peak ${Math.max(...selectedCourse.trend)}% this semester` },
+              { label:'At-risk students', val:`${selectedCourse.atRisk}`, sub:`${(selectedCourse.atRisk / selectedCourse.students * 100).toFixed(1)}% of enrolled` },
+              { label:'Unanswered questions', val:`${selectedCourse.questions}`, sub:'Target: reply within 48 hours' },
+            ].map(m => (
+              <div key={m.label} className="metric">
+                <div className="metric-label">{m.label}</div>
+                <div className="metric-value" style={{ fontSize:'22px' }}>{m.val}</div>
+                <div className="metric-sub">{m.sub}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* At-risk (H5) + CUE compliance (H8) */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1.8fr', gap:'16px' }}>
 
           <div className="card" style={{ padding:'20px' }}>
             <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A', marginBottom:'4px' }}>At-risk students by course (H5)</div>
-            <div style={{ fontSize:'12px', color:'#94A3B8', marginBottom:'14px' }}>Department-wide early warning · Week 8</div>
+            <div style={{ fontSize:'12px', color:'#94A3B8', marginBottom:'14px' }}>Department-wide early warning</div>
             <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
               {AT_RISK_DEPT.map(r=>(
                 <div key={r.course} style={{ display:'flex', alignItems:'center', gap:'12px', padding:'11px 14px', background:'#F8FAFC', borderRadius:'9px' }}>
@@ -232,7 +259,7 @@ export default function HoDView() {
 
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginTop:'14px' }}>
               <div style={{ padding:'11px 14px', background:'#FFFBEB', borderRadius:'9px', border:'1px solid #FDE68A', fontSize:'12px', color:'#78350F' }}>
-                <strong>⚠ Priority:</strong> KNQF mapping below 80% across all three programmes. Action required before August 2026 CUE review.
+                <strong>⚠ Priority:</strong> KNQF mapping below 80% across all three programmes. Action required before the next CUE review.
               </div>
               <div style={{ padding:'11px 14px', background:'#ECFDF5', borderRadius:'9px', border:'1px solid #A7F3D0', fontSize:'12px', color:'#064E3B' }}>
                 <strong>✓ Strength:</strong> Assessment spread and core unit coverage compliant across all programmes.

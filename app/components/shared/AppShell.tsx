@@ -1,5 +1,7 @@
 'use client'
+import { useEffect, useState } from 'react'
 import type { Role } from '../../page'
+import { useStore } from '../../lib/demoStore'
 
 const ROLES: { id: Role; label: string; avatar: string; name: string; subtitle: string }[] = [
   { id: 'student',  label: 'Student',          avatar: 'SK', name: 'Sara Kamau',       subtitle: 'Year 2 · BCom' },
@@ -11,6 +13,14 @@ export default function AppShell({ role, setRole, children }: {
   role: Role; setRole: (r: Role) => void; children: React.ReactNode
 }) {
   const current = ROLES.find(r => r.id === role)!
+  const { reset } = useStore()
+  const [confirming, setConfirming] = useState(false)
+
+  useEffect(() => {
+    if (!confirming) return
+    const t = setTimeout(() => setConfirming(false), 4000)
+    return () => clearTimeout(t)
+  }, [confirming])
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden' }}>
@@ -61,6 +71,17 @@ export default function AppShell({ role, setRole, children }: {
 
         {/* User chip */}
         <div style={{ display:'flex', alignItems:'center', gap:'9px' }}>
+          <button
+            onClick={() => { if (confirming) { reset(); setConfirming(false) } else setConfirming(true) }}
+            title="Clear everything done in this demo and start again"
+            style={{
+              marginRight:'8px', fontSize:'11px', padding:'4px 9px', borderRadius:'6px', cursor:'pointer', fontFamily:'inherit',
+              border:'1px solid rgba(255,255,255,.2)', background: confirming ? '#DC2626' : 'transparent',
+              color: confirming ? '#fff' : 'rgba(255,255,255,.55)',
+            }}
+          >
+            {confirming ? 'Click again to reset' : 'Reset demo'}
+          </button>
           <div style={{ textAlign:'right' }}>
             <div style={{ color:'rgba(255,255,255,.9)', fontSize:'12px', fontWeight:500 }}>{current.name}</div>
             <div style={{ color:'rgba(255,255,255,.4)', fontSize:'10px' }}>{current.subtitle}</div>

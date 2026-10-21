@@ -1,44 +1,59 @@
 export const COURSES = [
-  { code:'SBS 201', name:'Financial Accounting', lecturer:'Prof. Mwangi', credits:3, progress:72, color:'#2563EB' },
-  { code:'SBS 102', name:'Business Statistics',  lecturer:'Prof. Kariuki', credits:3, progress:45, color:'#0D9488' },
-  { code:'SBS 110', name:'Principles of Management', lecturer:'Dr. Omondi', credits:3, progress:58, color:'#7C3AED' },
-  { code:'ECO 201', name:'Microeconomics',       lecturer:'Dr. Njagi',   credits:3, progress:30, color:'#D97706' },
+  { code:'SBS 201', name:'Financial Accounting', lecturer:'Prof. Mwangi', credits:3, color:'#2563EB' },
+  { code:'SBS 102', name:'Business Statistics',  lecturer:'Prof. Kariuki', credits:3, color:'#0D9488' },
+  { code:'SBS 110', name:'Principles of Management', lecturer:'Dr. Omondi', credits:3, color:'#7C3AED' },
+  { code:'ECO 201', name:'Microeconomics',       lecturer:'Dr. Njagi',   credits:3, color:'#D97706' },
 ]
 
-export const TOPIC_PROGRESS: Record<string, {topic:string; score:number; sessions:number; lastStudied:string}[]> = {
+export type Course = typeof COURSES[number]
+
+// The demo student. Lecturers only ever see the anonymised ID.
+export const STUDENT = { name:'Sara Kamau', initials:'SK', id:'STR-2024-0117', programme:'Year 2 · BCom · SBS' }
+
+// SBS 201 is taught to this week (see content/sbs201/00-course-outline.md).
+export const CURRENT_WEEK = 9
+
+export interface TopicProgress { topic:string; score:number; sessions:number; daysAgo:number|null; week?:number }
+
+// Starting mastery for the demo student. daysAgo: null means not started.
+export const TOPIC_PROGRESS: Record<string, TopicProgress[]> = {
   'SBS 201': [
-    { topic:'Accounting equation',    score:92, sessions:4, lastStudied:'2 days ago' },
-    { topic:'Double-entry system',    score:85, sessions:5, lastStudied:'3 days ago' },
-    { topic:'Ledger accounts',        score:78, sessions:3, lastStudied:'4 days ago' },
-    { topic:'Trial balance',          score:65, sessions:4, lastStudied:'Yesterday' },
-    { topic:'Income statement',       score:70, sessions:3, lastStudied:'Today' },
-    { topic:'Balance sheet',          score:60, sessions:2, lastStudied:'5 days ago' },
-    { topic:'Accruals & prepayments', score:42, sessions:2, lastStudied:'1 week ago' },
-    { topic:'Depreciation',           score:38, sessions:1, lastStudied:'1 week ago' },
-    { topic:'Cash flow statements',   score:25, sessions:1, lastStudied:'2 weeks ago' },
-    { topic:'Bank reconciliation',    score:15, sessions:0, lastStudied:'Not yet started' },
+    { topic:'Accounting equation',    score:92, sessions:4, daysAgo:2,  week:1 },
+    { topic:'Double-entry system',    score:85, sessions:5, daysAgo:3,  week:2 },
+    { topic:'Ledger accounts',        score:78, sessions:3, daysAgo:4,  week:3 },
+    { topic:'Trial balance',          score:65, sessions:4, daysAgo:1,  week:5 },
+    { topic:'Depreciation',           score:38, sessions:1, daysAgo:7,  week:6 },
+    { topic:'Accruals & prepayments', score:42, sessions:2, daysAgo:7,  week:8 },
+    { topic:'Income statement',       score:70, sessions:3, daysAgo:0,  week:9 },
+    { topic:'Balance sheet',          score:60, sessions:2, daysAgo:5,  week:9 },
+    { topic:'Bank reconciliation',    score:0,  sessions:0, daysAgo:null, week:10 },
+    { topic:'Cash flow statements',   score:25, sessions:1, daysAgo:14, week:11 },
   ],
   'SBS 102': [
-    { topic:'Descriptive statistics', score:78, sessions:4, lastStudied:'3 days ago' },
-    { topic:'Probability theory',     score:55, sessions:3, lastStudied:'4 days ago' },
-    { topic:'Normal distribution',    score:45, sessions:2, lastStudied:'1 week ago' },
-    { topic:'Hypothesis testing',     score:30, sessions:1, lastStudied:'1 week ago' },
-    { topic:'Regression & correlation',score:20,sessions:0, lastStudied:'Not yet started' },
+    { topic:'Descriptive statistics', score:78, sessions:4, daysAgo:3 },
+    { topic:'Probability theory',     score:55, sessions:3, daysAgo:4 },
+    { topic:'Normal distribution',    score:45, sessions:2, daysAgo:7 },
+    { topic:'Hypothesis testing',     score:30, sessions:1, daysAgo:7 },
+    { topic:'Regression & correlation',score:0, sessions:0, daysAgo:null },
   ],
   'SBS 110': [
-    { topic:'Classical management',   score:82, sessions:5, lastStudied:'2 days ago' },
-    { topic:'Motivation theories',    score:70, sessions:4, lastStudied:'3 days ago' },
-    { topic:'Leadership styles',      score:65, sessions:3, lastStudied:'4 days ago' },
-    { topic:'Organisational design',  score:50, sessions:2, lastStudied:'1 week ago' },
-    { topic:'Corporate governance',   score:35, sessions:1, lastStudied:'1 week ago' },
+    { topic:'Classical management',   score:82, sessions:5, daysAgo:2 },
+    { topic:'Motivation theories',    score:70, sessions:4, daysAgo:3 },
+    { topic:'Leadership styles',      score:65, sessions:3, daysAgo:4 },
+    { topic:'Organisational design',  score:50, sessions:2, daysAgo:7 },
+    { topic:'Corporate governance',   score:35, sessions:1, daysAgo:7 },
   ],
   'ECO 201': [
-    { topic:'Supply & demand',        score:72, sessions:4, lastStudied:'Yesterday' },
-    { topic:'Price elasticity',       score:55, sessions:2, lastStudied:'3 days ago' },
-    { topic:'Consumer theory',        score:40, sessions:1, lastStudied:'1 week ago' },
-    { topic:'Market structures',      score:25, sessions:1, lastStudied:'1 week ago' },
-    { topic:'Market failure',         score:10, sessions:0, lastStudied:'Not yet started' },
+    { topic:'Supply & demand',        score:72, sessions:4, daysAgo:1 },
+    { topic:'Price elasticity',       score:55, sessions:2, daysAgo:3 },
+    { topic:'Consumer theory',        score:40, sessions:1, daysAgo:7 },
+    { topic:'Market structures',      score:25, sessions:1, daysAgo:7 },
+    { topic:'Market failure',         score:0,  sessions:0, daysAgo:null },
   ],
+}
+
+export function courseTopics(code: string) {
+  return (TOPIC_PROGRESS[code] || []).map(t => t.topic)
 }
 
 export const QUICK_STARTERS: Record<string, {label:string; prompt:string}[]> = {
