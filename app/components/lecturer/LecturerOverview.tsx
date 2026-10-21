@@ -1,41 +1,87 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useStore, type BriefItem } from '../../lib/demoStore'
+import { buildCohort, topicStats, TREND_HISTORY } from '../../lib/cohort'
+import { CURRENT_WEEK } from '../student/studentData'
+import { average, timeAgo } from '../../lib/format'
 
-const HEAT = [
-  { topic:'Depreciation',           pct:63, level:5 },
-  { topic:'Accruals & prepayments', pct:47, level:4 },
-  { topic:'Trial balance errors',   pct:41, level:4 },
-  { topic:'Income statement',       pct:35, level:3 },
-  { topic:'Cash flow stmt',         pct:31, level:3 },
-  { topic:'Double-entry',           pct:22, level:2 },
-  { topic:'Ledger posting',         pct:18, level:2 },
-  { topic:'Accounting equation',    pct:11, level:1 },
-]
+const COURSE = 'SBS 201'
 
-const BRIEF = [
-  { rank:1, topic:'Depreciation methods', desc:'63% confusion — straight-line vs reducing balance. 38 students asked variants this week.', time:'20 min' },
-  { rank:2, topic:'Accruals & prepayments', desc:'Timing confusion: recognition vs cash. Top misconception: all expenses = cash outflow.', time:'15 min' },
-  { rank:3, topic:'Trial balance errors', desc:'Students struggling to find omission errors. Worked example recommended.', time:'10 min' },
-  { rank:4, topic:'Open Q&A', desc:'Buffer for emerging questions.', time:'15 min' },
-]
-
-const heatClass: Record<number,string> = {5:'heat-5',4:'heat-4',3:'heat-3',2:'heat-2',1:'heat-1'}
+const heatLevel = (confusion: number) => confusion >= 50 ? 5 : confusion >= 40 ? 4 : confusion >= 30 ? 3 : confusion >= 20 ? 2 : 1
 
 export default function LecturerOverview() {
+  const { state, saveBrief } = useStore()
   const chartRef = useRef<HTMLCanvasElement>(null)
   const chartInst = useRef<any>(null)
+  const [briefState, setBriefState] = useState<'idle' | 'loading' | 'error'>('idle')
+
+  const practiceCount = state.practiceLog.filter(p => p.course === COURSE).length
+  const cohort = useMemo(() => buildCohort(state.mastery[COURSE] || [], practiceCount), [state.mastery, practiceCount])
+  const stats = useMemo(() => topicStats(cohort), [cohort])
+  const misconceptions = state.misconceptions.filter(m => m.course === COURSE)
+  const questions = state.questions.filter(q => q.course === COURSE)
+
+  const active = cohort.filter(s => s.daysAgo <= 7).length
+  const classAvg = average(cohort.map(s => s.score))
+  const atRisk = cohort.filter(s => s.status === 'Critical' || s.status === 'At risk').length
+  const top = stats[0]
+
+  // Students who use Arthur more vs less, for the insight card.
+  const frequent = cohort.filter(s => s.sessions >= 10)
+  const occasional = cohort.filter(s => s.sessions < 10)
+
+  const defaultBrief: BriefItem[] = [
+    ...stats.slice(0, 3).map((t, i) => ({
+      topic: t.topic,
+      focus: `${t.confusion}% of students are below 50% mastery · class average ${t.avg}%.`,
+      minutes: [20, 15, 10][i],
+    })),
+    { topic: 'Open Q&A', focus: `Buffer for emerging questions (${questions.filter(q => !q.reply).length} unanswered in your inbox).`, minutes: 15 },
+  ]
+  // The class data a brief is drafted from. The saved brief keeps the version it
+  // used, so we can say when it's out of date instead of redrafting automatically.
+  const briefInput = {
+    course: COURSE,
+    week: CURRENT_WEEK,
+    topics: stats,
+    misconceptions: misconceptions.slice(0, 15).map(m => `${m.topic}: ${m.note}`),
+    questions: questions.slice(0, 10).map(q => `${q.topic}: ${q.question}`.slice(0, 1000)),
+  }
+  const signature = JSON.stringify(briefInput)
+  const saved = state.briefs[COURSE]
+  const outOfDate = !!saved && saved.signature !== signature
+  const shownBrief = saved?.items || defaultBrief
+
+  const draftBrief = async () => {
+    setBriefState('loading')
+    try {
+      const res = await fetch('/api/brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Unchanged data plus a click means "give me a new draft"; otherwise the server may reuse one.
+        body: JSON.stringify({ ...briefInput, refresh: saved?.signature === signature }),
+      })
+      if (!res.ok) throw new Error(`brief failed: ${res.status}`)
+      const data = await res.json()
+      saveBrief(COURSE, { items: data.items, generatedAt: data.generatedAt, signature })
+      setBriefState('idle')
+    } catch {
+      setBriefState('error')
+    }
+  }
 
   useEffect(() => {
     import('chart.js/auto').then(({default:Chart}) => {
       if (!chartRef.current) return
       if (chartInst.current) chartInst.current.destroy()
+      const data = [...TREND_HISTORY, classAvg]
       chartInst.current = new Chart(chartRef.current, {
         type:'line',
         data:{
-          labels:['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8'],
+          labels: data.map((_, i) => `Wk ${i + 1}`),
           datasets:[{
             label:'Comprehension %',
-            data:[55,58,61,67,72,68,65,64],
+            data,
             borderColor:'#2563EB', backgroundColor:'rgba(37,99,235,.07)',
             borderWidth:2.5, pointBackgroundColor:'#2563EB', pointRadius:5,
             tension:.4, fill:true,
@@ -52,25 +98,28 @@ export default function LecturerOverview() {
       })
     })
     return () => { if(chartInst.current) chartInst.current.destroy() }
-  }, [])
+  }, [classAvg])
 
   return (
     <div style={{ overflow:'auto', height:'100%', padding:'20px 24px', background:'#F8FAFC' }}>
       <div style={{ maxWidth:'1100px', margin:'0 auto', display:'flex', flexDirection:'column', gap:'18px' }}>
 
+        <div style={{ fontSize:'11px', color:'#94A3B8' }}>
+          Demo class: 30 synthetic students plus Sara Kamau ({cohort[0].id}), whose activity updates these figures live.
+        </div>
+
         {/* Metrics */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'14px' }}>
           {[
-            { label:'Active students', val:'214', sub:'of 247 enrolled', delta:'↑ 18 this week', up:true },
-            { label:'Avg comprehension', val:'64%', sub:'Across all topics', delta:'↓ 3% from last week', up:false },
-            { label:'At-risk students', val:'12', sub:'< 40% engagement', delta:'↑ 4 flagged', up:false, alert:true },
-            { label:'Top confusion', val:'Depreciation', sub:'63% confusion rate', delta:'⚠ Needs focus', up:false, warn:true },
+            { label:'Active students', val:`${active}`, sub:`of ${cohort.length} in the class · last 7 days` },
+            { label:'Avg comprehension', val:`${classAvg}%`, sub:`Topics taught to Week ${CURRENT_WEEK}` },
+            { label:'At-risk students', val:`${atRisk}`, sub:'Critical or at risk', alert:true },
+            { label:'Top confusion', val: top.topic, sub:`${top.confusion}% below 50% mastery`, warn:true },
           ].map(m => (
             <div key={m.label} className="metric">
               <div className="metric-label">{m.label}</div>
-              <div className="metric-value" style={{ fontSize: m.val.length>5?'18px':'28px', color: m.alert?'#DC2626':'#0F172A' }}>{m.val}</div>
+              <div className="metric-value" style={{ fontSize: m.val.length>5?'18px':'28px', color: m.alert?'#DC2626':m.warn?'#D97706':'#0F172A' }}>{m.val}</div>
               <div className="metric-sub">{m.sub}</div>
-              <div className="metric-delta" style={{ color: m.up?'#059669':m.warn?'#D97706':'#DC2626' }}>{m.delta}</div>
             </div>
           ))}
         </div>
@@ -81,19 +130,16 @@ export default function LecturerOverview() {
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
               <div>
                 <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Topic comprehension map (L5)</div>
-                <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Week 8 · 214 student interactions · Anonymised</div>
+                <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Share of students below 50% mastery · Anonymised</div>
               </div>
-              <span className="badge badge-amber">⚠ 3 need attention</span>
+              <span className="badge badge-amber">⚠ {stats.filter(t => t.confusion >= 40).length} need attention</span>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px' }}>
-              {HEAT.map(h => (
-                <div key={h.topic} className={`${heatClass[h.level]}`} style={{ padding:'10px 8px', borderRadius:'9px', cursor:'pointer', transition:'transform .15s' }}
-                  onMouseEnter={e=>(e.currentTarget as HTMLElement).style.transform='scale(1.04)'}
-                  onMouseLeave={e=>(e.currentTarget as HTMLElement).style.transform='scale(1)'}
-                >
+              {stats.map(h => (
+                <div key={h.topic} className={`heat-${heatLevel(h.confusion)}`} style={{ padding:'10px 8px', borderRadius:'9px' }}>
                   <div style={{ fontSize:'11px', fontWeight:500, marginBottom:'4px', lineHeight:1.2 }}>{h.topic}</div>
-                  <div style={{ fontSize:'20px', fontWeight:700 }}>{h.pct}%</div>
-                  <div style={{ fontSize:'10px', opacity:.7 }}>confusion</div>
+                  <div style={{ fontSize:'20px', fontWeight:700 }}>{h.confusion}%</div>
+                  <div style={{ fontSize:'10px', opacity:.7 }}>confused · avg {h.avg}%</div>
                 </div>
               ))}
             </div>
@@ -108,53 +154,65 @@ export default function LecturerOverview() {
           </div>
 
           <div className="card" style={{ padding:'20px' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px', gap:'8px' }}>
               <div>
-                <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Auto session brief (L5)</div>
-                <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Thu 9 May · Tutorial 08</div>
+                <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Session brief (L5)</div>
+                <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Next tutorial · Week {CURRENT_WEEK}</div>
               </div>
-              <span className="badge badge-blue">AI-generated</span>
+              <button onClick={draftBrief} disabled={briefState === 'loading'} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 10px', flexShrink:0 }}>
+                {briefState === 'loading' ? 'Drafting…' : saved ? '↻ Refresh' : '✦ Draft with Arthur'}
+              </button>
             </div>
-            {BRIEF.map((b,i)=>(
-              <div key={b.rank} style={{ display:'flex', gap:'10px', padding:'10px 0', borderTop: i>0?'1px solid #F1F5F9':'none' }}>
-                <span style={{ fontSize:'11px', fontWeight:700, color:'#CBD5E1', width:'18px', flexShrink:0, marginTop:'1px' }}>#{b.rank}</span>
+            {shownBrief.map((b,i)=>(
+              <div key={i} style={{ display:'flex', gap:'10px', padding:'10px 0', borderTop: i>0?'1px solid #F1F5F9':'none' }}>
+                <span style={{ fontSize:'11px', fontWeight:700, color:'#CBD5E1', width:'18px', flexShrink:0, marginTop:'1px' }}>#{i+1}</span>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:'13px', fontWeight:500, color:'#0F172A' }}>{b.topic}</div>
-                  <div style={{ fontSize:'11px', color:'#64748B', marginTop:'2px', lineHeight:1.4 }}>{b.desc}</div>
+                  <div style={{ fontSize:'11px', color:'#64748B', marginTop:'2px', lineHeight:1.4 }}>{b.focus}</div>
                 </div>
-                <span className="badge badge-teal" style={{ alignSelf:'flex-start', flexShrink:0 }}>{b.time}</span>
+                <span className="badge badge-teal" style={{ alignSelf:'flex-start', flexShrink:0 }}>{b.minutes} min</span>
               </div>
             ))}
-            <div style={{ marginTop:'12px', padding:'10px 12px', background:'#EFF6FF', borderRadius:'8px', fontSize:'11px', color:'#1D4ED8', fontWeight:500 }}>
-              ✦ 60 min total · Built from 214 student interactions
+            <div style={{ marginTop:'12px', padding:'10px 12px', background: briefState === 'error' ? '#FEF2F2' : outOfDate ? '#FFFBEB' : '#EFF6FF', borderRadius:'8px', fontSize:'11px', color: briefState === 'error' ? '#B91C1C' : outOfDate ? '#92400E' : '#1D4ED8', fontWeight:500 }}>
+              {briefState === 'error'
+                ? saved ? 'Arthur could not refresh the brief. Showing the last draft.' : 'Arthur could not draft the brief. Showing the plan built from class data.'
+                : saved
+                  ? outOfDate
+                    ? `Drafted ${timeAgo(saved.generatedAt).toLowerCase()}. Class data has changed since; refresh to update it.`
+                    : `✦ Drafted by Arthur ${timeAgo(saved.generatedAt).toLowerCase()} from class mastery, misconceptions and student questions`
+                  : '✦ Built from class mastery. Ask Arthur to add teaching suggestions.'}
             </div>
           </div>
         </div>
 
-        {/* Trend + L12 insight */}
+        {/* Trend + insights */}
         <div className="card" style={{ padding:'20px' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
             <div>
               <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Weekly comprehension trend (L12)</div>
-              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>SBS 201 · Weeks 1–8 · What worked, what confused students</div>
+              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>{COURSE} · Weeks 1–{CURRENT_WEEK - 1} are demo history; Week {CURRENT_WEEK} is live</div>
             </div>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:'24px', alignItems:'center' }}>
-            <div style={{ position:'relative', height:'180px' }}>
-              <canvas ref={chartRef} role="img" aria-label="Comprehension trend: rises from 55% to 72%, dips to 64% in weeks 6-8"/>
+          <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:'24px', alignItems:'start' }}>
+            <div style={{ position:'relative', height:'200px' }}>
+              <canvas ref={chartRef} role="img" aria-label={`Comprehension trend by week, currently ${classAvg}%`}/>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
               <div style={{ padding:'12px', background:'#FEF3C7', borderRadius:'10px', border:'1px solid #FDE68A' }}>
                 <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'4px' }}>Arthur insight</div>
                 <p style={{ fontSize:'12px', color:'#78350F', lineHeight:1.5, margin:0 }}>
-                  Comprehension peaked at 72% (Week 5) then dipped with introduction of depreciation. Students who studied &gt;3 sessions show 18% higher retention.
+                  Students with 10+ Arthur sessions average {average(frequent.map(s => s.score))}% mastery, against {average(occasional.map(s => s.score))}% for those with fewer ({frequent.length} vs {occasional.length} students).
                 </p>
               </div>
-              <div style={{ padding:'12px', background:'#ECFDF5', borderRadius:'10px', border:'1px solid #A7F3D0' }}>
-                <div style={{ fontSize:'10px', fontWeight:700, color:'#065F46', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'4px' }}>What worked (L12)</div>
-                <p style={{ fontSize:'12px', color:'#064E3B', lineHeight:1.5, margin:0 }}>
-                  Worked examples with Kenyan company data (Safaricom, Equity Bank) generated 3× more follow-up sessions than textbook exercises.
-                </p>
+              <div style={{ padding:'12px', background:'#F8FAFC', borderRadius:'10px', border:'1px solid #E2E8F0' }}>
+                <div style={{ fontSize:'10px', fontWeight:700, color:'#475569', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'6px' }}>Misconceptions Arthur noticed</div>
+                {misconceptions.length === 0 && <p style={{ fontSize:'12px', color:'#94A3B8', margin:0 }}>None this week.</p>}
+                {misconceptions.slice(0, 5).map((m, i) => (
+                  <div key={i} style={{ fontSize:'12px', color:'#334155', lineHeight:1.45, padding:'5px 0', borderTop: i > 0 ? '1px solid #F1F5F9' : 'none' }}>
+                    <strong style={{ fontWeight:600 }}>{m.topic}:</strong> {m.note}
+                    <span style={{ display:'block', fontSize:'10px', color:'#94A3B8' }}>{typeof m.at === 'number' ? timeAgo(m.at) : m.at}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

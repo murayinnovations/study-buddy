@@ -4,6 +4,7 @@ import LecturerOverview from './LecturerOverview'
 import LecturerStudents from './LecturerStudents'
 import LecturerContent from './LecturerContent'
 import LecturerQuestions from './LecturerQuestions'
+import { useStore } from '../../lib/demoStore'
 
 const TABS = [
   { id:'overview',   label:'Class overview',    icon:'📊' },
@@ -14,6 +15,8 @@ const TABS = [
 
 export default function LecturerView() {
   const [tab, setTab] = useState('overview')
+  const { state } = useStore()
+  const unanswered = state.questions.filter(q => q.course === 'SBS 201' && !q.reply).length
 
   return (
     <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden' }}>
@@ -34,11 +37,14 @@ export default function LecturerView() {
           >
             <span style={{ fontSize:'14px' }}>{t.icon}</span>
             {t.label}
+            {t.id === 'questions' && unanswered > 0 && (
+              <span className="badge badge-red" style={{ fontSize:'10px', padding:'1px 7px' }}>{unanswered}</span>
+            )}
           </button>
         ))}
         <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:'6px', fontSize:'12px', color:'#94A3B8' }}>
           <span className="ai-pulse" style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#059669', display:'inline-block' }}/>
-          Financial Accounting SBS 201 · Week 8 of 14
+          Financial Accounting SBS 201 · Week 9 of 14
         </div>
       </div>
 

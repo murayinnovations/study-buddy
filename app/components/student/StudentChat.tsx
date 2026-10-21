@@ -1,82 +1,207 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { TOPIC_PROGRESS, QUICK_STARTERS, WELCOME_MESSAGES } from './studentData'
+import { QUICK_STARTERS, CURRENT_WEEK, courseTopics, type Course } from './studentData'
+import { useStore, extraMaterialsFor, type ChatMessage, type ChatEvent, type Source } from '../../lib/demoStore'
 
-interface Message { role: 'user'|'assistant'; content: string; flagged?: boolean }
+// Courses whose answers are grounded in uploaded materials (see app/lib/materials.ts).
+const GROUNDED_COURSES = ['SBS 201']
+
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 
 function renderMd(text: string) {
-  return text
+  return escapeHtml(text)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/^(\d+\.) /gm, '<br/>$1 ')
     .replace(/\n\n/g, '</p><p style="margin-top:.45rem">')
     .replace(/\n/g, '<br/>')
+    .replace(/⟦(\d+)⟧/g, '<sup class="cite">$1</sup>')
 }
 
-export default function StudentChat({ selectedCourse, showProgress, setShowProgress }: any) {
-  const [messages, setMessages] = useState<Message[]>([
-    { role:'assistant', content: WELCOME_MESSAGES[selectedCourse.code] }
-  ])
+export default function StudentChat({ selectedCourse, showProgress, setShowProgress, pendingPrompt, clearPendingPrompt }: {
+  selectedCourse: Course
+  showProgress: boolean
+  setShowProgress: (v: boolean) => void
+  pendingPrompt: string | null
+  clearPendingPrompt: () => void
+}) {
+  const store = useStore()
+  const { state, setChat, clearChat, recordPractice, noteMisconception, askLecturer } = store
+  const course = selectedCourse.code
+  const messages = state.chats[course] || []
+
+  // The reply being streamed; committed to the store when it finishes.
+  const [live, setLive] = useState<ChatMessage | null>(null)
   const [input, setInput] = useState('')
-  const [streaming, setStreaming] = useState(false)
   const [flagModal, setFlagModal] = useState(false)
   const [flagText, setFlagText] = useState('')
+  const [flagTopic, setFlagTopic] = useState('')
+  const [notice, setNotice] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
-  const prevCode = useRef(selectedCourse.code)
+  const sentPending = useRef<string | null>(null)
+  // Topics practised in this chat, so a session is counted once per topic.
+  const practised = useRef(new Set<string>())
+  // The latest misconception Arthur noted in this chat, for "Ask lecturer".
+  const lastMisconception = useRef<{ topic: string; note: string } | null>(null)
+  // The topic most recently practised in this chat, for "Ask lecturer".
+  const lastPractised = useRef<string | null>(null)
+  const streaming = live !== null
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages.length, live?.content])
 
   useEffect(() => {
-    if (selectedCourse.code !== prevCode.current) {
-      prevCode.current = selectedCourse.code
-      setMessages([{ role:'assistant', content: WELCOME_MESSAGES[selectedCourse.code] }])
+    if (!notice) return
+    const t = setTimeout(() => setNotice(''), 5000)
+    return () => clearTimeout(t)
+  }, [notice])
+
+  const topics = state.mastery[course] || []
+
+  // Streams Arthur's reply to `history`, which must end with a user turn.
+  const reply = useCallback(async (history: ChatMessage[]) => {
+    setChat(course, history)
+    let acc = ''
+    const sources: Source[] = []
+    const events: ChatEvent[] = []
+    const show = () => setLive({ role:'assistant', content:acc, sources:[...sources], events:[...events] })
+    show()
+    // Each cited passage gets a marker per source, numbered in order of first use.
+    const addCitations = (cited: Source[]) => {
+      const nums = new Set<number>()
+      for (const c of cited) {
+        let i = sources.findIndex(x => x.title===c.title && x.quote===c.quote)
+        if (i === -1) i = sources.push(c) - 1
+        nums.add(i+1)
+      }
+      acc += Array.from(nums).map(n => `⟦${n}⟧`).join('')
     }
-  }, [selectedCourse.code])
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages])
-
-  const topics = TOPIC_PROGRESS[selectedCourse.code] || []
-  const weakest = topics.reduce((w,t) => t.score < w.score ? t : w, topics[0])
-  const studentProgress = { weakest: weakest?.topic, topics: topics.map(t => ({ [t.topic]: t.score })) }
-
-  const send = useCallback(async (text?: string) => {
-    const content = text || input.trim()
-    if (!content || streaming) return
-    setInput('')
-    const newMsgs: Message[] = [...messages, { role:'user', content }]
-    setMessages(newMsgs)
-    setStreaming(true)
-    setMessages(prev => [...prev, { role:'assistant', content:'' }])
+    let serverError = ''
     try {
       const res = await fetch('/api/chat', {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ messages: newMsgs, courseCode: selectedCourse.code, studentProgress }),
+        body: JSON.stringify({
+          // Failed replies are dropped so the error text never reaches Arthur.
+          messages: history.filter(m => !m.failed).map(m => ({ role: m.role, content: m.content, context: m.context })),
+          courseCode: course,
+          extraMaterials: extraMaterialsFor(state, course),
+        }),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: '' }))
+        serverError = error || ''
+        throw new Error(`chat request failed: ${res.status}`)
+      }
       const reader = res.body!.getReader()
       const dec = new TextDecoder()
-      let acc = ''
+      let buf = ''
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
-        acc += dec.decode(value, { stream:true })
-        setMessages(prev => { const u=[...prev]; u[u.length-1]={role:'assistant',content:acc}; return u })
+        buf += dec.decode(value, { stream:true })
+        const lines = buf.split('\n')
+        buf = lines.pop()!
+        for (const line of lines) {
+          if (!line) continue
+          const ev = JSON.parse(line)
+          if (ev.t === 'text') acc += ev.v
+          else if (ev.t === 'cite') addCitations(ev.sources)
+          else if (ev.t === 'practice') {
+            events.push(recordPractice(course, ev.topic, ev.correct, !practised.current.has(ev.topic)))
+            practised.current.add(ev.topic)
+            lastPractised.current = ev.topic
+          } else if (ev.t === 'misconception') {
+            noteMisconception(course, ev.topic, ev.note)
+            lastMisconception.current = { topic: ev.topic, note: ev.note }
+          }
+        }
+        show()
       }
     } catch {
-      setMessages(prev => { const u=[...prev]; u[u.length-1]={role:'assistant',content:"I'm having trouble connecting. Please check that ANTHROPIC_API_KEY is set, then try again."}; return u })
-    } finally { setStreaming(false) }
-  }, [input, messages, streaming, selectedCourse.code, studentProgress])
+      if (!acc) {
+        setChat(course, [...history, { role:'assistant', content: serverError || "I'm having trouble connecting right now. Try again in a moment.", failed:true }])
+        setLive(null)
+        return
+      }
+      acc += '\n\n*(The connection dropped before I finished. Use Regenerate to try again.)*'
+    }
+    setChat(course, [...history, { role:'assistant', content:acc, sources, events }])
+    setLive(null)
+  }, [course, state, setChat, recordPractice, noteMisconception])
+
+  const send = useCallback((text?: string) => {
+    const content = text || input.trim()
+    if (!content || streaming) return
+    setInput('')
+    // The mastery snapshot is stored with the message so later requests replay it byte for byte.
+    const context = JSON.stringify(Object.fromEntries(topics.map(t => [t.topic, `${t.score}%`])))
+    reply([...messages, { role:'user', content, context }])
+  }, [input, streaming, topics, messages, reply])
+
+  // Re-asks Arthur for the last answer. Not offered once that answer recorded a
+  // practice result, since asking again would count the attempt twice.
+  const last = messages[messages.length - 1]
+  const canRegenerate = !streaming && last?.role === 'assistant' && messages.length >= 2
+    && messages[messages.length - 2].role === 'user' && !(last.events && last.events.length > 0)
+  const regenerate = () => { if (canRegenerate) reply(messages.slice(0, -1)) }
+
+  // "Start a session" from the sidebar.
+  useEffect(() => {
+    if (!pendingPrompt || streaming || sentPending.current === pendingPrompt) return
+    sentPending.current = pendingPrompt
+    clearPendingPrompt()
+    send(pendingPrompt)
+  }, [pendingPrompt, streaming, send, clearPendingPrompt])
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
-  const flagToLecturer = () => {
+  const weakestStarted = [...topics].filter(t => t.sessions > 0 && (t.week ?? 0) <= CURRENT_WEEK).sort((a, b) => a.score - b.score)[0]
+
+  const openFlagModal = () => {
     const lastUser = [...messages].reverse().find(m => m.role==='user')
     setFlagText(lastUser?.content || '')
+    setFlagTopic(lastMisconception.current?.topic || lastPractised.current || weakestStarted?.topic || topics[0]?.topic || '')
     setFlagModal(true)
   }
+
+  const flagTopicData = topics.find(t => t.topic === flagTopic)
+  const attempts = state.practiceLog.filter(p => p.course === course && p.topic === flagTopic)
+  const flagContext = [
+    `Mastery: ${flagTopicData?.score ?? 0}%`,
+    `Practice attempts: ${attempts.length} (${attempts.filter(a => a.correct).length} correct)`,
+    lastMisconception.current?.topic === flagTopic ? `Misconception Arthur noticed: ${lastMisconception.current.note}` : null,
+    `Messages with Arthur in this chat: ${messages.filter(m => m.role === 'user').length}`,
+  ].filter(Boolean).join(' · ')
+
+  const sendFlag = () => {
+    const score = flagTopicData?.score ?? 0
+    askLecturer({
+      course, topic: flagTopic, question: flagText.trim(), context: flagContext,
+      urgency: score < 40 ? 'High' : score < 60 ? 'Medium' : 'Low',
+    })
+    setFlagModal(false)
+    setNotice(`Sent to ${selectedCourse.lecturer}. Their reply will appear in your sidebar.`)
+  }
+
+  const shown = live ? [...messages, live] : messages
+  const hasUserMessages = messages.some(m => m.role === 'user')
+
+  const headerButton = (active = false): React.CSSProperties => ({
+    fontSize:'12px', fontWeight:500, padding:'6px 12px', borderRadius:'8px',
+    border:'1.5px solid #E2E8F0', background: active ? '#EFF6FF' : '#fff', color: active ? '#2563EB' : '#475569',
+    cursor:'pointer', display:'flex', alignItems:'center', gap:'5px', fontFamily:'inherit',
+  })
 
   return (
     <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'#F8FAFC', minWidth:0 }}>
@@ -84,51 +209,42 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
       {/* Chat header */}
       <div style={{
         background:'#fff', borderBottom:'1px solid #E2E8F0', padding:'12px 20px',
-        display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0,
+        display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0, gap:'12px',
       }}>
-        <div>
+        <div style={{ minWidth:0 }}>
           <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>
             {selectedCourse.name} — {selectedCourse.code}
           </div>
           <div style={{ fontSize:'11px', color:'#94A3B8', marginTop:'2px' }}>
-            {selectedCourse.lecturer} · Grounded in suLMS course materials · S3 ✓
+            {selectedCourse.lecturer} · {GROUNDED_COURSES.includes(course) ? 'Answers from approved course materials' : 'Course materials not yet uploaded'}
           </div>
         </div>
-        <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
-          <button
-            onClick={flagToLecturer}
-            style={{
-              fontSize:'12px', fontWeight:500, padding:'6px 12px', borderRadius:'8px',
-              border:'1.5px solid #E2E8F0', background:'#fff', color:'#475569',
-              cursor:'pointer', display:'flex', alignItems:'center', gap:'5px', fontFamily:'inherit',
-            }}
-            title="Flag question to lecturer (S10)"
-          >
+        <div style={{ display:'flex', gap:'8px', alignItems:'center', flexShrink:0 }}>
+          {hasUserMessages && (
+            <button onClick={() => { clearChat(course); practised.current.clear(); lastMisconception.current = null; lastPractised.current = null }} disabled={streaming} style={headerButton()} title="Start a new conversation">
+              New chat
+            </button>
+          )}
+          <button onClick={openFlagModal} style={headerButton()} title="Send a question to your lecturer (S10)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
             Ask lecturer
           </button>
-          <button
-            onClick={() => setShowProgress(!showProgress)}
-            style={{
-              fontSize:'12px', fontWeight:500, padding:'6px 12px', borderRadius:'8px',
-              border:'1.5px solid #E2E8F0', background: showProgress ? '#EFF6FF' : '#fff',
-              color: showProgress ? '#2563EB' : '#475569',
-              cursor:'pointer', fontFamily:'inherit',
-            }}
-          >
+          <button onClick={() => setShowProgress(!showProgress)} style={headerButton(showProgress)}>
             {showProgress ? 'Hide' : 'Show'} progress
           </button>
-          <div style={{ display:'flex', alignItems:'center', gap:'5px', fontSize:'11px', fontWeight:600, color:'#059669', background:'#ECFDF5', padding:'5px 10px', borderRadius:'7px' }}>
-            <span className="ai-pulse" style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#059669', display:'inline-block' }}/>
-            Arthur active
-          </div>
         </div>
       </div>
+
+      {notice && (
+        <div className="fade-up" style={{ margin:'12px 24px 0', padding:'10px 14px', borderRadius:'9px', background:'#ECFDF5', border:'1px solid #A7F3D0', color:'#065F46', fontSize:'12px', fontWeight:500 }}>
+          ✓ {notice}
+        </div>
+      )}
 
       {/* Messages */}
       <div style={{ flex:1, overflowY:'auto', padding:'20px 24px', display:'flex', flexDirection:'column', gap:'16px' }}>
 
-        {messages.map((msg, i) => (
+        {shown.map((msg, i) => (
           <div key={i} className="fade-up" style={{ display:'flex', gap:'10px', flexDirection: msg.role==='user' ? 'row-reverse' : 'row', alignItems:'flex-start' }}>
             <div style={{
               width:'32px', height:'32px', borderRadius:'50%', flexShrink:0,
@@ -157,14 +273,42 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
                   boxShadow: msg.role==='assistant' ? '0 1px 3px rgba(0,0,0,.04)' : 'none',
                 }}
               >
-                {msg.role==='assistant' && msg.content==='' && streaming ? (
+                {msg.failed ? (
+                  <span style={{ color:'#B91C1C' }}>{msg.content}</span>
+                ) : msg.role==='assistant' && msg.content==='' && msg === live ? (
                   <span style={{ display:'flex', gap:'5px', alignItems:'center', padding:'2px 0' }}>
                     <span className="thinking-dot"/><span className="thinking-dot"/><span className="thinking-dot"/>
                   </span>
                 ) : (
-                  <p dangerouslySetInnerHTML={{ __html:`<p>${renderMd(msg.content)}</p>` }} style={{margin:0}}/>
+                  <div dangerouslySetInnerHTML={{ __html:`<p style="margin:0">${renderMd(msg.content)}</p>` }}/>
+                )}
+                {msg.sources && msg.sources.length > 0 && (
+                  <div style={{ marginTop:'10px', paddingTop:'8px', borderTop:'1px solid #F1F5F9', display:'flex', flexDirection:'column', gap:'4px' }}>
+                    <div style={{ fontSize:'10px', fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.5px' }}>Sources</div>
+                    {msg.sources.map((src, n) => (
+                      <div key={n} title={src.quote} style={{ fontSize:'11px', color:'#64748B', lineHeight:1.4, display:'flex', gap:'6px' }}>
+                        <span style={{ fontWeight:700, color:'#2563EB', flexShrink:0 }}>{n+1}</span>
+                        <span><strong style={{ color:'#334155', fontWeight:600 }}>{src.title}</strong> — “{src.quote.length > 110 ? src.quote.slice(0,110).trimEnd() + '…' : src.quote}”</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
+              {i === messages.length - 1 && canRegenerate && (
+                <button onClick={regenerate} title="Ask Arthur to answer this again"
+                  style={{ marginTop:'6px', fontSize:'11px', color: msg.failed ? '#2563EB' : '#94A3B8', fontWeight: msg.failed ? 600 : 400, background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
+                  ↻ {msg.failed ? 'Try again' : 'Regenerate'}
+                </button>
+              )}
+              {msg.events && msg.events.length > 0 && (
+                <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginTop:'6px' }}>
+                  {msg.events.map((ev, n) => (
+                    <span key={n} className={`badge ${ev.correct ? 'badge-green' : 'badge-amber'}`} style={{ fontSize:'11px' }}>
+                      {ev.correct ? '✓' : '↺'} {ev.topic}: {ev.before}% → {ev.after}%
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -172,9 +316,9 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
       </div>
 
       {/* Quick starters — only when no user messages yet */}
-      {messages.filter(m => m.role==='user').length === 0 && (
+      {!hasUserMessages && !streaming && (
         <div style={{ padding:'0 24px 12px', display:'flex', gap:'6px', flexWrap:'wrap' }}>
-          {(QUICK_STARTERS[selectedCourse.code] || []).map(q => (
+          {(QUICK_STARTERS[course] || []).map(q => (
             <button
               key={q.label}
               onClick={() => send(q.prompt)}
@@ -193,7 +337,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
       )}
 
       {/* Contextual suggestions mid-chat */}
-      {messages.filter(m => m.role==='user').length > 0 && !streaming && (
+      {hasUserMessages && !streaming && (
         <div style={{ padding:'0 24px 10px', display:'flex', gap:'6px', flexWrap:'wrap' }}>
           {['Give me a practice question', 'Use a Kenyan example', 'Summarise key points', 'Quiz me on this'].map(s => (
             <button key={s} onClick={() => send(s)}
@@ -208,7 +352,6 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
       <div style={{ padding:'12px 24px 16px', background:'#fff', borderTop:'1px solid #E2E8F0', flexShrink:0 }}>
         <div style={{ display:'flex', gap:'10px', alignItems:'flex-end' }}>
           <textarea
-            ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKey}
@@ -238,42 +381,43 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
           </button>
         </div>
         <div style={{ marginTop:'7px', fontSize:'11px', color:'#94A3B8', textAlign:'center' }}>
-          Arthur only uses {selectedCourse.code} course materials · Answers cite source topics (S3)
+          {GROUNDED_COURSES.includes(course)
+            ? <>Arthur answers from {course} course materials and cites the notes it used (S3)</>
+            : <>Arthur sticks to the {course} syllabus · Course materials not yet uploaded</>}
         </div>
       </div>
 
-      {/* Flag to lecturer modal (S10) */}
+      {/* Ask your lecturer (S10) */}
       {flagModal && (
         <div style={{
           position:'fixed', inset:0, background:'rgba(0,0,0,.4)', display:'flex',
-          alignItems:'center', justifyContent:'center', zIndex:100,
+          alignItems:'center', justifyContent:'center', zIndex:100, padding:'16px',
         }} onClick={() => setFlagModal(false)}>
           <div
             onClick={e => e.stopPropagation()}
-            style={{ background:'#fff', borderRadius:'16px', padding:'24px', width:'440px', boxShadow:'0 20px 60px rgba(0,0,0,.15)' }}
+            style={{ background:'#fff', borderRadius:'16px', padding:'24px', width:'460px', maxWidth:'100%', boxShadow:'0 20px 60px rgba(0,0,0,.15)' }}
             className="fade-up"
           >
-            <div style={{ fontWeight:700, fontSize:'16px', color:'#0F172A', marginBottom:'6px' }}>Ask your lecturer</div>
+            <div style={{ fontWeight:700, fontSize:'16px', color:'#0F172A', marginBottom:'6px' }}>Ask {selectedCourse.lecturer}</div>
             <p style={{ fontSize:'13px', color:'#64748B', marginBottom:'16px', lineHeight:1.5 }}>
-              Arthur will send your question to Prof. Mwangi with context about what you've been studying and where you're stuck. This is feature S10.
+              Arthur sends your question with context about what you&apos;ve been studying, so your lecturer can see where you&apos;re stuck.
             </p>
-            <div style={{ background:'#F8FAFC', borderRadius:'8px', padding:'12px', marginBottom:'16px', border:'1px solid #E2E8F0' }}>
-              <div style={{ fontSize:'11px', fontWeight:600, color:'#94A3B8', marginBottom:'5px', textTransform:'uppercase', letterSpacing:'.5px' }}>Your question</div>
-              <div style={{ fontSize:'13px', color:'#0F172A' }}>{flagText || 'Your current question'}</div>
-            </div>
+            <label style={{ fontSize:'11px', fontWeight:600, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.5px' }}>Topic</label>
+            <select value={flagTopic} onChange={e => setFlagTopic(e.target.value)}
+              style={{ width:'100%', margin:'5px 0 12px', fontSize:'13px', padding:'8px 10px', borderRadius:'8px', border:'1.5px solid #E2E8F0', fontFamily:'inherit', background:'#F8FAFC', color:'#0F172A' }}>
+              {courseTopics(course).map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <label style={{ fontSize:'11px', fontWeight:600, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.5px' }}>Your question</label>
+            <textarea value={flagText} onChange={e => setFlagText(e.target.value)} rows={4} placeholder="What are you stuck on?"
+              style={{ width:'100%', margin:'5px 0 12px', fontSize:'13px', padding:'10px 12px', borderRadius:'8px', border:'1.5px solid #E2E8F0', fontFamily:'inherit', resize:'vertical', background:'#F8FAFC', color:'#0F172A', lineHeight:1.5 }}/>
             <div style={{ background:'#EFF6FF', borderRadius:'8px', padding:'12px', marginBottom:'20px', border:'1px solid #BFDBFE' }}>
               <div style={{ fontSize:'11px', fontWeight:600, color:'#1D4ED8', marginBottom:'5px', textTransform:'uppercase', letterSpacing:'.5px' }}>Context Arthur will include</div>
-              <div style={{ fontSize:'12px', color:'#1E40AF' }}>
-                Topic: Depreciation (SBS 201) · Your mastery: 38% · Sessions: 1 · Last active: 1 week ago · What you've tried: walking through straight-line method
-              </div>
+              <div style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.5 }}>{flagContext}</div>
             </div>
             <div style={{ display:'flex', gap:'10px' }}>
               <button onClick={() => setFlagModal(false)} className="btn-ghost" style={{ flex:1 }}>Cancel</button>
-              <button
-                onClick={() => { setFlagModal(false); alert('✓ Question sent to Prof. Mwangi. Arthur will notify you when he replies.') }}
-                className="btn-primary" style={{ flex:2 }}
-              >
-                Send to Prof. Mwangi →
+              <button onClick={sendFlag} disabled={!flagText.trim() || !flagTopic} className="btn-primary" style={{ flex:2 }}>
+                Send to {selectedCourse.lecturer} →
               </button>
             </div>
           </div>
