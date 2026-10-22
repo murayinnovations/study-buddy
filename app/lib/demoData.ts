@@ -12,6 +12,7 @@ export interface ChatMessage {
   content: string
   sources?: Source[]
   events?: ChatEvent[]
+  misconceptions?: { topic: string; note: string }[]   // assistant turns: what Arthur noted for the lecturer
   context?: string    // user turns: mastery snapshot sent with the message, replayed unchanged
   failed?: boolean    // assistant turns: an error placeholder, not a real reply
 }

@@ -73,6 +73,9 @@ function jsonError(status: number, error: string) {
   return Response.json({ error }, { status })
 }
 
+const PRACTICE_INPUT = z.object({ topic: z.string(), correct: z.boolean() })
+const MISCONCEPTION_INPUT = z.object({ topic: z.string(), misconception: z.string().min(1).max(300) })
+
 // Citation markers the client inserts into Arthur's replies; stripped before replay.
 const CITATION_MARKER = /⟦\d+⟧/g
 
@@ -85,16 +88,45 @@ function userContent(text: string, context?: string): Anthropic.Beta.BetaContent
   return blocks
 }
 
+const TrackedInput = z.object({
+  practice: z.array(PRACTICE_INPUT.extend({ topic: z.string().max(100) })).max(5).optional(),
+  misconceptions: z.array(z.object({ topic: z.string().max(100), note: z.string().max(300) })).max(5).optional(),
+})
+
+// The tracking tools Arthur called in an earlier turn, rebuilt as tool calls and
+// results ahead of that turn's text. Without them Arthur sees itself marking
+// answers without recording them, and is more likely to skip the tools.
+// Rebuilt the same way every time, so the conversation prefix stays cacheable.
+function trackedTurn(index: number, raw: unknown): Anthropic.Beta.BetaMessageParam[] {
+  const parsed = TrackedInput.safeParse(raw)
+  if (!parsed.success) return []
+  const calls = [
+    ...(parsed.data.practice || []).map(p => ({ name: 'record_practice_result', input: p, result: 'Recorded.' })),
+    ...(parsed.data.misconceptions || []).map(m => ({ name: 'note_misconception', input: { topic: m.topic, misconception: m.note }, result: 'Noted for the lecturer.' })),
+  ]
+  if (calls.length === 0) return []
+  const id = (n: number) => `toolu_history_${index}_${n}`
+  return [
+    { role: 'assistant', content: calls.map((c, n) => ({ type: 'tool_use' as const, id: id(n), name: c.name, input: c.input })) },
+    { role: 'user', content: calls.map((c, n) => ({ type: 'tool_result' as const, tool_use_id: id(n), content: c.result })) },
+  ]
+}
+
 function parseMessages(raw: unknown): Anthropic.Beta.BetaMessageParam[] | null {
   if (!Array.isArray(raw) || raw.length === 0 || raw.length > MAX_MESSAGES) return null
   const messages: Anthropic.Beta.BetaMessageParam[] = []
-  for (const m of raw) {
+  for (let i = 0; i < raw.length; i++) {
+    const m = raw[i]
     if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null
     if (typeof m.content !== 'string' || m.content.length > MAX_MESSAGE_CHARS) return null
     if (m.context !== undefined && (typeof m.context !== 'string' || m.context.length > MAX_PROGRESS_CHARS)) return null
-    messages.push(m.role === 'user'
-      ? { role: 'user', content: userContent(m.content, m.context) }
-      : { role: 'assistant', content: m.content.replace(CITATION_MARKER, '') })
+    if (m.role === 'user') {
+      messages.push({ role: 'user', content: userContent(m.content, m.context) })
+    } else {
+      // Tool calls can't open the conversation, which must start with the student.
+      if (messages.length > 0) messages.push(...trackedTurn(i, m))
+      messages.push({ role: 'assistant', content: m.content.replace(CITATION_MARKER, '') })
+    }
   }
   // The API requires the conversation to start with a user turn, so drop the
   // client-side welcome message (and anything else before the first question).
@@ -102,6 +134,21 @@ function parseMessages(raw: unknown): Anthropic.Beta.BetaMessageParam[] | null {
   if (firstUser === -1) return null
   const trimmed = messages.slice(firstUser)
   return trimmed[trimmed.length - 1].role === 'user' ? trimmed : null
+}
+
+// Cited passages are raw markdown from the notes; show them as plain text.
+// Lines are joined with a space after punctuation, or a dash between headings and table rows.
+function plainQuote(text: string) {
+  const lines = text.split('\n')
+    .filter(l => !/^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$/.test(l))   // table separator rows
+    .map(l => l
+      .replace(/^\s*(#{1,6}|[-*])\s+/, '')                // heading and bullet marks
+      .replace(/\*\*|__|`/g, '')
+      .replace(/^\s*\||\|\s*$/g, '')                     // table row edges
+      .replace(/\s*\|\s*/g, ' · ')                        // table cells
+      .trim())
+    .filter(Boolean)
+  return lines.reduce((out, l) => !out ? l : out + (/[.:;?!]$/.test(out) ? ' ' : ' — ') + l, '')
 }
 
 function toDocument(m: Material): Anthropic.Beta.BetaRequestDocumentBlock {
@@ -120,7 +167,7 @@ function trackingTools(topics: string[]): Anthropic.Beta.BetaTool[] {
   return [
     {
       name: 'record_practice_result',
-      description: 'Record the result after you have marked the student\'s answer to a practice question that you set. Call it once per answer, in the same turn as your feedback. Do not call it for questions the student asks you, or before the student has answered.',
+      description: 'Record the result of the student\'s answer to a practice question that you set. Call it once for every answer, whether right, partly right or wrong, in the same turn as your feedback. Do not call it for questions the student asks you, or before the student has answered.',
       eager_input_streaming: true,
       input_schema: {
         type: 'object',
@@ -147,13 +194,11 @@ function trackingTools(topics: string[]): Anthropic.Beta.BetaTool[] {
   ]
 }
 
-const PRACTICE_INPUT = z.object({ topic: z.string(), correct: z.boolean() })
-const MISCONCEPTION_INPUT = z.object({ topic: z.string(), misconception: z.string().min(1).max(300) })
 
 const TRACKING_PROMPT = `
 
 PROGRESS TRACKING: You have two tools that update the student's progress and inform their lecturer.
-- After you mark an answer to a practice question you set, call record_practice_result with the topic and whether the answer was correct. This is how the student's mastery score changes, so do it every time.
+- Whenever the student answers a practice question you set, call record_practice_result before giving your feedback, with the topic and whether the answer was fully correct. Do this for every answer: right, partly right or wrong (partly right counts as not correct). This is how the student's mastery score changes, so never skip it.
 - When the student's reasoning shows a genuine misconception, call note_misconception.
 Never mention these tools to the student.
 
@@ -244,7 +289,7 @@ export async function POST(req: NextRequest) {
               const c = event.delta.citation
               if (c.type === 'char_location') {
                 const list = blockSources.get(event.index) || []
-                list.push({ title: c.document_title || 'Course material', quote: c.cited_text.trim() })
+                list.push({ title: c.document_title || 'Course material', quote: plainQuote(c.cited_text) })
                 blockSources.set(event.index, list)
               }
             } else if (event.type === 'content_block_stop' && blockSources.has(event.index)) {

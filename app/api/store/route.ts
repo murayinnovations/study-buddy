@@ -19,6 +19,7 @@ const message = z.object({
   events: z.array(z.object({
     kind: z.literal('practice'), topic: text(100), correct: z.boolean(), before: z.number(), after: z.number(),
   })).max(10).optional(),
+  misconceptions: z.array(z.object({ topic: text(100), note: text(300) })).max(10).optional(),
   context: text(2_000).optional(),
   failed: z.boolean().optional(),
 })
