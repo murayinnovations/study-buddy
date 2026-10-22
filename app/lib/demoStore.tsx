@@ -1,158 +1,94 @@
 'use client'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { TOPIC_PROGRESS, WELCOME_MESSAGES, STUDENT, COURSES } from '../components/student/studentData'
+import { STUDENT } from '../components/student/studentData'
+import { type DemoState, type ChatMessage, type ChatEvent, type LecturerQuestion, type UploadedMaterial, type SavedBrief, initialState, nextScore, welcomeChat } from './demoData'
 
-// Demo state shared by the student, lecturer and HoD views, saved in this
-// browser's localStorage. Supabase replaces this store after the POC steps;
-// the components only talk to the actions below.
+export type * from './demoData'
 
-export interface TopicMastery { topic: string; score: number; sessions: number; daysAgo: number | null; week?: number }
+// Demo state shared by the student, lecturer and HoD views. It lives in
+// Supabase behind /api/store: changes show here at once and are saved in the
+// background, and the store re-reads every few seconds so other windows see them.
 
-export interface Source { title: string; quote: string }
-export interface ChatEvent { kind: 'practice'; topic: string; correct: boolean; before: number; after: number }
-export interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
-  sources?: Source[]
-  events?: ChatEvent[]
-  context?: string    // user turns: mastery snapshot sent with the message, replayed unchanged
-  failed?: boolean    // assistant turns: an error placeholder, not a real reply
-}
+// saving: loaded from and saving to the database. offline: changes stay in this tab only.
+export type StoreStatus = 'loading' | 'saving' | 'offline'
 
-export interface LecturerQuestion {
-  id: string
-  course: string
-  studentId: string
-  topic: string
-  urgency: 'High' | 'Medium' | 'Low'
-  question: string
-  context: string
-  askedAt: number | string   // timestamp, or a fixed label for seeded questions
-  reply?: string
-  repliedAt?: number
-  savedToCourse?: boolean
-  seenByStudent?: boolean
-}
-
-export interface Misconception { course: string; topic: string; note: string; at: number | string }
-
-export interface UploadedMaterial {
-  id: string
-  course: string
-  title: string
-  type: string
-  topics: string[]
-  body: string
-  status: 'pending' | 'approved'
-  uploadedAt: number
-}
-
-export interface Goal { id: string; goal: string; week: string; mapped: boolean }
-
-export interface BriefItem { topic: string; focus: string; minutes: number }
-// signature: the class data the brief was drafted from, to tell when it's out of date.
-export interface SavedBrief { items: BriefItem[]; generatedAt: number; signature: string }
-
-interface DemoState {
-  version: number
-  mastery: Record<string, TopicMastery[]>
-  practiceLog: { course: string; topic: string; correct: boolean; at: number }[]
-  chats: Record<string, ChatMessage[]>
-  questions: LecturerQuestion[]
-  misconceptions: Misconception[]
-  uploads: UploadedMaterial[]
-  goals: Goal[]
-  approvedPracticeIds: number[]
-  checkIns: string[]
-  briefs: Record<string, SavedBrief>
-}
-
-const STORAGE_KEY = 'arthur-demo-state'
-const STATE_VERSION = 2
-
-function initialState(): DemoState {
-  return {
-    version: STATE_VERSION,
-    mastery: JSON.parse(JSON.stringify(TOPIC_PROGRESS)),
-    practiceLog: [],
-    chats: Object.fromEntries(COURSES.map(c => [c.code, [{ role: 'assistant', content: WELCOME_MESSAGES[c.code] }]])),
-    questions: [
-      {
-        id: 'seed-1', course: 'SBS 201', studentId: 'STR-2024-4348', topic: 'Depreciation', urgency: 'High', askedAt: '2 hours ago',
-        question: "I've read the notes on straight-line depreciation twice but I still don't understand why we subtract the residual value before dividing. Why can't we just divide the full cost by the useful life?",
-        context: 'Mastery: 38% · Practice attempts: 1 (0 correct) · Misconception Arthur noticed: treats the full cost as the amount used up · Tried: worked through the formula in the Week 6 notes',
-      },
-      {
-        id: 'seed-2', course: 'SBS 201', studentId: 'STR-2024-3741', topic: 'Accruals & prepayments', urgency: 'Medium', askedAt: '5 hours ago',
-        question: "I'm confused about the difference between an accrual and a prepayment. Arthur explained it but I'm still not sure which one I should use when rent is paid in advance.",
-        context: 'Mastery: 42% · Practice attempts: 3 (1 correct) · Misconception Arthur noticed: mixes up paying in advance with being paid in advance',
-      },
-      {
-        id: 'seed-3', course: 'SBS 201', studentId: 'STR-2024-7079', topic: 'Cash flow statements', urgency: 'Low', askedAt: 'Yesterday',
-        question: "For the cash flow statement, is depreciation added back because it's a non-cash expense? Or is there another reason?",
-        context: 'Mastery: 74% · Practice attempts: 4 (3 correct)',
-        reply: "Yes, exactly right. Depreciation is added back to profit in the indirect method because it was deducted to arrive at profit, but no cash left the business when it was charged. The cash left when the asset was bought, and that is shown under investing activities. Good instinct.",
-        seenByStudent: true,
-      },
-    ],
-    misconceptions: [
-      { course: 'SBS 201', topic: 'Depreciation', note: 'Subtracts the residual value before applying the reducing balance rate', at: 'This week' },
-      { course: 'SBS 201', topic: 'Accruals & prepayments', note: 'Treats cash paid in the year as the expense for the year', at: 'This week' },
-      { course: 'SBS 201', topic: 'Trial balance', note: 'Believes an agreed trial balance proves there are no errors', at: 'This week' },
-    ],
-    uploads: [],
-    goals: [
-      { id: 'g1', goal: 'Prepare financial statements in accordance with IFRS', week: 'By Week 10', mapped: true },
-      { id: 'g2', goal: 'Apply the matching concept to accruals and prepayments', week: 'By Week 8', mapped: true },
-      { id: 'g3', goal: 'Calculate depreciation using both methods and explain the choice', week: 'By Week 7', mapped: false },
-    ],
-    approvedPracticeIds: [1, 2],
-    checkIns: [],
-    briefs: {},
-  }
-}
-
-// Mastery moves a quarter of the way to 100 on a correct answer, and drops 15% on a wrong one.
-export function nextScore(score: number, correct: boolean) {
-  return correct ? Math.round(score + (100 - score) * 0.25) : Math.round(score * 0.85)
-}
-
-const newId = () => Math.random().toString(36).slice(2, 10)
+const POLL_MS = 4000
 
 function useDemoState() {
-  // Start from the seed on both server and client, then load saved state after
-  // mount, so the first render matches the server HTML.
+  // Start from the seed on both server and client so the first render matches
+  // the server HTML, then load the saved state after mount.
   const [state, setState] = useState<DemoState>(initialState)
-  const loaded = useRef(false)
+  const [status, setStatus] = useState<StoreStatus>('loading')
   const stateRef = useRef(state)
   stateRef.current = state
 
-  useEffect(() => {
+  // Writes go out one at a time, in order. A read that started before a write
+  // is discarded, so it can't undo a change still in flight.
+  const queue = useRef(Promise.resolve())
+  const pending = useRef(0)
+  const writes = useRef(0)
+  const configured = useRef(true)
+
+  const refresh = useCallback(async () => {
+    const seen = writes.current
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-      if (saved?.version === STATE_VERSION) setState(saved)
-    } catch {}
-    loaded.current = true
+      const res = await fetch('/api/store', { cache: 'no-store' })
+      if (res.status === 503) configured.current = false
+      if (!res.ok) throw new Error(`load failed: ${res.status}`)
+      const data: DemoState = await res.json()
+      if (pending.current === 0 && seen === writes.current) setState(data)
+      setStatus('saving')
+    } catch (err) {
+      console.warn('Arthur demo store:', err)
+      setStatus('offline')
+    }
   }, [])
 
   useEffect(() => {
-    if (!loaded.current) return
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)) } catch {}
-  }, [state])
+    refresh()
+    const tick = () => { if (configured.current && document.visibilityState === 'visible') refresh() }
+    const timer = setInterval(tick, POLL_MS)
+    window.addEventListener('focus', tick)
+    return () => { clearInterval(timer); window.removeEventListener('focus', tick) }
+  }, [refresh])
 
-  const update = useCallback((fn: (s: DemoState) => DemoState) => setState(fn), [])
+  const save = useCallback((action: { type: string } & Record<string, unknown>) => {
+    if (!configured.current) return
+    writes.current++
+    pending.current++
+    queue.current = queue.current.then(async () => {
+      try {
+        const res = await fetch('/api/store', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(action),
+        })
+        if (!res.ok) throw new Error(`save ${action.type} failed: ${res.status}`)
+      } catch (err) {
+        console.warn('Arthur demo store:', err)
+        setStatus('offline')
+      } finally {
+        pending.current--
+      }
+    })
+  }, [])
+
+  // Applies a change here at once and saves it.
+  const update = useCallback((fn: (s: DemoState) => DemoState, action: { type: string } & Record<string, unknown>) => {
+    setState(fn)
+    save(action)
+  }, [save])
 
   const actions = useMemo(() => ({
     reset: () => {
-      try { localStorage.removeItem(STORAGE_KEY) } catch {}
       setState(initialState())
+      save({ type: 'reset' })
+      queue.current = queue.current.then(refresh)
     },
 
     setChat: (course: string, messages: ChatMessage[]) =>
-      update(s => ({ ...s, chats: { ...s.chats, [course]: messages } })),
+      update(s => ({ ...s, chats: { ...s.chats, [course]: messages } }), { type: 'setChat', course, messages }),
 
     clearChat: (course: string) =>
-      update(s => ({ ...s, chats: { ...s.chats, [course]: [{ role: 'assistant', content: WELCOME_MESSAGES[course] }] } })),
+      update(s => ({ ...s, chats: { ...s.chats, [course]: welcomeChat(course) } }), { type: 'clearChat', course }),
 
     // Returns the before/after score so the chat can show the change.
     recordPractice: (course: string, topic: string, correct: boolean, countSession: boolean): ChatEvent => {
@@ -167,51 +103,65 @@ function useDemoState() {
           mastery: { ...s.mastery, [course]: mastery },
           practiceLog: [...s.practiceLog, { course, topic, correct, at: Date.now() }],
         }
-      })
+      }, { type: 'recordPractice', course, topic, correct, countSession })
       return event
     },
 
-    noteMisconception: (course: string, topic: string, note: string) =>
-      update(s => ({ ...s, misconceptions: [{ course, topic, note, at: Date.now() }, ...s.misconceptions].slice(0, 30) })),
+    noteMisconception: (course: string, topic: string, note: string) => {
+      const id = crypto.randomUUID()
+      update(s => ({ ...s, misconceptions: [{ id, course, topic, note, at: Date.now() }, ...s.misconceptions].slice(0, 30) }),
+        { type: 'noteMisconception', id, course, topic, note })
+    },
 
-    askLecturer: (q: Pick<LecturerQuestion, 'course' | 'topic' | 'urgency' | 'question' | 'context'>) =>
-      update(s => ({ ...s, questions: [{ ...q, id: newId(), studentId: STUDENT.id, askedAt: Date.now() }, ...s.questions] })),
+    askLecturer: (q: Pick<LecturerQuestion, 'course' | 'topic' | 'urgency' | 'question' | 'context'>) => {
+      const id = crypto.randomUUID()
+      update(s => ({ ...s, questions: [{ ...q, id, studentId: STUDENT.id, askedAt: Date.now() }, ...s.questions] }),
+        { type: 'askLecturer', id, ...q })
+    },
 
     replyToQuestion: (id: string, reply: string) =>
-      update(s => ({ ...s, questions: s.questions.map(q => q.id === id ? { ...q, reply, repliedAt: Date.now(), seenByStudent: false } : q) })),
+      update(s => ({ ...s, questions: s.questions.map(q => q.id === id ? { ...q, reply, repliedAt: Date.now(), seenByStudent: false } : q) }),
+        { type: 'replyToQuestion', id, reply }),
 
     saveAnswerToCourse: (id: string) =>
-      update(s => ({ ...s, questions: s.questions.map(q => q.id === id ? { ...q, savedToCourse: true } : q) })),
+      update(s => ({ ...s, questions: s.questions.map(q => q.id === id ? { ...q, savedToCourse: true } : q) }),
+        { type: 'saveAnswerToCourse', id }),
 
     markRepliesSeen: () =>
-      update(s => ({ ...s, questions: s.questions.map(q => q.studentId === STUDENT.id && q.reply ? { ...q, seenByStudent: true } : q) })),
+      update(s => ({ ...s, questions: s.questions.map(q => q.studentId === STUDENT.id && q.reply ? { ...q, seenByStudent: true } : q) }),
+        { type: 'markRepliesSeen' }),
 
-    uploadMaterial: (m: Pick<UploadedMaterial, 'course' | 'title' | 'type' | 'topics' | 'body'>) =>
-      update(s => ({ ...s, uploads: [...s.uploads, { ...m, id: newId(), status: 'pending', uploadedAt: Date.now() }] })),
+    uploadMaterial: (m: Pick<UploadedMaterial, 'course' | 'title' | 'type' | 'topics' | 'body'>) => {
+      const id = crypto.randomUUID()
+      update(s => ({ ...s, uploads: [...s.uploads, { ...m, id, status: 'pending', uploadedAt: Date.now() }] }),
+        { type: 'uploadMaterial', id, course: m.course, title: m.title, materialType: m.type, topics: m.topics, body: m.body })
+    },
 
     approveMaterial: (id: string) =>
-      update(s => ({ ...s, uploads: s.uploads.map(u => u.id === id ? { ...u, status: 'approved' } : u) })),
+      update(s => ({ ...s, uploads: s.uploads.map(u => u.id === id ? { ...u, status: 'approved' } : u) }), { type: 'approveMaterial', id }),
 
     removeMaterial: (id: string) =>
-      update(s => ({ ...s, uploads: s.uploads.filter(u => u.id !== id) })),
+      update(s => ({ ...s, uploads: s.uploads.filter(u => u.id !== id) }), { type: 'removeMaterial', id }),
 
-    addGoal: (goal: string, week: string) =>
-      update(s => ({ ...s, goals: [...s.goals, { id: newId(), goal, week, mapped: false }] })),
+    addGoal: (goal: string, week: string) => {
+      const id = crypto.randomUUID()
+      update(s => ({ ...s, goals: [...s.goals, { id, goal, week, mapped: false }] }), { type: 'addGoal', id, goal, week })
+    },
 
     mapGoal: (id: string) =>
-      update(s => ({ ...s, goals: s.goals.map(g => g.id === id ? { ...g, mapped: true } : g) })),
+      update(s => ({ ...s, goals: s.goals.map(g => g.id === id ? { ...g, mapped: true } : g) }), { type: 'mapGoal', id }),
 
     approvePractice: (id: number) =>
-      update(s => ({ ...s, approvedPracticeIds: Array.from(new Set([...s.approvedPracticeIds, id])) })),
+      update(s => ({ ...s, approvedPracticeIds: Array.from(new Set([...s.approvedPracticeIds, id])) }), { type: 'approvePractice', id }),
 
     saveBrief: (course: string, brief: SavedBrief) =>
-      update(s => ({ ...s, briefs: { ...s.briefs, [course]: brief } })),
+      update(s => ({ ...s, briefs: { ...s.briefs, [course]: brief } }), { type: 'saveBrief', course, brief }),
 
     sendCheckIn: (studentId: string) =>
-      update(s => ({ ...s, checkIns: Array.from(new Set([...s.checkIns, studentId])) })),
-  }), [update])
+      update(s => ({ ...s, checkIns: Array.from(new Set([...s.checkIns, studentId])) }), { type: 'sendCheckIn', studentId }),
+  }), [update, save, refresh])
 
-  return { state, ...actions }
+  return { state, status, ...actions }
 }
 
 type Store = ReturnType<typeof useDemoState>
@@ -227,21 +177,4 @@ export function useStore() {
   const store = useContext(StoreContext)
   if (!store) throw new Error('useStore must be used inside StoreProvider')
   return store
-}
-
-// Materials a lecturer added during the demo that Arthur should now use:
-// approved uploads plus replies saved to the course.
-export function extraMaterialsFor(state: DemoState, course: string) {
-  const uploads = state.uploads
-    .filter(u => u.course === course && u.status === 'approved')
-    .map(u => ({ title: u.title, type: u.type, topics: u.topics, body: u.body }))
-  const answers = state.questions
-    .filter(q => q.course === course && q.savedToCourse && q.reply)
-    .map(q => ({
-      title: `Lecturer answer — ${q.topic}`,
-      type: 'Lecturer answer',
-      topics: [q.topic],
-      body: `Student question: ${q.question}\n\nLecturer's answer: ${q.reply}`,
-    }))
-  return [...uploads, ...answers]
 }

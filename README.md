@@ -8,11 +8,11 @@ Arthur is an AI study companion with three views: student, lecturer and Head of 
 |---|---|
 | Student chat | Live. SBS 201 answers from the notes in `content/sbs201/` and cites them; the other courses use a syllabus description only |
 | Mastery tracking | Live. Arthur records practice results with a tool call and the student's scores update |
-| Ask lecturer → inbox → reply → save to course | Live within one browser |
+| Ask lecturer → inbox → reply → save to course | Live, shared across browsers |
 | Lecturer dashboards | Computed from a synthetic class of 30 students plus the live demo student |
-| Material upload and approval | Live within one browser (.md and .txt) |
+| Material upload and approval | Live (.md and .txt) |
 | Head of Department view | Illustrative data, labelled as such |
-| Storage | The browser's localStorage (`app/lib/demoStore.tsx`); Supabase replaces it next |
+| Storage | Supabase, through the app's `/api/store` route (`app/lib/db.ts`). No sign-in yet; it comes with the trial |
 
 The demo walkthrough is in [docs/demo-script.md](docs/demo-script.md).
 
@@ -22,11 +22,9 @@ The demo walkthrough is in [docs/demo-script.md](docs/demo-script.md).
    ```bash
    npm install
    ```
-2. Create `.env.local` in the project root (it is git-ignored):
-   ```
-   ANTHROPIC_API_KEY=your_key_from_console.anthropic.com
-   ```
-3. Start the dev server and open http://localhost:3000:
+2. Copy `.env.example` to `.env.local` (it is git-ignored) and fill in your Anthropic key and Supabase project URL and keys.
+3. Create the tables: in the Supabase dashboard open **SQL Editor → New query**, paste `supabase/schema.sql` and run it. The app fills in the demo data on first load.
+4. Start the dev server and open http://localhost:3000:
    ```bash
    npm run dev
    ```

@@ -4,6 +4,7 @@ import { z } from 'zod/v4'
 import { loadMaterials, type Material } from '../../lib/materials'
 import { courseTopics } from '../../components/student/studentData'
 import { MODEL, EFFORT, FALLBACK, getClient, logUsage } from '../../lib/claude'
+import { extraMaterials } from '../../lib/db'
 
 const COURSE_CONTEXTS: Record<string, string> = {
   'SBS 201': `You are Arthur, a learning companion for Financial Accounting (SBS 201) at Strathmore University, taught by Prof. Mwangi.
@@ -103,26 +104,6 @@ function parseMessages(raw: unknown): Anthropic.Beta.BetaMessageParam[] | null {
   return trimmed[trimmed.length - 1].role === 'user' ? trimmed : null
 }
 
-// Materials the lecturer added during the demo (approved uploads, saved answers).
-// Until Supabase holds them, the client sends them with each request.
-const MAX_EXTRA_MATERIALS = 10
-const MAX_EXTRA_CHARS = 80_000
-
-function parseExtraMaterials(raw: unknown): Material[] | null {
-  if (raw === undefined) return []
-  if (!Array.isArray(raw) || raw.length > MAX_EXTRA_MATERIALS) return null
-  let total = 0
-  const out: Material[] = []
-  for (const m of raw) {
-    if (!m || typeof m.title !== 'string' || typeof m.body !== 'string' || typeof m.type !== 'string') return null
-    if (!Array.isArray(m.topics) || !m.topics.every((t: unknown) => typeof t === 'string')) return null
-    total += m.body.length
-    if (total > MAX_EXTRA_CHARS) return null
-    out.push({ title: m.title.slice(0, 200), type: m.type.slice(0, 50), topics: m.topics.slice(0, 10), body: m.body })
-  }
-  return out
-}
-
 function toDocument(m: Material): Anthropic.Beta.BetaRequestDocumentBlock {
   return {
     type: 'document',
@@ -202,8 +183,12 @@ export async function POST(req: NextRequest) {
   const systemPrompt = COURSE_CONTEXTS[body.courseCode]
   if (!systemPrompt) return jsonError(400, 'Unknown course.')
 
-  const extra = parseExtraMaterials(body.extraMaterials)
-  if (!extra) return jsonError(400, 'Invalid course materials.')
+  // Lecturer additions (approved uploads, saved answers) come from the database.
+  // If it can't be reached, Arthur still answers from the course notes.
+  const extra = await extraMaterials(body.courseCode).catch(err => {
+    console.error('Loading lecturer materials failed:', err)
+    return []
+  })
 
   // Attach the course materials to the first user turn. The fixed course notes
   // come first and carry the cache breakpoint, so lecturer additions after them
