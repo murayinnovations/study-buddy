@@ -1,6 +1,6 @@
 # Arthur — Learning Companion for Strathmore University
 
-Arthur is an AI study companion with three views: student, lecturer and Head of Department. This repo is a proof of concept for a demo to Strathmore staff, with SBS 201 Financial Accounting as the pilot course.
+Arthur is an AI study companion with three views: student, lecturer and Head of Department. This repo is a proof of concept for a demo to Strathmore staff, with SBS 201 Financial Accounting as the pilot course
 
 ## Status
 
