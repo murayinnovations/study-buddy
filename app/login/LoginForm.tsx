@@ -45,7 +45,7 @@ export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
         Email
         <input
           type="email" required autoFocus autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
-          placeholder="you@strathmore.edu"
+          placeholder="you@example.com"
           style={{
             display:'block', width:'100%', marginTop:'6px', padding:'11px 12px', fontSize:'14px', fontFamily:'inherit',
             border:'1px solid #CBD5E1', borderRadius:'9px', outline:'none', boxSizing:'border-box',
