@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { useStore } from '../../lib/demoStore'
-import { buildCohort, TAUGHT_TOPICS, type CohortStudent, type Status } from '../../lib/cohort'
+import { buildCohort, SYNTHETIC_COUNT, TAUGHT_TOPICS, type CohortStudent, type Status } from '../../lib/cohort'
 import { daysAgoLabel, masteryColor } from '../../lib/format'
 
 const COURSE = 'SBS 201'
@@ -17,8 +17,7 @@ const ORDER: Status[] = ['Critical', 'At risk', 'On track', 'Excelling']
 
 export default function LecturerStudents() {
   const { state, sendCheckIn } = useStore()
-  const practiceCount = state.practiceLog.filter(p => p.course === COURSE).length
-  const cohort = useMemo(() => buildCohort(state.mastery[COURSE] || [], practiceCount), [state.mastery, practiceCount])
+  const cohort = useMemo(() => buildCohort(state.students), [state.students])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | Status>('all')
 
@@ -101,7 +100,7 @@ export default function LecturerStudents() {
             </table>
           </div>
           <p style={{ fontSize:'11px', color:'#94A3B8', marginTop:'10px' }}>
-            Showing {filtered.length} of {cohort.length} students · Demo class of synthetic students plus one live demo student
+            Showing {filtered.length} of {cohort.length} students · ● Live marks signed-up students; the other {SYNTHETIC_COUNT} are synthetic
           </p>
         </div>
       </div>

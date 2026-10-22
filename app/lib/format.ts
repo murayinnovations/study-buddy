@@ -23,3 +23,9 @@ export function average(nums: number[]) {
 export function masteryColor(score: number) {
   return score >= 75 ? '#059669' : score >= 50 ? '#D97706' : '#DC2626'
 }
+
+// "Prof. P. Mwangi" -> "PM"
+export function initials(name: string) {
+  return name.replace(/^(Prof|Dr|Mr|Mrs|Ms)\.?\s+/i, '').split(/\s+/).filter(w => /^[A-Za-z]/.test(w))
+    .slice(0, 2).map(w => w[0].toUpperCase()).join('')
+}

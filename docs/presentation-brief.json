@@ -1,150 +1,60 @@
 {
-  "instructions_for_claude": "Create a 10-12 slide presentation showcasing Arthur to Strathmore University staff (lecturers, heads of department, academic leadership). Audience is academic, not technical: lead with outcomes for students and lecturers, keep technical detail to one slide. Tone: confident, clear, honest about what is a proof of concept. Use the slide_outline as the structure, and the other sections as source material. Do not invent statistics, results or testimonials; the pilot has not run yet. Suggested visual style: clean, university blue (#1e3a8a-ish) with white space, one idea per slide, screenshots where marked.",
+  "instructions_for_claude": "This is an UPDATE to the Arthur presentation you already made, not a new deck. Keep the existing deck, its theme, layouts and every slide not mentioned below. Apply only the changes in 'changes', in order. Six new screenshots are attached; their file names match the 'screenshots' section. Style the new slide and the new screenshots exactly like the existing ones (same browser-window frame, callout style, colours, eyebrow labels and fonts). Slides are referred to by their current title, with their number in the original 13-slide outline in brackets in case titles were edited; if a slide has moved, find it by title and content. Do not invent figures. Put talking points in speaker notes. When done, list every slide you changed.",
 
-  "product": {
-    "name": "Arthur",
-    "tagline": "An AI study companion that knows your course, tracks your progress, and keeps your lecturer in the loop.",
-    "built_by": "Muray Innovations",
-    "for": "Strathmore University",
-    "stage": "Proof of concept, ready for a live staff demo",
-    "pilot_course": "SBS 201 Financial Accounting (Year 2, BCom), Week 9 of 14",
-    "one_paragraph_summary": "Arthur gives every student a patient tutor that answers only from their lecturer's approved course notes and shows where each answer came from. It checks understanding with practice questions, tracks mastery per topic, and spots misconceptions. Lecturers see which topics the class is struggling with, get an AI-drafted plan for the next tutorial, and answer student questions that arrive with context. Heads of Department get a cross-course view of engagement, at-risk students and compliance."
-  },
-
-  "problems_it_addresses": [
-    "Students study alone between lectures and get stuck with no one to ask at 11pm.",
-    "General AI chatbots answer from the internet, not from the course, and can contradict what the lecturer taught.",
-    "Lecturers only find out what the class misunderstood after a CAT or exam, when it is too late.",
-    "Office-hour questions arrive without context, and the same question gets answered many times.",
-    "Departments lack early, course-level signals about students who are falling behind."
+  "what_changed_in_the_app": [
+    "Sign-in: people sign in with a link emailed to them. No passwords. Only people on the pilot's members list get a link, and the sign-in page gives everyone the same reply so it can't be used to find out who has access.",
+    "One account per person, one view per role: a student, a lecturer or a Head of Department sees only their own view. The role switcher in the top bar is gone; the top bar now shows the person's role, name and a Sign out button.",
+    "Each student's data is private to them: their chats, progress and questions. The lecturer sees the class, anonymised by student number.",
+    "Lecturer dashboards now count the real signed-up students (marked ● Live) alongside a 30-student synthetic class, labelled as such, while the pilot is small.",
+    "The demo student is now Eric M. (student number STR-2024-0117), replacing Sara Kamau. He starts from the same sample progress, so every figure in the deck still holds (Depreciation 38%, rising to 54% after a correct practice answer).",
+    "The 'Reset demo' button is gone, because with real accounts it would wipe students' work."
   ],
 
-  "roles": {
-    "student": {
-      "persona": "Sara Kamau, second-year BCom student",
-      "features": [
-        { "name": "Course-grounded tutor", "detail": "Answers only from the lecturer's approved notes for the course and cites the source under each answer (numbered references)." },
-        { "name": "Practice questions with instant marking", "detail": "Arthur sets questions, marks the student's working, explains mistakes, and updates topic mastery (e.g. Depreciation 38% → 54%)." },
-        { "name": "Topic mastery and gap detection", "detail": "Progress panel with mastery per topic, overall score, and 'Arthur has spotted gaps' for the weakest taught topics." },
-        { "name": "Suggested next step", "detail": "Sidebar 'Arthur suggests' points the student to their weakest topic that has already been taught." },
-        { "name": "Misconception spotting", "detail": "When the student shows a specific misunderstanding, Arthur records it so the lecturer can address it in class." },
-        { "name": "Ask lecturer", "detail": "One click sends a question to the lecturer with context attached: current mastery, practice attempts and any misconception noticed." },
-        { "name": "Lecturer replies", "detail": "Replies appear in the student's sidebar with a 'new' badge." },
-        { "name": "Regenerate / Try again", "detail": "Students can ask for a fresh answer, or retry if the connection drops." },
-        { "name": "Multi-course", "detail": "Each course has its own chat and progress ring (Financial Accounting, Business Statistics, Principles of Management, Microeconomics)." }
-      ]
+  "screenshots": [
+    { "file": "01-sign-in.jpg", "shows": "The sign-in page: Arthur logo on deep navy, 'Sign in' card with one email field and an 'Email me a sign-in link' button. Text: no password needed.", "callouts": ["Invited email only", "No password"] },
+    { "file": "02-check-your-email.jpg", "shows": "After asking for a link: 'Check your email' with the address entered (eric.m@strathmore.edu). The same message shows whether or not the email has access.", "callouts": ["Link arrives by email", "Same reply for everyone"] },
+    { "file": "03-student-signed-in-eric.jpg", "shows": "Eric M. signed in as a student: top bar with a blue 'Student' badge, his name and Sign out; sidebar with his courses and 'Arthur suggests' Depreciation 38%; Arthur's welcome 'Hi Eric'; progress panel at 56% with the gaps Arthur has spotted.", "callouts": ["Role badge", "Eric's own progress", "Sign out"] },
+    { "file": "04-lecturer-signed-in-overview.jpg", "shows": "The lecturer signed in (top bar: teal 'Lecturer' badge, 'Muray Innovations · SBS 201 · Financial Accounting', Sign out). Class overview with the line 'Class: 1 signed-up student, whose activity updates these figures live, plus 30 synthetic students while the pilot is small', KPI cards, heatmap and the default session brief.", "callouts": ["Lecturer badge", "Real + synthetic class, labelled"] },
+    { "file": "05-lecturer-live-signed-up-student.jpg", "shows": "Individual students, with Eric's row (STR-2024-0117, ● Live, Today, 66%, On track) highlighted, and his detail panel: per-topic mastery from Depreciation 38% to Accounting equation 92%, and Arthur's recommendation to push Depreciation next.", "callouts": ["● Live: a signed-up student", "Anonymised by student number", "Arthur's recommendation"] },
+    { "file": "06-no-access.jpg", "shows": "Someone who signs in but isn't on the pilot list (guest@example.com) sees 'No access yet' and a Sign out button.", "callouts": ["Invite-only"] }
+  ],
+
+  "changes": [
+    {
+      "where": "Every slide and every speaker note",
+      "do": "Replace 'Sara Kamau' / 'Sara' with 'Eric M.' / 'Eric'. Keep his student number as STR-2024-0117 and keep all figures unchanged."
     },
-    "lecturer": {
-      "persona": "Prof. P. Mwangi, SBS 201",
-      "features": [
-        { "name": "Topic comprehension heatmap", "detail": "Shows, per topic, the share of students below 50% mastery, coloured by confusion level, for topics taught so far." },
-        { "name": "AI session brief", "detail": "'Draft with Arthur' turns class mastery, misconceptions and student questions into a timed 60-minute tutorial plan. Saved, with a Refresh button and an out-of-date notice when class data changes." },
-        { "name": "Misconceptions Arthur noticed", "detail": "A list of specific misunderstandings captured from student chats this week." },
-        { "name": "Weekly comprehension trend", "detail": "Class comprehension over the semester, with the current week live." },
-        { "name": "Individual students", "detail": "Class table with status (on track, at risk, critical), activity and per-topic scores; drill into any student and send a check-in." },
-        { "name": "Q&A inbox", "detail": "Student questions arrive with Arthur's context. Reply, then 'Save answer to course material' so Arthur uses it for every student." },
-        { "name": "Content & approval", "detail": "Upload notes; nothing reaches students until the lecturer approves it. Approve practice questions and set learning goals." }
-      ]
+    {
+      "where": "Every slide that uses an existing screenshot",
+      "do": "The older screenshots show the old top bar (a Student / Lecturer / Head of Department switcher, 'Reset demo') and the name 'Sara Kamau' in the student sidebar. Where a slide is replaced below, use the new screenshot. On the remaining slides, crop the old screenshots to the content area below the top bar, and on student slides also crop out the name block at the top of the left sidebar, so no slide shows the switcher or Sara's name. Remove any callout or speaker note about switching roles."
     },
-    "head_of_department": {
-      "features": [
-        { "name": "Cross-course overview", "detail": "Engagement and comprehension across the department's courses, with drill-in per course." },
-        { "name": "At-risk monitoring", "detail": "Students falling behind across courses, flagged early." },
-        { "name": "CUE compliance", "detail": "Readiness for the next Commission for University Education review." },
-        { "name": "Fairness and privacy audit", "detail": "Oversight of how the AI is used and how student data is handled." }
-      ],
-      "note": "This view uses illustrative data in the POC and is labelled as such on screen."
+    {
+      "where": "'Every student gets a tutor that knows their course' (slide 3)",
+      "do": "Replace its screenshot with 03-student-signed-in-eric.jpg. Callouts: 'Student badge', 'Eric's own progress', 'Arthur suggests what to study'. Add to speaker notes: 'Eric has signed in with his own account; what you see is his data only.'"
+    },
+    {
+      "where": "'Every student's progress, live' (slide 8)",
+      "do": "Replace its screenshot with 05-lecturer-live-signed-up-student.jpg. Update the caption: 'Eric (STR-2024-0117) is a real signed-in student, marked ● Live. The rest of the class is synthetic until the pilot starts.' His overall score here is 66%, before the practice question; do not quote the old 68%."
+    },
+    {
+      "where": "'See what the class doesn't get, and plan the tutorial in one click' (slide 7)",
+      "do": "Keep the existing screenshot (it shows the Arthur-drafted brief, which the new one doesn't). Add one line of small text under it: 'The dashboard counts real signed-up students plus a synthetic class, labelled on screen.'"
+    },
+    {
+      "where": "NEW slide, insert directly after the Head of Department slide 'Early warning across the department' (slide 11) and before 'Built responsibly' (slide 12)",
+      "do": "Title: 'One sign-in. The right view for each person.' Eyebrow: 'ACCESS & PRIVACY' (use the navy/blue accent, not a role colour). Layout: 01-sign-in.jpg large on the left with 02-check-your-email.jpg overlapping its lower-right corner (a deliberate before/after pair); on the right three short icon rows: (1) envelope icon, 'Sign in with an emailed link. No passwords to forget or leak.' (2) shield icon, 'Invite-only: only people on the pilot list get in.' (3) three role chips in their role colours (Student blue, Lecturer teal, Head of Department amber), 'Each person sees only their own role's view; each student only their own work.' Optional small inset of 06-no-access.jpg captioned 'Not on the list? No access.' Speaker notes: 'For the pilot, we add students and staff by email. Nobody can sign up on their own, and the sign-in page doesn't reveal who has access.'"
+    },
+    {
+      "where": "'Built responsibly' (slide 12)",
+      "do": "Add a fifth tile: 'Invite-only sign-in' (shield or key icon): 'Emailed sign-in links, one account per person, data private to each student.' If the tiles are in a 2x2 grid, switch to a single row of five or a 3+2 layout; keep the flow diagram."
+    },
+    {
+      "where": "'The ask: a one-semester pilot' (slide 13), roadmap strip",
+      "do": "Move 'Sign-in for students, lecturers and HoDs' from Next to Now (Now reads: 'Working, deployed POC · Sign-in with separate student, lecturer and HoD accounts · SBS 201 sample materials · Live data shared between student and lecturer'). Next now reads: 'Real lecturer notes and past papers · Own email sender for sign-in links at pilot scale'. Leave Pilot and Scale unchanged."
+    },
+    {
+      "where": "Any slide or note listing what is real versus illustrative",
+      "do": "Change 'the other 30 students' to 'the 30 synthetic students alongside real signed-up students'. Add 'Sign-in and separate accounts' to the real list."
     }
-  },
-
-  "key_differentiators": [
-    "Grounded in the lecturer's own material, with visible citations: not a general chatbot.",
-    "Lecturer stays in control: approves all content, and their answers become course material.",
-    "Closes the loop: student struggle → lecturer insight → better tutorial → student progress.",
-    "Early warning: misconceptions and at-risk students surface mid-semester, not after exams.",
-    "Built for Strathmore: course codes, CATs, Kenyan examples (KES), CUE compliance."
-  ],
-
-  "the_loop": [
-    "Student asks Arthur and practises; mastery updates.",
-    "Arthur notices a misconception and records it.",
-    "Student escalates a question to the lecturer with context.",
-    "Lecturer sees class-wide gaps and drafts the next tutorial with Arthur.",
-    "Lecturer replies and saves the answer to course material.",
-    "Every student now benefits from that answer."
-  ],
-
-  "how_it_works": {
-    "ai_model": "Anthropic Claude (Sonnet 5.5) via the Claude API",
-    "grounding": "Course notes are attached to every conversation as source documents with citations enabled, so answers point to the exact material used.",
-    "progress_tracking": "Arthur calls tools to record practice results and misconceptions; scores update in real time.",
-    "structured_planning": "The tutorial brief is generated as structured data (topic, focus, minutes) adding up to 60 minutes.",
-    "cost_efficiency": [
-      "Prompt caching: course notes and earlier turns are reused at a fraction of normal cost.",
-      "Low-effort setting for routine tutoring; configurable per deployment.",
-      "Session briefs are cached and only re-drafted when class data changes or the lecturer clicks Refresh."
-    ],
-    "stack": "Next.js and React web app, deployable on Vercel; Supabase planned for accounts and the shared database.",
-    "safety": "Answers restricted to approved materials; lecturer approval gate on all content; API keys kept server-side."
-  },
-
-  "sample_content_in_demo": {
-    "course": "SBS 201 Financial Accounting",
-    "materials": [
-      "Course outline",
-      "Trial balance and correction of errors",
-      "Depreciation (straight-line and reducing balance)",
-      "Disposal of non-current assets",
-      "Accruals and prepayments",
-      "Bank reconciliation",
-      "Cash flow statements",
-      "CAT 2 past paper with marking scheme"
-    ],
-    "note": "Sample material written for the demo, not official Strathmore notes."
-  },
-
-  "honesty_real_vs_illustrative": {
-    "real_in_demo": [
-      "Arthur's answers, citations and practice marking (live AI calls)",
-      "Mastery changes from practice questions",
-      "Ask lecturer → inbox → reply → saved to course material",
-      "Material upload and approval",
-      "The tutorial brief Arthur drafts"
-    ],
-    "synthetic_or_illustrative": [
-      "The other 30 students in the class (synthetic)",
-      "Weeks 1–8 of the comprehension trend",
-      "The Head of Department view",
-      "Course notes (sample material)",
-      "Check-in messages are recorded but not delivered"
-    ]
-  },
-
-  "roadmap": [
-    { "phase": "Now", "items": ["Working POC with student, lecturer and HoD views", "SBS 201 sample materials"] },
-    { "phase": "Next", "items": ["Supabase: sign-in for students, lecturers and HoDs; shared database; saved chats", "Hosted deployment on Vercel"] },
-    { "phase": "Pilot", "items": ["One course, one cohort, real lecturer notes", "Measure engagement, mastery gains and lecturer time saved", "Real HoD dashboard from pilot data"] },
-    { "phase": "Scale", "items": ["More courses and departments", "Integration with Strathmore's learning systems", "Notifications for check-ins and replies"] }
-  ],
-
-  "proposed_pilot_ask": {
-    "request": "One course and lecturer for a semester pilot.",
-    "what_we_need": ["Lecturer's approved notes and past papers", "A student cohort willing to use Arthur", "Agreement on data privacy and success measures"],
-    "success_measures_to_agree": ["Weekly active students", "Mastery improvement on targeted topics", "Lecturer hours saved on repeated questions", "Earlier identification of at-risk students"]
-  },
-
-  "slide_outline": [
-    { "n": 1, "title": "Arthur: a study companion for every Strathmore student", "content": "Tagline, Muray Innovations, pilot course SBS 201." },
-    { "n": 2, "title": "The problem", "content": "From problems_it_addresses, 3-4 bullets." },
-    { "n": 3, "title": "Meet Arthur", "content": "One-paragraph summary; three roles: student, lecturer, HoD.", "visual": "Screenshot: app top bar with Student / Lecturer / Head of Department tabs" },
-    { "n": 4, "title": "For students: a tutor that knows your course", "content": "Grounded answers with citations; practice questions with instant marking.", "visual": "Screenshot: chat answer with numbered sources and the mastery chip" },
-    { "n": 5, "title": "For students: progress you can see", "content": "Mastery per topic, gaps, suggested next step, ask lecturer.", "visual": "Screenshot: progress panel and sidebar" },
-    { "n": 6, "title": "For lecturers: see what the class doesn't get", "content": "Heatmap, misconceptions, trend.", "visual": "Screenshot: Class overview heatmap" },
-    { "n": 7, "title": "For lecturers: a tutorial plan in one click", "content": "AI session brief; Q&A inbox; save answers to course; approve content.", "visual": "Screenshot: session brief card" },
-    { "n": 8, "title": "For Heads of Department", "content": "Cross-course view, at-risk, CUE compliance, fairness and privacy. Note illustrative data." },
-    { "n": 9, "title": "The learning loop", "content": "the_loop as a circular diagram." },
-    { "n": 10, "title": "Built responsibly", "content": "Grounded in approved material, lecturer approval, cost-efficient AI, privacy; brief stack line." },
-    { "n": 11, "title": "Where we are and what's next", "content": "Roadmap phases; what's real vs illustrative in one line." },
-    { "n": 12, "title": "The ask: a one-semester pilot", "content": "proposed_pilot_ask; thank you and contact." }
   ]
 }

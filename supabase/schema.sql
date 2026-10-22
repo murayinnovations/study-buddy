@@ -1,9 +1,23 @@
--- Arthur demo database. Run once in the Supabase SQL Editor (Dashboard → SQL Editor → New query).
+-- Arthur database. Run in the Supabase SQL Editor (Dashboard → SQL Editor → New query).
+-- Every statement is safe to run again, so after a change just run the whole file.
 --
--- There is no sign-in yet, so the browser never talks to Supabase directly: every read
--- and write goes through the app's /api routes using the secret key. Row-level security
--- is enabled on every table with no policies, which blocks the publishable key entirely.
--- When sign-in is added, student_id columns map to accounts and policies are added then.
+-- People sign in with Supabase Auth (an emailed link), but the browser still never reads
+-- tables directly: every read and write goes through the app's /api routes, which check
+-- the signed-in member's role and use the secret key. Row-level security is enabled on
+-- every table with no policies, which blocks the publishable key entirely.
+
+-- Who may sign in, and as what. Add people with scripts/add-member.mjs.
+create table if not exists members (
+  email       text primary key check (email = lower(email)),
+  role        text not null check (role in ('student', 'lecturer', 'hod')),
+  name        text not null,
+  student_id  text unique,                 -- students only: their student number
+  subtitle    text,                        -- shown under the name, e.g. 'Year 2 · BCom · SBS'
+  sample_data boolean not null default false, -- students only: start from sample mastery (for demos)
+  created_at  timestamptz not null default now(),
+  check ((role = 'student') = (student_id is not null))
+);
+
 
 create table if not exists mastery (
   student_id   text not null,
@@ -103,6 +117,7 @@ create index if not exists questions_course_created on questions (course, create
 create index if not exists misconceptions_course_created on misconceptions (course, created_at desc);
 create index if not exists practice_log_student on practice_log (student_id, course);
 
+alter table members            enable row level security;
 alter table mastery            enable row level security;
 alter table practice_log       enable row level security;
 alter table chats              enable row level security;
@@ -114,14 +129,6 @@ alter table practice_approvals enable row level security;
 alter table check_ins          enable row level security;
 alter table briefs             enable row level security;
 
--- "Reset demo" empties every table in one statement; the app then re-seeds.
-create or replace function reset_demo_data() returns void
-language sql
-set search_path = public
-as $$
-  truncate mastery, practice_log, chats, questions, misconceptions,
-           materials, goals, practice_approvals, check_ins, briefs;
-$$;
-
-revoke execute on function reset_demo_data() from public, anon, authenticated;
-grant execute on function reset_demo_data() to service_role;
+-- The old "Reset demo" button emptied every table. With real accounts that would wipe
+-- students' work, so it's gone.
+drop function if exists reset_demo_data();

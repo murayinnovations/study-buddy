@@ -1,20 +1,20 @@
 'use client'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { STUDENT } from '../components/student/studentData'
-import { type DemoState, type ChatMessage, type ChatEvent, type LecturerQuestion, type UploadedMaterial, type SavedBrief, initialState, nextScore, welcomeChat } from './demoData'
+import { type DemoState, type ChatMessage, type ChatEvent, type LecturerQuestion, type UploadedMaterial, type SavedBrief, type Member, initialState, nextScore, welcomeChat } from './demoData'
 
 export type * from './demoData'
 
-// Demo state shared by the student, lecturer and HoD views. It lives in
-// Supabase behind /api/store: changes show here at once and are saved in the
-// background, and the store re-reads every few seconds so other windows see them.
+// The signed-in member's state: a student's own work, or the lecturer's course.
+// It lives in Supabase behind /api/store: changes show here at once and are saved
+// in the background, and the store re-reads every few seconds so the other side
+// (a student's lecturer, or the student) sees them.
 
 // saving: loaded from and saving to the database. offline: changes stay in this tab only.
 export type StoreStatus = 'loading' | 'saving' | 'offline'
 
 const POLL_MS = 4000
 
-function useDemoState() {
+function useDemoState(member: Member) {
   // Start from the seed on both server and client so the first render matches
   // the server HTML, then load the saved state after mount.
   const [state, setState] = useState<DemoState>(initialState)
@@ -34,6 +34,7 @@ function useDemoState() {
     try {
       const res = await fetch('/api/store', { cache: 'no-store' })
       if (res.status === 503) configured.current = false
+      if (res.status === 401) { window.location.href = '/login'; return }
       if (!res.ok) throw new Error(`load failed: ${res.status}`)
       const data: DemoState = await res.json()
       if (pending.current === 0 && seen === writes.current) setState(data)
@@ -61,6 +62,7 @@ function useDemoState() {
         const res = await fetch('/api/store', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(action),
         })
+        if (res.status === 401) { window.location.href = '/login'; return }
         if (!res.ok) throw new Error(`save ${action.type} failed: ${res.status}`)
       } catch (err) {
         console.warn('Arthur demo store:', err)
@@ -78,17 +80,11 @@ function useDemoState() {
   }, [save])
 
   const actions = useMemo(() => ({
-    reset: () => {
-      setState(initialState())
-      save({ type: 'reset' })
-      queue.current = queue.current.then(refresh)
-    },
-
     setChat: (course: string, messages: ChatMessage[]) =>
       update(s => ({ ...s, chats: { ...s.chats, [course]: messages } }), { type: 'setChat', course, messages }),
 
     clearChat: (course: string) =>
-      update(s => ({ ...s, chats: { ...s.chats, [course]: welcomeChat(course) } }), { type: 'clearChat', course }),
+      update(s => ({ ...s, chats: { ...s.chats, [course]: welcomeChat(course, member) } }), { type: 'clearChat', course }),
 
     // Returns the before/after score so the chat can show the change.
     recordPractice: (course: string, topic: string, correct: boolean, countSession: boolean): ChatEvent => {
@@ -115,7 +111,7 @@ function useDemoState() {
 
     askLecturer: (q: Pick<LecturerQuestion, 'course' | 'topic' | 'urgency' | 'question' | 'context'>) => {
       const id = crypto.randomUUID()
-      update(s => ({ ...s, questions: [{ ...q, id, studentId: STUDENT.id, askedAt: Date.now() }, ...s.questions] }),
+      update(s => ({ ...s, questions: [{ ...q, id, studentId: member.studentId!, askedAt: Date.now() }, ...s.questions] }),
         { type: 'askLecturer', id, ...q })
     },
 
@@ -128,7 +124,7 @@ function useDemoState() {
         { type: 'saveAnswerToCourse', id }),
 
     markRepliesSeen: () =>
-      update(s => ({ ...s, questions: s.questions.map(q => q.studentId === STUDENT.id && q.reply ? { ...q, seenByStudent: true } : q) }),
+      update(s => ({ ...s, questions: s.questions.map(q => q.studentId === member.studentId && q.reply ? { ...q, seenByStudent: true } : q) }),
         { type: 'markRepliesSeen' }),
 
     uploadMaterial: (m: Pick<UploadedMaterial, 'course' | 'title' | 'type' | 'topics' | 'body'>) => {
@@ -159,17 +155,17 @@ function useDemoState() {
 
     sendCheckIn: (studentId: string) =>
       update(s => ({ ...s, checkIns: Array.from(new Set([...s.checkIns, studentId])) }), { type: 'sendCheckIn', studentId }),
-  }), [update, save, refresh])
+  }), [update, member])
 
-  return { state, status, ...actions }
+  return { member, state, status, ...actions }
 }
 
 type Store = ReturnType<typeof useDemoState>
 
 const StoreContext = createContext<Store | null>(null)
 
-export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const store = useDemoState()
+export function StoreProvider({ member, children }: { member: Member; children: React.ReactNode }) {
+  const store = useDemoState(member)
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }
 

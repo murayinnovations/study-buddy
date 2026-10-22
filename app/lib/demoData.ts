@@ -1,7 +1,19 @@
-import { TOPIC_PROGRESS, WELCOME_MESSAGES, COURSES } from '../components/student/studentData'
+import { TOPIC_PROGRESS, WELCOME_MESSAGES, FIRST_WELCOME, COURSES } from '../components/student/studentData'
 
-// Shapes of the demo state shared by the student, lecturer and HoD views, and
-// the seed it starts from. Used by the browser store and the database layer.
+// Shapes of the state shared by the student, lecturer and HoD views, and the
+// seed data the course starts from. Used by the browser store and the database layer.
+
+export type Role = 'student' | 'lecturer' | 'hod'
+
+// A signed-in person, from the members table.
+export interface Member {
+  email: string
+  role: Role
+  name: string
+  studentId: string | null   // students only
+  subtitle: string
+  sampleData: boolean        // students only: started from sample mastery
+}
 
 export interface TopicMastery { topic: string; score: number; sessions: number; daysAgo: number | null; week?: number }
 
@@ -51,6 +63,15 @@ export interface BriefItem { topic: string; focus: string; minutes: number }
 // signature: the class data the brief was drafted from, to tell when it's out of date.
 export interface SavedBrief { items: BriefItem[]; generatedAt: number; signature: string }
 
+// A signed-up student in the pilot course, as their lecturer sees them.
+export interface ClassStudent {
+  id: string
+  mastery: TopicMastery[]
+  practiceCount: number
+  lastActive: number | null
+}
+
+// What one member can see: a student's own work, or the lecturer's course.
 export interface DemoState {
   mastery: Record<string, TopicMastery[]>
   practiceLog: { course: string; topic: string; correct: boolean; at: number }[]
@@ -62,12 +83,19 @@ export interface DemoState {
   approvedPracticeIds: number[]
   checkIns: string[]
   briefs: Record<string, SavedBrief>
+  students: ClassStudent[]   // lecturers only
 }
 
 // The lecturer pages cover the pilot course only.
 export const PILOT_COURSE = 'SBS 201'
 
-export const welcomeChat = (course: string): ChatMessage[] => [{ role: 'assistant', content: WELCOME_MESSAGES[course] }]
+// Arthur's opening message, addressed to the student by first name.
+export function welcomeChat(course: string, student: Pick<Member, 'name' | 'sampleData'>): ChatMessage[] {
+  const name = student.name.split(/\s+/)[0]
+  const courseName = COURSES.find(c => c.code === course)?.name ?? course
+  const text = student.sampleData ? WELCOME_MESSAGES[course] : FIRST_WELCOME.replace('{course}', courseName)
+  return [{ role: 'assistant', content: text.replace('{name}', name) }]
+}
 
 // Seeded rows carry an age so the database can store real timestamps for them.
 const HOUR = 3_600_000
@@ -106,20 +134,28 @@ export const SEED_GOALS: Goal[] = [
 
 export const SEED_APPROVED_PRACTICE = [1, 2]
 
+// Before the member's data has loaded.
 export function initialState(): DemoState {
-  const strip = <T extends { ageMs: number }>({ ageMs, ...rest }: T) => rest
   return {
-    mastery: JSON.parse(JSON.stringify(TOPIC_PROGRESS)),
+    mastery: {},
     practiceLog: [],
-    chats: Object.fromEntries(COURSES.map(c => [c.code, welcomeChat(c.code)])),
-    questions: SEED_QUESTIONS.map(strip),
-    misconceptions: SEED_MISCONCEPTIONS.map(strip),
+    chats: {},
+    questions: [],
+    misconceptions: [],
     uploads: [],
-    goals: SEED_GOALS.map(g => ({ ...g })),
-    approvedPracticeIds: [...SEED_APPROVED_PRACTICE],
+    goals: [],
+    approvedPracticeIds: [],
     checkIns: [],
     briefs: {},
+    students: [],
   }
+}
+
+// Where a new student starts: every topic not yet started, or the sample
+// student's progress for demo accounts.
+export function startingMastery(sample: boolean): Record<string, TopicMastery[]> {
+  return Object.fromEntries(Object.entries(TOPIC_PROGRESS).map(([course, topics]) => [course,
+    topics.map(t => sample ? { ...t } : { ...t, score: 0, sessions: 0, daysAgo: null })]))
 }
 
 // Mastery moves a quarter of the way to 100 on a correct answer, and drops 15% on a wrong one.

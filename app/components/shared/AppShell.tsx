@@ -1,26 +1,12 @@
 'use client'
-import { useEffect, useState } from 'react'
-import type { Role } from '../../page'
 import { useStore } from '../../lib/demoStore'
+import { initials } from '../../lib/format'
 
-const ROLES: { id: Role; label: string; avatar: string; name: string; subtitle: string }[] = [
-  { id: 'student',  label: 'Student',          avatar: 'SK', name: 'Sara Kamau',       subtitle: 'Year 2 · BCom' },
-  { id: 'lecturer', label: 'Lecturer',          avatar: 'PM', name: 'Prof. P. Mwangi',  subtitle: 'SBS 201 · Financial Accounting' },
-  { id: 'hod',      label: 'Head of Department', avatar: 'DN', name: 'Dr. N. Njoroge',   subtitle: 'Head, Strathmore Business School' },
-]
+const ROLE_LABEL = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Department' }
+const ROLE_COLOR = { student: '#3B82F6', lecturer: '#0D9488', hod: '#D97706' }
 
-export default function AppShell({ role, setRole, children }: {
-  role: Role; setRole: (r: Role) => void; children: React.ReactNode
-}) {
-  const current = ROLES.find(r => r.id === role)!
-  const { reset, status } = useStore()
-  const [confirming, setConfirming] = useState(false)
-
-  useEffect(() => {
-    if (!confirming) return
-    const t = setTimeout(() => setConfirming(false), 4000)
-    return () => clearTimeout(t)
-  }, [confirming])
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  const { member, status } = useStore()
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden' }}>
@@ -48,59 +34,42 @@ export default function AppShell({ role, setRole, children }: {
           </div>
         </div>
 
-        {/* Role switcher */}
-        <div style={{
-          display:'flex', alignItems:'center', gap:'4px',
-          background:'rgba(255,255,255,.07)', borderRadius:'10px', padding:'4px',
+        <span style={{
+          fontSize:'11px', fontWeight:600, padding:'4px 10px', borderRadius:'999px',
+          color:'#fff', background:ROLE_COLOR[member.role],
         }}>
-          {ROLES.map(r => (
-            <button
-              key={r.id}
-              onClick={() => setRole(r.id)}
-              style={{
-                padding:'6px 14px', borderRadius:'7px', fontSize:'12px', fontWeight:500,
-                color: role === r.id ? '#1E3A5F' : 'rgba(255,255,255,.6)',
-                background: role === r.id ? '#fff' : 'transparent',
-                border:'none', cursor:'pointer', transition:'all .15s', fontFamily:'inherit',
-              }}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+          {ROLE_LABEL[member.role]}
+        </span>
 
         {/* User chip */}
         <div style={{ display:'flex', alignItems:'center', gap:'9px' }}>
           {status === 'offline' && (
             <span
-              title="The demo database can't be reached, so changes stay in this tab only"
+              title="Arthur's database can't be reached, so changes stay in this tab only"
               style={{ fontSize:'11px', padding:'4px 9px', borderRadius:'6px', background:'#FEF3C7', color:'#92400E', fontWeight:500 }}
             >
               Not saving
             </span>
           )}
-          <button
-            onClick={() => { if (confirming) { reset(); setConfirming(false) } else setConfirming(true) }}
-            title="Clear everything done in this demo and start again"
-            style={{
-              marginRight:'8px', fontSize:'11px', padding:'4px 9px', borderRadius:'6px', cursor:'pointer', fontFamily:'inherit',
-              border:'1px solid rgba(255,255,255,.2)', background: confirming ? '#DC2626' : 'transparent',
-              color: confirming ? '#fff' : 'rgba(255,255,255,.55)',
-            }}
-          >
-            {confirming ? 'Click again to reset' : 'Reset demo'}
-          </button>
           <div style={{ textAlign:'right' }}>
-            <div style={{ color:'rgba(255,255,255,.9)', fontSize:'12px', fontWeight:500 }}>{current.name}</div>
-            <div style={{ color:'rgba(255,255,255,.4)', fontSize:'10px' }}>{current.subtitle}</div>
+            <div style={{ color:'rgba(255,255,255,.9)', fontSize:'12px', fontWeight:500 }}>{member.name}</div>
+            <div style={{ color:'rgba(255,255,255,.4)', fontSize:'10px' }}>{member.subtitle}</div>
           </div>
           <div style={{
             width:'32px', height:'32px', borderRadius:'50%',
-            background:'#3B82F6', display:'flex', alignItems:'center',
+            background:ROLE_COLOR[member.role], display:'flex', alignItems:'center',
             justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:700,
           }}>
-            {current.avatar}
+            {initials(member.name)}
           </div>
+          <form action="/auth/signout" method="post" style={{ margin:0 }}>
+            <button type="submit" style={{
+              marginLeft:'6px', fontSize:'11px', padding:'4px 9px', borderRadius:'6px', cursor:'pointer', fontFamily:'inherit',
+              border:'1px solid rgba(255,255,255,.2)', background:'transparent', color:'rgba(255,255,255,.6)',
+            }}>
+              Sign out
+            </button>
+          </form>
         </div>
       </header>
 

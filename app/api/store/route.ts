@@ -1,10 +1,11 @@
 import { z } from 'zod/v4'
 import { COURSES } from '../../components/student/studentData'
-import { hasDatabase, loadState, applyAction, type StoreAction } from '../../lib/db'
+import { hasDatabase, loadState, applyAction, mayApply, type StoreAction } from '../../lib/db'
+import { requireMember } from '../../lib/auth'
 
-// The browser's only door to the demo database: GET reads the whole demo
-// state, POST applies one change. No sign-in yet, so inputs are validated
-// and sized here.
+// The browser's only door to the database: GET reads what the signed-in member
+// can see, POST applies one change they're allowed to make. Inputs are
+// validated and sized here.
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +26,6 @@ const message = z.object({
 })
 
 const Action = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('reset') }),
   z.object({ type: z.literal('setChat'), course, messages: z.array(message).max(200) }),
   z.object({ type: z.literal('clearChat'), course }),
   z.object({ type: z.literal('recordPractice'), course, topic: text(100), correct: z.boolean(), countSession: z.boolean() }),
@@ -56,28 +56,34 @@ const Action = z.discriminatedUnion('type', [
   z.object({ type: z.literal('sendCheckIn'), studentId: id }),
 ])
 
-const notConfigured = () => Response.json({ error: 'The demo database is not configured.' }, { status: 503 })
+const notConfigured = () => Response.json({ error: 'The database is not configured.' }, { status: 503 })
 
 export async function GET() {
   if (!hasDatabase()) return notConfigured()
   try {
-    return Response.json(await loadState(), { headers: { 'Cache-Control': 'no-store' } })
+    const member = await requireMember()
+    if (member instanceof Response) return member
+    return Response.json(await loadState(member), { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {
-    console.error('Loading demo state failed:', err)
-    return Response.json({ error: 'Could not load the demo data.' }, { status: 502 })
+    console.error('Loading state failed:', err)
+    return Response.json({ error: 'Could not load your data.' }, { status: 502 })
   }
 }
 
 export async function POST(req: Request) {
   if (!hasDatabase()) return notConfigured()
+  const member = await requireMember().catch(() => null)
+  if (!member) return Response.json({ error: 'Could not check your sign-in.' }, { status: 502 })
+  if (member instanceof Response) return member
   let action: StoreAction
   try {
     action = Action.parse(await req.json()) as StoreAction
   } catch {
     return Response.json({ error: 'Invalid change.' }, { status: 400 })
   }
+  if (!mayApply(member, action)) return Response.json({ error: 'Not allowed.' }, { status: 403 })
   try {
-    await applyAction(action)
+    await applyAction(member, action)
     return Response.json({ ok: true })
   } catch (err) {
     console.error(`Saving ${action.type} failed:`, err)

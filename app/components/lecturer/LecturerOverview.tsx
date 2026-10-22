@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore, type BriefItem } from '../../lib/demoStore'
-import { buildCohort, topicStats, TREND_HISTORY } from '../../lib/cohort'
+import { buildCohort, SYNTHETIC_COUNT, topicStats, TREND_HISTORY } from '../../lib/cohort'
 import { CURRENT_WEEK } from '../student/studentData'
 import { average, timeAgo } from '../../lib/format'
 
@@ -15,8 +15,7 @@ export default function LecturerOverview() {
   const chartInst = useRef<any>(null)
   const [briefState, setBriefState] = useState<'idle' | 'loading' | 'error'>('idle')
 
-  const practiceCount = state.practiceLog.filter(p => p.course === COURSE).length
-  const cohort = useMemo(() => buildCohort(state.mastery[COURSE] || [], practiceCount), [state.mastery, practiceCount])
+  const cohort = useMemo(() => buildCohort(state.students), [state.students])
   const stats = useMemo(() => topicStats(cohort), [cohort])
   const misconceptions = state.misconceptions.filter(m => m.course === COURSE)
   const questions = state.questions.filter(q => q.course === COURSE)
@@ -105,7 +104,7 @@ export default function LecturerOverview() {
       <div style={{ maxWidth:'1100px', margin:'0 auto', display:'flex', flexDirection:'column', gap:'18px' }}>
 
         <div style={{ fontSize:'11px', color:'#94A3B8' }}>
-          Demo class: 30 synthetic students plus Sara Kamau ({cohort[0].id}), whose activity updates these figures live.
+          Class: {cohort.length - SYNTHETIC_COUNT} signed-up student{cohort.length - SYNTHETIC_COUNT === 1 ? '' : 's'}, whose activity updates these figures live, plus {SYNTHETIC_COUNT} synthetic students while the pilot is small.
         </div>
 
         {/* Metrics */}

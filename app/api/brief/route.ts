@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod'
 import { z } from 'zod/v4'
 import { MODEL, FALLBACK, getClient, logUsage } from '../../lib/claude'
+import { requireMember } from '../../lib/auth'
 
 // Drafts the lecturer's next tutorial plan from the class's learning signals.
 
@@ -29,6 +30,8 @@ const Brief = z.object({
 
 export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY) return Response.json({ error: 'Arthur is not configured yet.' }, { status: 500 })
+  const member = await requireMember('lecturer')
+  if (member instanceof Response) return member
 
   let input: z.infer<typeof BriefInput>
   try {

@@ -7,15 +7,13 @@ export const COURSES = [
 
 export type Course = typeof COURSES[number]
 
-// The demo student. Lecturers only ever see the anonymised ID.
-export const STUDENT = { name:'Sara Kamau', initials:'SK', id:'STR-2024-0117', programme:'Year 2 · BCom · SBS' }
-
 // SBS 201 is taught to this week (see content/sbs201/00-course-outline.md).
 export const CURRENT_WEEK = 9
 
 export interface TopicProgress { topic:string; score:number; sessions:number; daysAgo:number|null; week?:number }
 
-// Starting mastery for the demo student. daysAgo: null means not started.
+// Sample progress (the demo student's), used for accounts added with --sample.
+// daysAgo: null means not started.
 export const TOPIC_PROGRESS: Record<string, TopicProgress[]> = {
   'SBS 201': [
     { topic:'Accounting equation',    score:92, sessions:4, daysAgo:2,  week:1 },
@@ -82,9 +80,14 @@ export const QUICK_STARTERS: Record<string, {label:string; prompt:string}[]> = {
   ],
 }
 
+// Arthur's first message in each course. {name} is the student's first name.
+// For accounts with the sample progress: it refers to that progress.
 export const WELCOME_MESSAGES: Record<string, string> = {
-  'SBS 201': `Hi Sara 👋 Good to see you again.\n\nI've been keeping track of your progress in **Financial Accounting**. You're doing well on the fundamentals — your accounting equation and double-entry scores are strong.\n\nI notice you haven't spent much time on **Depreciation** yet, and your Accruals score has room to grow. Those two topics come up every semester in the final exam.\n\nWhat would you like to work on today?`,
-  'SBS 102': `Welcome back to **Business Statistics**, Sara.\n\nYou're making solid progress on descriptive statistics. Hypothesis testing is your next frontier — it builds on the probability work you've been doing.\n\nWhat shall we tackle?`,
-  'SBS 110': `Hi Sara! **Principles of Management** — let's go.\n\nYour classical management theory is looking good. Leadership styles and corporate governance are worth revisiting before the next CAT.\n\nWhat are you working on today?`,
-  'ECO 201': `Good to see you, Sara. **Microeconomics** is where we are.\n\nSupply and demand is your strongest area so far. Market structures and consumer theory need more sessions — let's build on those.\n\nWhat would you like to explore?`,
+  'SBS 201': `Hi {name} 👋 Good to see you again.\n\nI've been keeping track of your progress in **Financial Accounting**. You're doing well on the fundamentals — your accounting equation and double-entry scores are strong.\n\nI notice you haven't spent much time on **Depreciation** yet, and your Accruals score has room to grow. Those two topics come up every semester in the final exam.\n\nWhat would you like to work on today?`,
+  'SBS 102': `Welcome back to **Business Statistics**, {name}.\n\nYou're making solid progress on descriptive statistics. Hypothesis testing is your next frontier — it builds on the probability work you've been doing.\n\nWhat shall we tackle?`,
+  'SBS 110': `Hi {name}! **Principles of Management** — let's go.\n\nYour classical management theory is looking good. Leadership styles and corporate governance are worth revisiting before the next CAT.\n\nWhat are you working on today?`,
+  'ECO 201': `Good to see you, {name}. **Microeconomics** is where we are.\n\nSupply and demand is your strongest area so far. Market structures and consumer theory need more sessions — let's build on those.\n\nWhat would you like to explore?`,
 }
+
+// For students starting from scratch.
+export const FIRST_WELCOME = `Hi {name} 👋 I'm Arthur, your study companion for **{course}**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?`
