@@ -1,9 +1,9 @@
 'use client'
 import { useState } from 'react'
-import { COURSES, STUDENT, CURRENT_WEEK, type Course } from './studentData'
+import { COURSES, CURRENT_WEEK, type Course } from './studentData'
 import { useStore } from '../../lib/demoStore'
 import { PILOT_COURSE } from '../../lib/demoData'
-import { average } from '../../lib/format'
+import { average, initials } from '../../lib/format'
 
 function ProgressRing({ value, color, size = 36 }: { value: number; color: string; size?: number }) {
   const r = (size - 6) / 2
@@ -31,7 +31,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
   setSelectedCourse: (c: Course) => void
   onStartSession: (c: Course, topic: string) => void
 }) {
-  const { state, markRepliesSeen } = useStore()
+  const { member, state, markRepliesSeen } = useStore()
   const [showReplies, setShowReplies] = useState(false)
 
   const courseProgress = (code: string) => average((state.mastery[code] || []).map(t => t.score))
@@ -47,7 +47,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
       .map(t => ({ course: c, ...t })))
     .sort((a, b) => a.score - b.score)[0]
 
-  const replies = state.questions.filter(q => q.studentId === STUDENT.id && q.reply)
+  const replies = state.questions.filter(q => q.studentId === member.studentId && q.reply)
   const unseen = replies.filter(q => !q.seenByStudent).length
 
   return (
@@ -61,10 +61,10 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
           <div style={{
             width:'40px', height:'40px', borderRadius:'50%', background:'linear-gradient(135deg,#3B82F6,#1D4ED8)',
             display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:'14px',
-          }}>{STUDENT.initials}</div>
+          }}>{initials(member.name)}</div>
           <div>
-            <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A' }}>{STUDENT.name}</div>
-            <div style={{ fontSize:'11px', color:'#94A3B8' }}>{STUDENT.programme}</div>
+            <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A' }}>{member.name}</div>
+            <div style={{ fontSize:'11px', color:'#94A3B8' }}>{member.subtitle}</div>
           </div>
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>

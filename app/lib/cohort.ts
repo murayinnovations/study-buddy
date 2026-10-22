@@ -1,15 +1,16 @@
-import { TOPIC_PROGRESS, CURRENT_WEEK, STUDENT } from '../components/student/studentData'
-import type { TopicMastery } from './demoData'
+import { TOPIC_PROGRESS, CURRENT_WEEK } from '../components/student/studentData'
+import type { ClassStudent } from './demoData'
 import { average } from './format'
 
-// A synthetic SBS 201 class so the lecturer dashboards have something to show.
-// Generated from a fixed seed, so every load (server and browser) is identical.
+// The SBS 201 class for the lecturer dashboards: the students who have signed up,
+// plus a synthetic class so the dashboards have something to show while the pilot
+// is small. The synthetic class comes from a fixed seed, so every load is identical.
 
 export type Status = 'Critical' | 'At risk' | 'On track' | 'Excelling'
 
 export interface CohortStudent {
   id: string
-  live: boolean            // the demo student, whose data changes during the demo
+  live: boolean            // a real signed-up student, not synthetic
   daysAgo: number
   engagement: number       // % of expected study activity this fortnight
   sessions: number
@@ -75,19 +76,28 @@ const SYNTHETIC: CohortStudent[] = (() => {
   })
 })()
 
-export function buildCohort(liveMastery: TopicMastery[], livePracticeCount: number): CohortStudent[] {
-  const scores: Record<string, number> = {}
-  for (const t of liveMastery) scores[t.topic] = t.score
-  const live = finish({
-    id: STUDENT.id,
-    live: true,
-    daysAgo: 0,
-    engagement: Math.min(95, 62 + livePracticeCount * 3),
-    sessions: liveMastery.reduce((s, t) => s + t.sessions, 0),
-    scores,
-    trend: '↑',
+export const SYNTHETIC_COUNT = SYNTHETIC.length
+
+const DAY = 86_400_000
+
+// Engagement for real students is a rough proxy until there's enough pilot data:
+// it starts neutral, so a new student isn't flagged, and rises with practice questions answered.
+export function buildCohort(students: ClassStudent[]): CohortStudent[] {
+  const live = students.map(s => {
+    const scores: Record<string, number> = {}
+    for (const t of TAUGHT_TOPICS) scores[t] = 0
+    for (const t of s.mastery) scores[t.topic] = t.score
+    return finish({
+      id: s.id,
+      live: true,
+      daysAgo: s.lastActive === null ? 99 : Math.floor((Date.now() - s.lastActive) / DAY),
+      engagement: Math.min(95, 50 + s.practiceCount * 5),
+      sessions: s.mastery.reduce((n, t) => n + t.sessions, 0),
+      scores,
+      trend: '→',
+    })
   })
-  return [live, ...SYNTHETIC]
+  return [...live, ...SYNTHETIC]
 }
 
 export interface TopicStat { topic: string; avg: number; confusion: number }

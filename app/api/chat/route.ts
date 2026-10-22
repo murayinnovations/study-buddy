@@ -5,6 +5,7 @@ import { loadMaterials, type Material } from '../../lib/materials'
 import { courseTopics } from '../../components/student/studentData'
 import { MODEL, EFFORT, FALLBACK, getClient, logUsage } from '../../lib/claude'
 import { extraMaterials } from '../../lib/db'
+import { requireMember } from '../../lib/auth'
 
 const COURSE_CONTEXTS: Record<string, string> = {
   'SBS 201': `You are Arthur, a learning companion for Financial Accounting (SBS 201) at Strathmore University, taught by Prof. Mwangi.
@@ -55,17 +56,16 @@ const MAX_MESSAGES = 40
 const MAX_MESSAGE_CHARS = 4000
 const MAX_PROGRESS_CHARS = 2000
 
-// Basic per-IP limit. Instances don't share memory, so this only blunts abuse
-// until the route is gated on a signed-in Supabase session.
+// Per-student limit. Instances don't share memory, so this is approximate.
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 60_000
 const hits = new Map<string, number[]>()
 
-function rateLimited(ip: string) {
+function rateLimited(key: string) {
   const now = Date.now()
-  const recent = (hits.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS)
+  const recent = (hits.get(key) || []).filter(t => now - t < RATE_WINDOW_MS)
   recent.push(now)
-  hits.set(ip, recent)
+  hits.set(key, recent)
   return recent.length > RATE_LIMIT
 }
 
@@ -212,8 +212,9 @@ export async function POST(req: NextRequest) {
     return jsonError(500, 'Arthur is not configured yet.')
   }
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  if (rateLimited(ip)) return jsonError(429, 'Too many messages. Please wait a minute.')
+  const member = await requireMember('student')
+  if (member instanceof Response) return member
+  if (rateLimited(member.email)) return jsonError(429, 'Too many messages. Please wait a minute.')
 
   let body: any
   try {
