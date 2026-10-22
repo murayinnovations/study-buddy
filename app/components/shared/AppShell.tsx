@@ -13,7 +13,7 @@ export default function AppShell({ role, setRole, children }: {
   role: Role; setRole: (r: Role) => void; children: React.ReactNode
 }) {
   const current = ROLES.find(r => r.id === role)!
-  const { reset } = useStore()
+  const { reset, status } = useStore()
   const [confirming, setConfirming] = useState(false)
 
   useEffect(() => {
@@ -71,6 +71,14 @@ export default function AppShell({ role, setRole, children }: {
 
         {/* User chip */}
         <div style={{ display:'flex', alignItems:'center', gap:'9px' }}>
+          {status === 'offline' && (
+            <span
+              title="The demo database can't be reached, so changes stay in this tab only"
+              style={{ fontSize:'11px', padding:'4px 9px', borderRadius:'6px', background:'#FEF3C7', color:'#92400E', fontWeight:500 }}
+            >
+              Not saving
+            </span>
+          )}
           <button
             onClick={() => { if (confirming) { reset(); setConfirming(false) } else setConfirming(true) }}
             title="Clear everything done in this demo and start again"

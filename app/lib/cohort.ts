@@ -1,5 +1,5 @@
 import { TOPIC_PROGRESS, CURRENT_WEEK, STUDENT } from '../components/student/studentData'
-import type { TopicMastery } from './demoStore'
+import type { TopicMastery } from './demoData'
 import { average } from './format'
 
 // A synthetic SBS 201 class so the lecturer dashboards have something to show.

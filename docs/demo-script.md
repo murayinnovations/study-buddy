@@ -53,7 +53,7 @@ Click **Head of Department**.
 | Material upload and approval | Course notes are sample material written for the demo |
 | The tutorial brief Arthur drafts | Check-in messages are recorded but not delivered |
 
-Everything is stored in this browser for now. Supabase (accounts and a shared database) comes after the demo build.
+Everything is saved in a shared Supabase database, so a second browser window (for example the lecturer view) shows changes within a few seconds. Sign-in comes with the trial.
 
 ## If something goes wrong
 

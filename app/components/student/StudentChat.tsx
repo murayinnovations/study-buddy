@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { QUICK_STARTERS, CURRENT_WEEK, courseTopics, type Course } from './studentData'
-import { useStore, extraMaterialsFor, type ChatMessage, type ChatEvent, type Source } from '../../lib/demoStore'
+import { useStore, type ChatMessage, type ChatEvent, type Source } from '../../lib/demoStore'
 
 // Courses whose answers are grounded in uploaded materials (see app/lib/materials.ts).
 const GROUNDED_COURSES = ['SBS 201']
@@ -93,7 +93,6 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
           // Failed replies are dropped so the error text never reaches Arthur.
           messages: history.filter(m => !m.failed).map(m => ({ role: m.role, content: m.content, context: m.context })),
           courseCode: course,
-          extraMaterials: extraMaterialsFor(state, course),
         }),
       })
       if (!res.ok) {
@@ -136,7 +135,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
     }
     setChat(course, [...history, { role:'assistant', content:acc, sources, events }])
     setLive(null)
-  }, [course, state, setChat, recordPractice, noteMisconception])
+  }, [course, setChat, recordPractice, noteMisconception])
 
   const send = useCallback((text?: string) => {
     const content = text || input.trim()
