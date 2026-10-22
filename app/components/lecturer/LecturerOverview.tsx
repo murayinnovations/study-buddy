@@ -173,8 +173,10 @@ export default function LecturerOverview() {
                 <span className="badge badge-teal" style={{ alignSelf:'flex-start', flexShrink:0 }}>{b.minutes} min</span>
               </div>
             ))}
-            <div style={{ marginTop:'12px', padding:'10px 12px', background: briefState === 'error' ? '#FEF2F2' : outOfDate ? '#FFFBEB' : '#EFF6FF', borderRadius:'8px', fontSize:'11px', color: briefState === 'error' ? '#B91C1C' : outOfDate ? '#92400E' : '#1D4ED8', fontWeight:500 }}>
-              {briefState === 'error'
+            <div style={{ marginTop:'12px', padding:'10px 12px', background: briefState === 'error' ? '#FEF2F2' : outOfDate && briefState !== 'loading' ? '#FFFBEB' : '#EFF6FF', borderRadius:'8px', fontSize:'11px', color: briefState === 'error' ? '#B91C1C' : outOfDate && briefState !== 'loading' ? '#92400E' : '#1D4ED8', fontWeight:500 }}>
+              {briefState === 'loading'
+                ? '✦ Arthur is drafting from class mastery, misconceptions and student questions. This takes about 20–30 seconds.'
+                : briefState === 'error'
                 ? saved ? 'Arthur could not refresh the brief. Showing the last draft.' : 'Arthur could not draft the brief. Showing the plan built from class data.'
                 : saved
                   ? outOfDate

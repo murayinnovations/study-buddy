@@ -26,6 +26,23 @@ function renderMd(text: string) {
     .replace(/⟦(\d+)⟧/g, '<sup class="cite">$1</sup>')
 }
 
+// Dots while Arthur works. After a few seconds it says what's happening, so a
+// long first answer doesn't look like a hang.
+function Thinking() {
+  const [secs, setSecs] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setSecs(s => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const label = secs >= 15 ? 'Still working on it…' : secs >= 4 ? 'Reading the course notes…' : ''
+  return (
+    <span style={{ display:'flex', gap:'5px', alignItems:'center', padding:'2px 0' }}>
+      <span className="thinking-dot"/><span className="thinking-dot"/><span className="thinking-dot"/>
+      {label && <span style={{ marginLeft:'6px', fontSize:'12px', color:'#94A3B8' }}>{label}</span>}
+    </span>
+  )
+}
+
 export default function StudentChat({ selectedCourse, showProgress, setShowProgress, pendingPrompt, clearPendingPrompt }: {
   selectedCourse: Course
   showProgress: boolean
@@ -71,6 +88,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
     let acc = ''
     const sources: Source[] = []
     const events: ChatEvent[] = []
+    const noted: { topic: string; note: string }[] = []
     const show = () => setLive({ role:'assistant', content:acc, sources:[...sources], events:[...events] })
     show()
     // Each cited passage gets a marker per source, numbered in order of first use.
@@ -91,7 +109,11 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({
           // Failed replies are dropped so the error text never reaches Arthur.
-          messages: history.filter(m => !m.failed).map(m => ({ role: m.role, content: m.content, context: m.context })),
+          // Arthur's earlier tracking goes back with each reply, so it sees itself recording results.
+          messages: history.filter(m => !m.failed).map(m => ({
+            role: m.role, content: m.content, context: m.context,
+            practice: m.events?.map(e => ({ topic: e.topic, correct: e.correct })), misconceptions: m.misconceptions,
+          })),
           courseCode: course,
         }),
       })
@@ -120,6 +142,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
             lastPractised.current = ev.topic
           } else if (ev.t === 'misconception') {
             noteMisconception(course, ev.topic, ev.note)
+            noted.push({ topic: ev.topic, note: ev.note })
             lastMisconception.current = { topic: ev.topic, note: ev.note }
           }
         }
@@ -133,7 +156,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
       }
       acc += '\n\n*(The connection dropped before I finished. Use Regenerate to try again.)*'
     }
-    setChat(course, [...history, { role:'assistant', content:acc, sources, events }])
+    setChat(course, [...history, { role:'assistant', content:acc, sources, events, ...(noted.length > 0 && { misconceptions: noted }) }])
     setLive(null)
   }, [course, setChat, recordPractice, noteMisconception])
 
@@ -275,9 +298,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
                 {msg.failed ? (
                   <span style={{ color:'#B91C1C' }}>{msg.content}</span>
                 ) : msg.role==='assistant' && msg.content==='' && msg === live ? (
-                  <span style={{ display:'flex', gap:'5px', alignItems:'center', padding:'2px 0' }}>
-                    <span className="thinking-dot"/><span className="thinking-dot"/><span className="thinking-dot"/>
-                  </span>
+                  <Thinking/>
                 ) : (
                   <div dangerouslySetInnerHTML={{ __html:`<p style="margin:0">${renderMd(msg.content)}</p>` }}/>
                 )}

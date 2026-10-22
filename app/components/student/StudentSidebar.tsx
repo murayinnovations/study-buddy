@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { COURSES, STUDENT, CURRENT_WEEK, type Course } from './studentData'
 import { useStore } from '../../lib/demoStore'
+import { PILOT_COURSE } from '../../lib/demoData'
 import { average } from '../../lib/format'
 
 function ProgressRing({ value, color, size = 36 }: { value: number; color: string; size?: number }) {
@@ -37,8 +38,10 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
   const totalCredits = COURSES.reduce((s,c) => s + c.credits, 0)
   const avgProgress = average(COURSES.map(c => courseProgress(c.code)))
 
-  // Weakest topic the student has started and the class has been taught, across all courses.
+  // Weakest topic the student has started and the class has been taught, in the
+  // pilot course: the only one where Arthur has course notes to teach from.
   const suggestion = COURSES
+    .filter(c => c.code === PILOT_COURSE)
     .flatMap(c => (state.mastery[c.code] || [])
       .filter(t => t.sessions > 0 && (t.week ?? 0) <= CURRENT_WEEK)
       .map(t => ({ course: c, ...t })))
