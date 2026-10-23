@@ -128,7 +128,7 @@ export default function LecturerOverview() {
           <div className="card" style={{ padding:'20px' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
               <div>
-                <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Topic comprehension map (L5)</div>
+                <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Topic comprehension map</div>
                 <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Share of students below 50% mastery · Anonymised</div>
               </div>
               <span className="badge badge-amber">⚠ {stats.filter(t => t.confusion >= 40).length} need attention</span>
@@ -155,7 +155,7 @@ export default function LecturerOverview() {
           <div className="card" style={{ padding:'20px' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px', gap:'8px' }}>
               <div>
-                <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Session brief (L5)</div>
+                <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Session brief</div>
                 <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Next tutorial · Week {CURRENT_WEEK}</div>
               </div>
               <button onClick={draftBrief} disabled={briefState === 'loading'} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 10px', flexShrink:0 }}>
@@ -190,7 +190,7 @@ export default function LecturerOverview() {
         <div className="card" style={{ padding:'20px' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
             <div>
-              <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Weekly comprehension trend (L12)</div>
+              <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Weekly comprehension trend</div>
               <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>{COURSE} · Weeks 1–{CURRENT_WEEK - 1} are demo history; Week {CURRENT_WEEK} is live</div>
             </div>
           </div>

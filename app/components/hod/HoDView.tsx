@@ -84,7 +84,7 @@ export default function HoDView() {
         {/* Header */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div>
-            <h1 style={{ fontSize:'16px', fontWeight:700, color:'#0F172A', margin:0 }}>Department Overview (H1–H10)</h1>
+            <h1 style={{ fontSize:'16px', fontWeight:700, color:'#0F172A', margin:0 }}>Department Overview</h1>
             <p style={{ fontSize:'12px', color:'#94A3B8', margin:'3px 0 0' }}>Strathmore Business School · Dr. N. Njoroge, Head · Current semester</p>
           </div>
           <div style={{ display:'flex', gap:'8px' }}>
@@ -102,9 +102,9 @@ export default function HoDView() {
           {[
             { label:'Total students', val:totalStudents.toString(), sub:'Across 4 courses', delta:'↑ 12% YoY', up:true },
             { label:'Active this week', val:`${Math.round(totalActive/totalStudents*100)}%`, sub:`${totalActive} students`, delta:'↑ healthy', up:true },
-            { label:'Avg comprehension', val:`${avgCompr}%`, sub:'Department average', delta:'H3: all courses', up:true },
-            { label:'At-risk students', val:totalAtRisk.toString(), sub:'Department-wide', delta:'H5: needs attention', up:false, alert:true },
-            { label:'Unanswered Q\'s', val:unanswered.toString(), sub:'Across all courses', delta:'H7: 48hr SLA', up:false, warn:true },
+            { label:'Avg comprehension', val:`${avgCompr}%`, sub:'Department average', delta:'All courses', up:true },
+            { label:'At-risk students', val:totalAtRisk.toString(), sub:'Department-wide', delta:'Needs attention', up:false, alert:true },
+            { label:'Unanswered Q\'s', val:unanswered.toString(), sub:'Across all courses', delta:'48hr SLA', up:false, warn:true },
           ].map(m=>(
             <div key={m.label} className="metric">
               <div className="metric-label">{m.label}</div>
@@ -118,7 +118,7 @@ export default function HoDView() {
         {/* Course table (H3, H4) + chart */}
         <div style={{ display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:'16px' }}>
           <div className="card" style={{ padding:'20px' }}>
-            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A', marginBottom:'4px' }}>Course performance (H3 · H4)</div>
+            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A', marginBottom:'4px' }}>Course performance</div>
             <div style={{ fontSize:'12px', color:'#94A3B8', marginBottom:'14px' }}>Click a row to drill in · Sorted by at-risk count</div>
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
@@ -155,7 +155,7 @@ export default function HoDView() {
           </div>
 
           <div className="card" style={{ padding:'20px' }}>
-            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A', marginBottom:'4px' }}>Comprehension vs engagement (H4)</div>
+            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A', marginBottom:'4px' }}>Comprehension vs engagement</div>
             <div style={{ fontSize:'12px', color:'#94A3B8', marginBottom:'14px' }}>Cross-course comparison · This semester</div>
             <div style={{ position:'relative', height:'220px' }}>
               <canvas ref={chartRef} role="img" aria-label="Bar chart comparing comprehension and engagement across 4 courses"/>
@@ -190,7 +190,7 @@ export default function HoDView() {
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1.8fr', gap:'16px' }}>
 
           <div className="card" style={{ padding:'20px' }}>
-            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A', marginBottom:'4px' }}>At-risk students by course (H5)</div>
+            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A', marginBottom:'4px' }}>At-risk students by course</div>
             <div style={{ fontSize:'12px', color:'#94A3B8', marginBottom:'14px' }}>Department-wide early warning</div>
             <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
               {AT_RISK_DEPT.map(r=>(
@@ -215,7 +215,7 @@ export default function HoDView() {
           <div className="card" style={{ padding:'20px' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px' }}>
               <div>
-                <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>CUE compliance health check (H8 · H10)</div>
+                <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>CUE compliance health check</div>
                 <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Switch programme to compare · Regulatory framework: CUE 2014 · KNQF Act 2014</div>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
@@ -272,7 +272,7 @@ export default function HoDView() {
         <div className="card" style={{ padding:'20px' }}>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'20px' }}>
             <div>
-              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Curriculum AI accuracy (H8)</div>
+              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Curriculum AI accuracy</div>
               {[
                 { label:'Answers backed by course material', pct:99.2 },
                 { label:'Answers reviewed and approved by lecturers', pct:94.8 },
@@ -290,7 +290,7 @@ export default function HoDView() {
               ))}
             </div>
             <div>
-              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Fairness monitoring (H8 · S9)</div>
+              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Fairness monitoring</div>
               {[
                 { label:'Male / female experience parity', val:'97% match', ok:true },
                 { label:'High-income / low-income parity', val:'96% match', ok:true },
@@ -304,7 +304,7 @@ export default function HoDView() {
               ))}
             </div>
             <div>
-              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Privacy & data (H9)</div>
+              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Privacy & data</div>
               {[
                 { label:'All student IDs anonymised in dashboards', ok:true },
                 { label:'No raw student data shared cross-lecturer', ok:true },

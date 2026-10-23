@@ -247,7 +247,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
               New chat
             </button>
           )}
-          <button onClick={openFlagModal} style={headerButton()} title="Send a question to your lecturer (S10)">
+          <button onClick={openFlagModal} style={headerButton()} title="Send a question to your lecturer">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
             Ask lecturer
           </button>
@@ -402,7 +402,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
         </div>
         <div style={{ marginTop:'7px', fontSize:'11px', color:'#94A3B8', textAlign:'center' }}>
           {GROUNDED_COURSES.includes(course)
-            ? <>Curriculum AI answers from {course} course materials and cites the notes it used (S3)</>
+            ? <>Curriculum AI answers from {course} course materials and cites the notes it used</>
             : <>Curriculum AI sticks to the {course} syllabus · Course materials not yet uploaded</>}
         </div>
       </div>
