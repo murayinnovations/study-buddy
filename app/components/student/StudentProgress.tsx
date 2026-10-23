@@ -56,7 +56,7 @@ export default function StudentProgress({ selectedCourse, onClose }: { selectedC
         {weakTopics.length > 0 && (
           <div style={{ background:'#FFFBEB', borderRadius:'10px', padding:'12px', border:'1px solid #FDE68A' }}>
             <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'6px' }}>
-              ⚡ Curriculum AI has spotted gaps (S11)
+              ⚡ Curriculum AI has spotted gaps
             </div>
             {weakTopics.slice(0,3).map(t => (
               <div key={t.topic} style={{ fontSize:'12px', color:'#78350F', marginBottom:'4px', display:'flex', justifyContent:'space-between' }}>
@@ -73,7 +73,7 @@ export default function StudentProgress({ selectedCourse, onClose }: { selectedC
         {/* All topics */}
         <div>
           <div style={{ fontSize:'10px', fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.6px', marginBottom:'8px' }}>
-            Topic mastery (S7)
+            Topic mastery
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
             {topics.map(t => {
@@ -101,7 +101,7 @@ export default function StudentProgress({ selectedCourse, onClose }: { selectedC
         {/* Study path (S12) */}
         <div>
           <div style={{ fontSize:'10px', fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.6px', marginBottom:'8px' }}>
-            Your study path (S12)
+            Your study path
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
             {sorted.slice(0,4).map((t,i) => (

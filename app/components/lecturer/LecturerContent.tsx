@@ -53,7 +53,7 @@ export default function LecturerContent() {
         <div className="card" style={{ padding:'20px' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px' }}>
             <div>
-              <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Learning goals (L2)</div>
+              <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Learning goals</div>
               <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>What students are marked against. Curriculum AI teaches towards mapped goals.</div>
             </div>
             {!newGoal && <button onClick={() => setNewGoal({ goal:'', week:'' })} className="btn-primary" style={{ fontSize:'12px', padding:'6px 14px' }}>+ Add goal</button>}
@@ -86,7 +86,7 @@ export default function LecturerContent() {
         <div className="card" style={{ padding:'20px' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px', gap:'12px' }}>
             <div>
-              <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Course material approval (L1 · S8)</div>
+              <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Course material approval</div>
               <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Nothing reaches students until you approve it. Curriculum AI answers only from approved material.</div>
             </div>
             <button onClick={() => fileRef.current?.click()} className="btn-primary" style={{ fontSize:'12px', padding:'6px 14px', flexShrink:0 }}>Upload material</button>
@@ -164,7 +164,7 @@ export default function LecturerContent() {
         {/* Practice questions (L10) */}
         <div className="card" style={{ padding:'20px' }}>
           <div style={{ marginBottom:'14px' }}>
-            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Curriculum AI&apos;s practice questions (L10)</div>
+            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Curriculum AI&apos;s practice questions</div>
             <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Review and approve questions for the shared question bank.</div>
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>

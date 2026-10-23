@@ -33,7 +33,7 @@ export default function LecturerStudents() {
 
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px', gap:'12px', flexWrap:'wrap' }}>
             <div>
-              <h2 style={{ fontSize:'15px', fontWeight:700, color:'#0F172A', margin:0 }}>Individual student view (L4 · L7)</h2>
+              <h2 style={{ fontSize:'15px', fontWeight:700, color:'#0F172A', margin:0 }}>Individual student view</h2>
               <p style={{ fontSize:'12px', color:'#94A3B8', margin:'3px 0 0' }}>Identities anonymised · Click a row for detail</p>
             </div>
             <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
@@ -137,7 +137,7 @@ export default function LecturerStudents() {
             })}
 
             <div style={{ padding:'12px', background:'#FFFBEB', borderRadius:'9px', border:'1px solid #FDE68A' }}>
-              <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'5px' }}>Curriculum AI recommendation (L7)</div>
+              <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'5px' }}>Curriculum AI recommendation</div>
               <p style={{ fontSize:'12px', color:'#78350F', lineHeight:1.5, margin:0 }}>
                 {selected.status === 'Critical' || selected.status === 'At risk'
                   ? `Last active ${daysAgoLabel(selected.daysAgo).toLowerCase()}, engagement at ${selected.engagement}%. Suggest a direct check-in before the next tutorial, focused on ${selected.weakTopic}.`
@@ -151,7 +151,7 @@ export default function LecturerStudents() {
               </div>
             ) : (
               <button onClick={() => sendCheckIn(selected.id)} className="btn-primary" style={{ width:'100%', padding:'10px' }}>
-                Send check-in message (L8)
+                Send check-in message
               </button>
             )}
           </div>
