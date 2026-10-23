@@ -1,4 +1,4 @@
--- Arthur database. Run in the Supabase SQL Editor (Dashboard → SQL Editor → New query).
+-- Curriculum AI database. Run in the Supabase SQL Editor (Dashboard → SQL Editor → New query).
 -- Every statement is safe to run again, so after a change just run the whole file.
 --
 -- People sign in with Supabase Auth (an emailed link), but the browser still never reads
@@ -14,9 +14,13 @@ create table if not exists members (
   student_id  text unique,                 -- students only: their student number
   subtitle    text,                        -- shown under the name, e.g. 'Year 2 · BCom · SBS'
   sample_data boolean not null default false, -- students only: start from sample mastery (for demos)
+  demo_group  text,                           -- members sharing a group can switch between each other's views
   created_at  timestamptz not null default now(),
   check ((role = 'student') = (student_id is not null))
 );
+
+-- Added after the table above already existed in some projects; harmless if the column is already there.
+alter table members add column if not exists demo_group text;
 
 
 create table if not exists mastery (

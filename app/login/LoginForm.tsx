@@ -27,8 +27,8 @@ export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
       <div style={{ background:'#EFF6FF', border:'1px solid #BFDBFE', borderRadius:'10px', padding:'16px' }}>
         <div style={{ fontSize:'14px', fontWeight:600, color:'#1E3A5F' }}>Check your email</div>
         <p style={{ fontSize:'13px', color:'#475569', margin:'6px 0 0', lineHeight:1.5 }}>
-          If <strong>{email.trim()}</strong> has access to Arthur, a sign-in link is on its way. Open it in this browser.
-          Nothing after a few minutes? Check spam, or ask the Arthur team to confirm your access.
+          If <strong>{email.trim()}</strong> has access to Curriculum AI, a sign-in link is on its way. Open it in this browser.
+          Nothing after a few minutes? Check spam, or ask the Curriculum AI team to confirm your access.
         </p>
         <button onClick={() => setState('idle')} style={{
           marginTop:'12px', background:'none', border:'none', padding:0, color:'#2563EB', fontSize:'13px', cursor:'pointer', fontFamily:'inherit',

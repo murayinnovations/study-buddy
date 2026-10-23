@@ -40,7 +40,7 @@ function useDemoState(member: Member) {
       if (pending.current === 0 && seen === writes.current) setState(data)
       setStatus('saving')
     } catch (err) {
-      console.warn('Arthur demo store:', err)
+      console.warn('Curriculum AI demo store:', err)
       setStatus('offline')
     }
   }, [])
@@ -65,7 +65,7 @@ function useDemoState(member: Member) {
         if (res.status === 401) { window.location.href = '/login'; return }
         if (!res.ok) throw new Error(`save ${action.type} failed: ${res.status}`)
       } catch (err) {
-        console.warn('Arthur demo store:', err)
+        console.warn('Curriculum AI demo store:', err)
         setStatus('offline')
       } finally {
         pending.current--

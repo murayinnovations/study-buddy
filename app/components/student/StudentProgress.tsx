@@ -52,11 +52,11 @@ export default function StudentProgress({ selectedCourse, onClose }: { selectedC
           )}
         </div>
 
-        {/* Arthur gap alert (S11) */}
+        {/* Curriculum AI gap alert (S11) */}
         {weakTopics.length > 0 && (
           <div style={{ background:'#FFFBEB', borderRadius:'10px', padding:'12px', border:'1px solid #FDE68A' }}>
             <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'6px' }}>
-              ⚡ Arthur has spotted gaps (S11)
+              ⚡ Curriculum AI has spotted gaps (S11)
             </div>
             {weakTopics.slice(0,3).map(t => (
               <div key={t.topic} style={{ fontSize:'12px', color:'#78350F', marginBottom:'4px', display:'flex', justifyContent:'space-between' }}>
@@ -65,7 +65,7 @@ export default function StudentProgress({ selectedCourse, onClose }: { selectedC
               </div>
             ))}
             <div style={{ fontSize:'11px', color:'#92400E', marginTop:'6px', fontStyle:'italic' }}>
-              Ask Arthur for a practice question on any of these to move your score.
+              Ask Curriculum AI for a practice question on any of these to move your score.
             </div>
           </div>
         )}

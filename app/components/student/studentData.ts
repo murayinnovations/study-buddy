@@ -80,7 +80,7 @@ export const QUICK_STARTERS: Record<string, {label:string; prompt:string}[]> = {
   ],
 }
 
-// Arthur's first message in each course. {name} is the student's first name.
+// Curriculum AI's first message in each course. {name} is the student's first name.
 // For accounts with the sample progress: it refers to that progress.
 export const WELCOME_MESSAGES: Record<string, string> = {
   'SBS 201': `Hi {name} 👋 Good to see you again.\n\nI've been keeping track of your progress in **Financial Accounting**. You're doing well on the fundamentals — your accounting equation and double-entry scores are strong.\n\nI notice you haven't spent much time on **Depreciation** yet, and your Accruals score has room to grow. Those two topics come up every semester in the final exam.\n\nWhat would you like to work on today?`,
@@ -90,4 +90,4 @@ export const WELCOME_MESSAGES: Record<string, string> = {
 }
 
 // For students starting from scratch.
-export const FIRST_WELCOME = `Hi {name} 👋 I'm Arthur, your study companion for **{course}**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?`
+export const FIRST_WELCOME = `Hi {name} 👋 I'm Curriculum AI, your study companion for **{course}**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?`

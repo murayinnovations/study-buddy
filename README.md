@@ -1,13 +1,13 @@
-# Arthur — Learning Companion for Strathmore University
+# Curriculum AI — Learning Companion for Strathmore University
 
-Arthur is an AI study companion with three views: student, lecturer and Head of Department. This repo is a proof of concept for a demo to Strathmore staff, with SBS 201 Financial Accounting as the pilot course.
+Curriculum AI is an AI study companion with three views: student, lecturer and Head of Department. This repo is a proof of concept for a demo to Strathmore staff, with SBS 201 Financial Accounting as the pilot course.
 
 ## Status
 
 | Area | State |
 |---|---|
 | Student chat | Live. SBS 201 answers from the notes in `content/sbs201/` and cites them; the other courses use a syllabus description only |
-| Mastery tracking | Live. Arthur records practice results with a tool call and the student's scores update |
+| Mastery tracking | Live. Curriculum AI records practice results with a tool call and the student's scores update |
 | Ask lecturer → inbox → reply → save to course | Live, shared across browsers |
 | Lecturer dashboards | Computed from the signed-up students plus a synthetic class of 30 |
 | Material upload and approval | Live (.md and .txt) |
@@ -65,6 +65,18 @@ node --env-file=.env.local scripts/members.mjs remove sara@example.com
 ```
 
 Students start with every topic not yet started; `--sample` starts them from the demo's sample progress instead, for demo accounts. Lecturers see SBS 201, the pilot course. A Gmail address with `+` (`you+lecturer@gmail.com`) arrives in the same inbox, which is handy for having one account per role.
+
+### Switching views with one click
+
+Give the student, lecturer and HoD demo accounts the same `--group` value and a role switcher appears in the header, so a presenter can flip between all three views in one window instead of signing in separately as each one:
+
+```bash
+node --env-file=.env.local scripts/members.mjs add sara@example.com student "Sara Kamau" STR-2024-0117 --sample --group demo1
+node --env-file=.env.local scripts/members.mjs add mwangi@example.com lecturer "Prof. P. Mwangi" --group demo1
+node --env-file=.env.local scripts/members.mjs add njoroge@example.com hod "Dr. N. Njoroge" --group demo1
+```
+
+Sign in as any one of them and the header shows all three roles; clicking one switches the whole view, including which account's real data you're looking at. Accounts without a shared `--group` don't get the switcher — the pilot's real student, lecturer and HoD accounts should stay ungrouped so this stays a demo-only convenience.
 
 ## Three modules
 

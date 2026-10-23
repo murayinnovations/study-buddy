@@ -1,6 +1,6 @@
 import LoginForm from './LoginForm'
 
-export const metadata = { title: 'Sign in · Arthur' }
+export const metadata = { title: 'Sign in · Curriculum AI' }
 
 export default function LoginPage({ searchParams }: { searchParams: { error?: string } }) {
   return (
@@ -22,7 +22,7 @@ export default function LoginPage({ searchParams }: { searchParams: { error?: st
             </svg>
           </div>
           <div>
-            <div style={{ color:'#fff', fontWeight:700, fontSize:'20px', lineHeight:1 }}>Arthur</div>
+            <div style={{ color:'#fff', fontWeight:700, fontSize:'20px', lineHeight:1 }}>Curriculum AI</div>
             <div style={{ color:'rgba(255,255,255,.5)', fontSize:'11px', marginTop:'3px' }}>Strathmore University · Pilot</div>
           </div>
         </div>

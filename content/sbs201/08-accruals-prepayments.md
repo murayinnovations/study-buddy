@@ -6,7 +6,7 @@ topics: [Accruals & prepayments]
 
 # Week 8 — Accruals and Prepayments
 
-> Sample material written for the Arthur demo. Not an official Strathmore University document.
+> Sample material written for the Curriculum AI demo. Not an official Strathmore University document.
 
 ## The accrual basis
 

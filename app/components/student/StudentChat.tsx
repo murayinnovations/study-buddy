@@ -26,7 +26,7 @@ function renderMd(text: string) {
     .replace(/⟦(\d+)⟧/g, '<sup class="cite">$1</sup>')
 }
 
-// Dots while Arthur works. After a few seconds it says what's happening, so a
+// Dots while Curriculum AI works. After a few seconds it says what's happening, so a
 // long first answer doesn't look like a hang.
 function Thinking() {
   const [secs, setSecs] = useState(0)
@@ -66,7 +66,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
   const sentPending = useRef<string | null>(null)
   // Topics practised in this chat, so a session is counted once per topic.
   const practised = useRef(new Set<string>())
-  // The latest misconception Arthur noted in this chat, for "Ask lecturer".
+  // The latest misconception Curriculum AI noted in this chat, for "Ask lecturer".
   const lastMisconception = useRef<{ topic: string; note: string } | null>(null)
   // The topic most recently practised in this chat, for "Ask lecturer".
   const lastPractised = useRef<string | null>(null)
@@ -82,7 +82,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
 
   const topics = state.mastery[course] || []
 
-  // Streams Arthur's reply to `history`, which must end with a user turn.
+  // Streams Curriculum AI's reply to `history`, which must end with a user turn.
   const reply = useCallback(async (history: ChatMessage[]) => {
     setChat(course, history)
     let acc = ''
@@ -108,8 +108,8 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({
-          // Failed replies are dropped so the error text never reaches Arthur.
-          // Arthur's earlier tracking goes back with each reply, so it sees itself recording results.
+          // Failed replies are dropped so the error text never reaches Curriculum AI.
+          // Curriculum AI's earlier tracking goes back with each reply, so it sees itself recording results.
           messages: history.filter(m => !m.failed).map(m => ({
             role: m.role, content: m.content, context: m.context,
             practice: m.events?.map(e => ({ topic: e.topic, correct: e.correct })), misconceptions: m.misconceptions,
@@ -169,7 +169,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
     reply([...messages, { role:'user', content, context }])
   }, [input, streaming, topics, messages, reply])
 
-  // Re-asks Arthur for the last answer. Not offered once that answer recorded a
+  // Re-asks Curriculum AI for the last answer. Not offered once that answer recorded a
   // practice result, since asking again would count the attempt twice.
   const last = messages[messages.length - 1]
   const canRegenerate = !streaming && last?.role === 'assistant' && messages.length >= 2
@@ -202,8 +202,8 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
   const flagContext = [
     `Mastery: ${flagTopicData?.score ?? 0}%`,
     `Practice attempts: ${attempts.length} (${attempts.filter(a => a.correct).length} correct)`,
-    lastMisconception.current?.topic === flagTopic ? `Misconception Arthur noticed: ${lastMisconception.current.note}` : null,
-    `Messages with Arthur in this chat: ${messages.filter(m => m.role === 'user').length}`,
+    lastMisconception.current?.topic === flagTopic ? `Misconception Curriculum AI noticed: ${lastMisconception.current.note}` : null,
+    `Messages with Curriculum AI in this chat: ${messages.filter(m => m.role === 'user').length}`,
   ].filter(Boolean).join(' · ')
 
   const sendFlag = () => {
@@ -282,7 +282,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
             </div>
             <div style={{ display:'flex', flexDirection:'column', alignItems: msg.role==='user' ? 'flex-end' : 'flex-start', maxWidth:'72%' }}>
               <span style={{ fontSize:'10px', fontWeight:700, color:'#94A3B8', marginBottom:'4px', letterSpacing:'.3px' }}>
-                {msg.role==='assistant' ? 'ARTHUR' : 'YOU'}
+                {msg.role==='assistant' ? 'CURRICULUM AI' : 'YOU'}
               </span>
               <div
                 className="chat-prose"
@@ -315,7 +315,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
                 )}
               </div>
               {i === messages.length - 1 && canRegenerate && (
-                <button onClick={regenerate} title="Ask Arthur to answer this again"
+                <button onClick={regenerate} title="Ask Curriculum AI to answer this again"
                   style={{ marginTop:'6px', fontSize:'11px', color: msg.failed ? '#2563EB' : '#94A3B8', fontWeight: msg.failed ? 600 : 400, background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
                   ↻ {msg.failed ? 'Try again' : 'Regenerate'}
                 </button>
@@ -402,8 +402,8 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
         </div>
         <div style={{ marginTop:'7px', fontSize:'11px', color:'#94A3B8', textAlign:'center' }}>
           {GROUNDED_COURSES.includes(course)
-            ? <>Arthur answers from {course} course materials and cites the notes it used (S3)</>
-            : <>Arthur sticks to the {course} syllabus · Course materials not yet uploaded</>}
+            ? <>Curriculum AI answers from {course} course materials and cites the notes it used (S3)</>
+            : <>Curriculum AI sticks to the {course} syllabus · Course materials not yet uploaded</>}
         </div>
       </div>
 
@@ -420,7 +420,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
           >
             <div style={{ fontWeight:700, fontSize:'16px', color:'#0F172A', marginBottom:'6px' }}>Ask {selectedCourse.lecturer}</div>
             <p style={{ fontSize:'13px', color:'#64748B', marginBottom:'16px', lineHeight:1.5 }}>
-              Arthur sends your question with context about what you&apos;ve been studying, so your lecturer can see where you&apos;re stuck.
+              Curriculum AI sends your question with context about what you&apos;ve been studying, so your lecturer can see where you&apos;re stuck.
             </p>
             <label style={{ fontSize:'11px', fontWeight:600, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.5px' }}>Topic</label>
             <select value={flagTopic} onChange={e => setFlagTopic(e.target.value)}
@@ -431,7 +431,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
             <textarea value={flagText} onChange={e => setFlagText(e.target.value)} rows={4} placeholder="What are you stuck on?"
               style={{ width:'100%', margin:'5px 0 12px', fontSize:'13px', padding:'10px 12px', borderRadius:'8px', border:'1.5px solid #E2E8F0', fontFamily:'inherit', resize:'vertical', background:'#F8FAFC', color:'#0F172A', lineHeight:1.5 }}/>
             <div style={{ background:'#EFF6FF', borderRadius:'8px', padding:'12px', marginBottom:'20px', border:'1px solid #BFDBFE' }}>
-              <div style={{ fontSize:'11px', fontWeight:600, color:'#1D4ED8', marginBottom:'5px', textTransform:'uppercase', letterSpacing:'.5px' }}>Context Arthur will include</div>
+              <div style={{ fontSize:'11px', fontWeight:600, color:'#1D4ED8', marginBottom:'5px', textTransform:'uppercase', letterSpacing:'.5px' }}>Context Curriculum AI will include</div>
               <div style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.5 }}>{flagContext}</div>
             </div>
             <div style={{ display:'flex', gap:'10px' }}>

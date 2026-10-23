@@ -208,7 +208,7 @@ export default function HoDView() {
               ))}
             </div>
             <div style={{ marginTop:'14px', padding:'11px 14px', background:'#FEF2F2', borderRadius:'9px', border:'1px solid #FECACA', fontSize:'12px', color:'#7F1D1D' }}>
-              <strong>Total: {totalAtRisk} students</strong> across the department are below the engagement threshold. Arthur has flagged these to their respective lecturers.
+              <strong>Total: {totalAtRisk} students</strong> across the department are below the engagement threshold. Curriculum AI has flagged these to their respective lecturers.
             </div>
           </div>
 
@@ -268,11 +268,11 @@ export default function HoDView() {
           </div>
         </div>
 
-        {/* Arthur accuracy & fairness (H8, H9) */}
+        {/* Curriculum AI accuracy & fairness (H8, H9) */}
         <div className="card" style={{ padding:'20px' }}>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'20px' }}>
             <div>
-              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Arthur accuracy (H8)</div>
+              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Curriculum AI accuracy (H8)</div>
               {[
                 { label:'Answers backed by course material', pct:99.2 },
                 { label:'Answers reviewed and approved by lecturers', pct:94.8 },

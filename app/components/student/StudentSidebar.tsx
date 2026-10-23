@@ -39,7 +39,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
   const avgProgress = average(COURSES.map(c => courseProgress(c.code)))
 
   // Weakest topic the student has started and the class has been taught, in the
-  // pilot course: the only one where Arthur has course notes to teach from.
+  // pilot course: the only one where Curriculum AI has course notes to teach from.
   const suggestion = COURSES
     .filter(c => c.code === PILOT_COURSE)
     .flatMap(c => (state.mastery[c.code] || [])
@@ -141,7 +141,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
           </div>
         )}
 
-        {/* Arthur insight */}
+        {/* Curriculum AI insight */}
         {suggestion && (
           <div style={{
             marginTop:'16px', padding:'12px', borderRadius:'10px',
@@ -150,7 +150,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
           }}>
             <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'6px' }}>
               <span className="ai-pulse" style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#2563EB', display:'inline-block' }}/>
-              <span style={{ fontSize:'10px', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'.5px' }}>Arthur suggests</span>
+              <span style={{ fontSize:'10px', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'.5px' }}>Curriculum AI suggests</span>
             </div>
             <p style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.5, margin:0 }}>
               Your <strong>{suggestion.topic}</strong> score in {suggestion.course.code} is {suggestion.score}%, your lowest so far. Let&apos;s work on it today.
@@ -178,7 +178,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
       <div style={{ padding:'12px 16px', borderTop:'1px solid #E2E8F0' }}>
         <div style={{ fontSize:'11px', color:'#94A3B8', display:'flex', alignItems:'center', gap:'5px' }}>
           <span className="ai-pulse" style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#059669', display:'inline-block' }}/>
-          Arthur uses your lecturers&apos; approved materials
+          Curriculum AI uses your lecturers&apos; approved materials
         </div>
       </div>
     </aside>

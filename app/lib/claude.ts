@@ -1,13 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-// Model and effort for Arthur. Override with ARTHUR_MODEL / ARTHUR_EFFORT
-// (e.g. ARTHUR_MODEL=claude-opus-5-5, ARTHUR_EFFORT=medium) to compare quality.
+// Model and effort for Curriculum AI. Override with CURRICULUM_AI_MODEL / CURRICULUM_AI_EFFORT
+// (e.g. CURRICULUM_AI_MODEL=claude-opus-5-5, CURRICULUM_AI_EFFORT=medium) to compare quality.
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'] as const
 export type Effort = typeof EFFORTS[number]
 
-export const MODEL = process.env.ARTHUR_MODEL || 'claude-sonnet-5-5'
-export const EFFORT: Effort = (EFFORTS as readonly string[]).includes(process.env.ARTHUR_EFFORT || '')
-  ? process.env.ARTHUR_EFFORT as Effort
+export const MODEL = process.env.CURRICULUM_AI_MODEL || 'claude-sonnet-5-5'
+export const EFFORT: Effort = (EFFORTS as readonly string[]).includes(process.env.CURRICULUM_AI_EFFORT || '')
+  ? process.env.CURRICULUM_AI_EFFORT as Effort
   : 'low'
 
 // If a safety classifier declines, retry server-side on Anthropic's recommended model.

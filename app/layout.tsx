@@ -1,6 +1,6 @@
 import './globals.css'
 export const metadata = {
-  title: 'Arthur — Learning Companion · Strathmore University',
+  title: 'Curriculum AI — Learning Companion · Strathmore University',
   description: 'A learning companion for university students, lecturers and heads of department.',
 }
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -6,7 +6,7 @@ topics: [Depreciation]
 
 # Week 7 — Disposal of Non-Current Assets
 
-> Sample material written for the Arthur demo. Not an official Strathmore University document.
+> Sample material written for the Curriculum AI demo. Not an official Strathmore University document.
 
 When an asset is sold, it must be removed from the books along with its accumulated depreciation. The difference between the sale proceeds and the carrying amount is a **profit or loss on disposal**.
 

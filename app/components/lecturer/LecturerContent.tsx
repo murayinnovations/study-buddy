@@ -54,7 +54,7 @@ export default function LecturerContent() {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px' }}>
             <div>
               <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Learning goals (L2)</div>
-              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>What students are marked against. Arthur teaches towards mapped goals.</div>
+              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>What students are marked against. Curriculum AI teaches towards mapped goals.</div>
             </div>
             {!newGoal && <button onClick={() => setNewGoal({ goal:'', week:'' })} className="btn-primary" style={{ fontSize:'12px', padding:'6px 14px' }}>+ Add goal</button>}
           </div>
@@ -66,9 +66,9 @@ export default function LecturerContent() {
                 </div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:'13px', fontWeight:500, color:'#0F172A' }}>{g.goal}</div>
-                  <div style={{ fontSize:'11px', color:'#94A3B8', marginTop:'1px' }}>{g.week} · {g.mapped?'Mapped to Arthur':'Not yet mapped to Arthur'}</div>
+                  <div style={{ fontSize:'11px', color:'#94A3B8', marginTop:'1px' }}>{g.week} · {g.mapped?'Mapped to Curriculum AI':'Not yet mapped to Curriculum AI'}</div>
                 </div>
-                {!g.mapped && <button onClick={() => mapGoal(g.id)} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 12px' }}>Map to Arthur</button>}
+                {!g.mapped && <button onClick={() => mapGoal(g.id)} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 12px' }}>Map to Curriculum AI</button>}
               </div>
             ))}
             {newGoal && (
@@ -87,7 +87,7 @@ export default function LecturerContent() {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px', gap:'12px' }}>
             <div>
               <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Course material approval (L1 · S8)</div>
-              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Nothing reaches students until you approve it. Arthur answers only from approved material.</div>
+              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Nothing reaches students until you approve it. Curriculum AI answers only from approved material.</div>
             </div>
             <button onClick={() => fileRef.current?.click()} className="btn-primary" style={{ fontSize:'12px', padding:'6px 14px', flexShrink:0 }}>Upload material</button>
             <input ref={fileRef} type="file" accept=".md,.txt,text/plain,text/markdown" style={{ display:'none' }}
@@ -154,7 +154,7 @@ export default function LecturerContent() {
                   <td style={{ padding:'11px 12px' }}>{m.topics.map(t=><span key={t} className="badge badge-blue" style={{ marginRight:'4px', fontSize:'10px' }}>{t}</span>)}</td>
                   <td style={{ padding:'11px 12px', fontSize:'11px', color:'#94A3B8' }}>Start of semester</td>
                   <td style={{ padding:'11px 12px' }}><span className="badge badge-green">✓ Approved</span></td>
-                  <td style={{ padding:'11px 12px', fontSize:'11px', color:'#94A3B8' }}>In use by Arthur</td>
+                  <td style={{ padding:'11px 12px', fontSize:'11px', color:'#94A3B8' }}>In use by Curriculum AI</td>
                 </tr>
               ))}
             </tbody>
@@ -164,7 +164,7 @@ export default function LecturerContent() {
         {/* Practice questions (L10) */}
         <div className="card" style={{ padding:'20px' }}>
           <div style={{ marginBottom:'14px' }}>
-            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Arthur&apos;s practice questions (L10)</div>
+            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Curriculum AI&apos;s practice questions (L10)</div>
             <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Review and approve questions for the shared question bank.</div>
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>

@@ -29,7 +29,7 @@ const Brief = z.object({
 })
 
 export async function POST(req: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) return Response.json({ error: 'Arthur is not configured yet.' }, { status: 500 })
+  if (!process.env.ANTHROPIC_API_KEY) return Response.json({ error: 'Curriculum AI is not configured yet.' }, { status: 500 })
   const member = await requireMember('lecturer')
   if (member instanceof Response) return member
 
@@ -61,7 +61,7 @@ Confusion rate is the share of students below 50% mastery on a topic.
 Topics, most confused first:
 ${input.topics.map(t => `- ${t.topic}: ${t.confusion}% confused, class average ${t.avg}%`).join('\n')}
 
-Misconceptions Arthur noticed in student chats this week:
+Misconceptions Curriculum AI noticed in student chats this week:
 ${input.misconceptions.map(m => `- ${m}`).join('\n') || '- none recorded'}
 
 Recent questions students sent to the lecturer:
@@ -72,7 +72,7 @@ Return 3 or 4 items whose minutes add up to 60. Spend the most time on the most 
     })
     logUsage('brief', 'low', response.usage)
     if (response.stop_reason === 'refusal' || !response.parsed_output) {
-      return Response.json({ error: 'Arthur could not draft a brief this time.' }, { status: 502 })
+      return Response.json({ error: 'Curriculum AI could not draft a brief this time.' }, { status: 502 })
     }
     const draft = { items: response.parsed_output.items, generatedAt: Date.now() }
     if (drafts.size >= MAX_DRAFTS) drafts.delete(drafts.keys().next().value!)
@@ -81,6 +81,6 @@ Return 3 or 4 items whose minutes add up to 60. Spend the most time on the most 
   } catch (err) {
     if (err instanceof Anthropic.APIError) console.error(`Claude API error ${err.status}:`, err.message)
     else console.error('Brief failed:', err)
-    return Response.json({ error: 'Arthur could not draft a brief this time.' }, { status: 502 })
+    return Response.json({ error: 'Curriculum AI could not draft a brief this time.' }, { status: 502 })
   }
 }

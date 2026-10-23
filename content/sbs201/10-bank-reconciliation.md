@@ -6,7 +6,7 @@ topics: [Bank reconciliation]
 
 # Week 10 — Bank Reconciliation
 
-> Sample material written for the Arthur demo. Not an official Strathmore University document.
+> Sample material written for the Curriculum AI demo. Not an official Strathmore University document.
 
 ## Why the balances differ
 

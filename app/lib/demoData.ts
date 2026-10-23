@@ -13,6 +13,7 @@ export interface Member {
   studentId: string | null   // students only
   subtitle: string
   sampleData: boolean        // students only: started from sample mastery
+  demoGroup: string | null   // members sharing a group can switch between each other's views
 }
 
 export interface TopicMastery { topic: string; score: number; sessions: number; daysAgo: number | null; week?: number }
@@ -24,7 +25,7 @@ export interface ChatMessage {
   content: string
   sources?: Source[]
   events?: ChatEvent[]
-  misconceptions?: { topic: string; note: string }[]   // assistant turns: what Arthur noted for the lecturer
+  misconceptions?: { topic: string; note: string }[]   // assistant turns: what Curriculum AI noted for the lecturer
   context?: string    // user turns: mastery snapshot sent with the message, replayed unchanged
   failed?: boolean    // assistant turns: an error placeholder, not a real reply
 }
@@ -89,7 +90,7 @@ export interface DemoState {
 // The lecturer pages cover the pilot course only.
 export const PILOT_COURSE = 'SBS 201'
 
-// Arthur's opening message, addressed to the student by first name.
+// Curriculum AI's opening message, addressed to the student by first name.
 export function welcomeChat(course: string, student: Pick<Member, 'name' | 'sampleData'>): ChatMessage[] {
   const name = student.name.split(/\s+/)[0]
   const courseName = COURSES.find(c => c.code === course)?.name ?? course
@@ -104,12 +105,12 @@ export const SEED_QUESTIONS: (LecturerQuestion & { ageMs: number })[] = [
   {
     id: 'seed-1', course: 'SBS 201', studentId: 'STR-2024-4348', topic: 'Depreciation', urgency: 'High', askedAt: '2 hours ago', ageMs: 2 * HOUR,
     question: "I've read the notes on straight-line depreciation twice but I still don't understand why we subtract the residual value before dividing. Why can't we just divide the full cost by the useful life?",
-    context: 'Mastery: 38% · Practice attempts: 1 (0 correct) · Misconception Arthur noticed: treats the full cost as the amount used up · Tried: worked through the formula in the Week 6 notes',
+    context: 'Mastery: 38% · Practice attempts: 1 (0 correct) · Misconception Curriculum AI noticed: treats the full cost as the amount used up · Tried: worked through the formula in the Week 6 notes',
   },
   {
     id: 'seed-2', course: 'SBS 201', studentId: 'STR-2024-3741', topic: 'Accruals & prepayments', urgency: 'Medium', askedAt: '5 hours ago', ageMs: 5 * HOUR,
-    question: "I'm confused about the difference between an accrual and a prepayment. Arthur explained it but I'm still not sure which one I should use when rent is paid in advance.",
-    context: 'Mastery: 42% · Practice attempts: 3 (1 correct) · Misconception Arthur noticed: mixes up paying in advance with being paid in advance',
+    question: "I'm confused about the difference between an accrual and a prepayment. Curriculum AI explained it but I'm still not sure which one I should use when rent is paid in advance.",
+    context: 'Mastery: 42% · Practice attempts: 3 (1 correct) · Misconception Curriculum AI noticed: mixes up paying in advance with being paid in advance',
   },
   {
     id: 'seed-3', course: 'SBS 201', studentId: 'STR-2024-7079', topic: 'Cash flow statements', urgency: 'Low', askedAt: 'Yesterday', ageMs: 26 * HOUR,

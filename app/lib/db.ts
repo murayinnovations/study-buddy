@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { COURSES } from '../components/student/studentData'
 import {
-  type DemoState, type ChatMessage, type SavedBrief, type TopicMastery, type Member, type ClassStudent,
+  type DemoState, type ChatMessage, type SavedBrief, type TopicMastery, type Member, type ClassStudent, type Role,
   PILOT_COURSE, SEED_QUESTIONS, SEED_MISCONCEPTIONS, SEED_GOALS, SEED_APPROVED_PRACTICE,
   initialState, startingMastery, welcomeChat, nextScore,
 } from './demoData'
@@ -51,9 +51,21 @@ export async function getMember(email: string): Promise<Member | null> {
   const member: Member | null = row && {
     email: row.email, role: row.role, name: row.name, studentId: row.student_id,
     subtitle: row.subtitle || DEFAULT_SUBTITLE[row.role as Member['role']], sampleData: row.sample_data,
+    demoGroup: row.demo_group,
   }
   members.set(key, { member, at: Date.now() })
   return member
+}
+
+// The other role's account in the same demo group, for the one-button view switcher.
+// Not cached: it's only called right after a switch, never on every request.
+export async function getMemberByGroup(group: string, role: Role): Promise<Member | null> {
+  const row = check(await db().from('members').select('*').eq('demo_group', group).eq('role', role).maybeSingle())
+  return row && {
+    email: row.email, role: row.role, name: row.name, studentId: row.student_id,
+    subtitle: row.subtitle || DEFAULT_SUBTITLE[row.role as Member['role']], sampleData: row.sample_data,
+    demoGroup: row.demo_group,
+  }
 }
 
 // The course's starting questions, misconceptions, goals and approvals.
@@ -168,7 +180,7 @@ async function loadLecturer(): Promise<DemoState> {
   }
 }
 
-// Signed-up students who have opened Arthur, with their progress in the course.
+// Signed-up students who have opened Curriculum AI, with their progress in the course.
 async function classStudents(course: string): Promise<ClassStudent[]> {
   const ids = check(await db().from('members').select('student_id').eq('role', 'student')).map(m => m.student_id as string)
   if (ids.length === 0) return []
@@ -278,7 +290,7 @@ export async function applyAction(member: Member, a: StoreAction) {
   }
 }
 
-// Materials the lecturer added that Arthur should now use: approved uploads,
+// Materials the lecturer added that Curriculum AI should now use: approved uploads,
 // then replies saved to the course. Capped so a large upload can't blow up every request.
 const MAX_EXTRA_MATERIALS = 10
 const MAX_EXTRA_CHARS = 80_000
