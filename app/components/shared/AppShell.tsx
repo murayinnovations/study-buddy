@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useStore } from '../../lib/demoStore'
 import { initials } from '../../lib/format'
 import type { Role } from '../../lib/demoData'
+import DemoGuide from './DemoGuide'
 
 const ROLE_LABEL = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Department' }
 const ROLE_COLOR = { student: '#3B82F6', lecturer: '#0D9488', hod: '#D97706' }
@@ -122,6 +123,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
         {children}
       </main>
+
+      {member.demoGroup && <DemoGuide />}
     </div>
   )
 }

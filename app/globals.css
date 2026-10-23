@@ -5,20 +5,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --arthur-blue: #2563EB;
-  --arthur-blue-light: #EFF6FF;
-  --arthur-blue-mid: #BFDBFE;
-  --arthur-navy: #1E3A5F;
-  --arthur-teal: #0D9488;
-  --arthur-teal-light: #F0FDFA;
-  --arthur-warm: #F59E0B;
-  --arthur-warm-light: #FFFBEB;
-  --arthur-green: #059669;
-  --arthur-green-light: #ECFDF5;
-  --arthur-red: #DC2626;
-  --arthur-red-light: #FEF2F2;
-  --arthur-purple: #7C3AED;
-  --arthur-purple-light: #F5F3FF;
+  --curriculum-ai-blue: #2563EB;
+  --curriculum-ai-blue-light: #EFF6FF;
+  --curriculum-ai-blue-mid: #BFDBFE;
+  --curriculum-ai-navy: #1E3A5F;
+  --curriculum-ai-teal: #0D9488;
+  --curriculum-ai-teal-light: #F0FDFA;
+  --curriculum-ai-warm: #F59E0B;
+  --curriculum-ai-warm-light: #FFFBEB;
+  --curriculum-ai-green: #059669;
+  --curriculum-ai-green-light: #ECFDF5;
+  --curriculum-ai-red: #DC2626;
+  --curriculum-ai-red-light: #FEF2F2;
+  --curriculum-ai-purple: #7C3AED;
+  --curriculum-ai-purple-light: #F5F3FF;
   --surface: #FFFFFF;
   --surface-2: #F8FAFC;
   --surface-3: #F1F5F9;
@@ -52,7 +52,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface-2)
 
 .thinking-dot {
   display: inline-block; width:7px; height:7px; border-radius:50%;
-  background: var(--arthur-blue); animation: thinking 1.4s ease-in-out infinite;
+  background: var(--curriculum-ai-blue); animation: thinking 1.4s ease-in-out infinite;
 }
 .thinking-dot:nth-child(2) { animation-delay:.18s; }
 .thinking-dot:nth-child(3) { animation-delay:.36s; }
@@ -88,12 +88,12 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface-2)
 
 /* Status badges */
 .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; letter-spacing:.3px; }
-.badge-blue   { background:var(--arthur-blue-light); color:var(--arthur-blue); }
-.badge-green  { background:var(--arthur-green-light); color:var(--arthur-green); }
-.badge-amber  { background:var(--arthur-warm-light); color:#92400E; }
-.badge-red    { background:var(--arthur-red-light); color:var(--arthur-red); }
-.badge-purple { background:var(--arthur-purple-light); color:var(--arthur-purple); }
-.badge-teal   { background:var(--arthur-teal-light); color:var(--arthur-teal); }
+.badge-blue   { background:var(--curriculum-ai-blue-light); color:var(--curriculum-ai-blue); }
+.badge-green  { background:var(--curriculum-ai-green-light); color:var(--curriculum-ai-green); }
+.badge-amber  { background:var(--curriculum-ai-warm-light); color:#92400E; }
+.badge-red    { background:var(--curriculum-ai-red-light); color:var(--curriculum-ai-red); }
+.badge-purple { background:var(--curriculum-ai-purple-light); color:var(--curriculum-ai-purple); }
+.badge-teal   { background:var(--curriculum-ai-teal-light); color:var(--curriculum-ai-teal); }
 .badge-gray   { background:var(--surface-3); color:var(--text-2); }
 
 /* Metric card */
@@ -116,17 +116,17 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface-2)
 .comp-fail { border-top:3px solid #DC2626; }
 
 /* Input */
-.arthur-input {
+.curriculum-ai-input {
   width:100%; padding:10px 14px; border:1.5px solid var(--border);
   border-radius:10px; font-size:13px; font-family:inherit;
   color:var(--text-1); background:var(--surface-2); outline:none;
   transition:border-color .15s, background .15s;
 }
-.arthur-input:focus { border-color:var(--arthur-blue); background:var(--surface); }
+.curriculum-ai-input:focus { border-color:var(--curriculum-ai-blue); background:var(--surface); }
 
 /* Button */
 .btn-primary {
-  background:var(--arthur-blue); color:#fff; border:none; border-radius:9px;
+  background:var(--curriculum-ai-blue); color:#fff; border:none; border-radius:9px;
   font-size:13px; font-weight:500; font-family:inherit;
   padding:9px 18px; cursor:pointer; transition:background .15s;
 }
@@ -137,7 +137,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface-2)
   border-radius:9px; font-size:13px; font-weight:500; font-family:inherit;
   padding:8px 16px; cursor:pointer; transition:all .15s;
 }
-.btn-ghost:hover { border-color:var(--arthur-blue); color:var(--arthur-blue); background:var(--arthur-blue-light); }
+.btn-ghost:hover { border-color:var(--curriculum-ai-blue); color:var(--curriculum-ai-blue); background:var(--curriculum-ai-blue-light); }
 
 /* Nav pill */
 .nav-pill {
@@ -145,5 +145,5 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface-2)
   color:var(--text-2); cursor:pointer; border:none; background:transparent;
   transition:all .15s; display:flex; align-items:center; gap:7px;
 }
-.nav-pill.active { background:var(--arthur-blue); color:#fff; }
+.nav-pill.active { background:var(--curriculum-ai-blue); color:#fff; }
 .nav-pill:not(.active):hover { background:var(--surface-3); color:var(--text-1); }
