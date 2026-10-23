@@ -6,7 +6,7 @@ topics: [Depreciation, Accruals & prepayments, Bank reconciliation]
 
 # SBS 201 — Sample CAT 2 with Marking Scheme
 
-> Sample material written for the Arthur demo. Not an official Strathmore University paper.
+> Sample material written for the Curriculum AI demo. Not an official Strathmore University paper.
 
 **Time:** 1 hour. **Total:** 30 marks. Show all workings.
 

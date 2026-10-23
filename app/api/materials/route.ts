@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { loadMaterials } from '../../lib/materials'
 import { requireMember } from '../../lib/auth'
 
-// Lists the course notes Arthur answers from (titles only, not the text).
+// Lists the course notes Curriculum AI answers from (titles only, not the text).
 export async function GET(req: NextRequest) {
   const member = await requireMember()
   if (member instanceof Response) return member

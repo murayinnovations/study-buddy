@@ -8,7 +8,7 @@ import { extraMaterials } from '../../lib/db'
 import { requireMember } from '../../lib/auth'
 
 const COURSE_CONTEXTS: Record<string, string> = {
-  'SBS 201': `You are Arthur, a learning companion for Financial Accounting (SBS 201) at Strathmore University, taught by Prof. Mwangi.
+  'SBS 201': `You are Curriculum AI, a learning companion for Financial Accounting (SBS 201) at Strathmore University, taught by Prof. Mwangi.
 
 YOUR IDENTITY: You are a patient, encouraging study partner — not a search engine. You remember what the student has been working on and build on it. You care whether they actually understand, not just whether they got an answer.
 
@@ -31,7 +31,7 @@ YOUR RULES:
 7. Use **bold** for key terms. Use numbered steps for processes. Never use bullet soup.
 8. Never use markdown tables or headings; the chat window can't display them. Lay out workings as numbered lines.`,
 
-  'SBS 102': `You are Arthur, a learning companion for Business Statistics (SBS 102) at Strathmore University, taught by Prof. Kariuki.
+  'SBS 102': `You are Curriculum AI, a learning companion for Business Statistics (SBS 102) at Strathmore University, taught by Prof. Kariuki.
 
 YOUR IDENTITY: Patient, encouraging, precise. You show your working. You use Kenyan economic data.
 
@@ -39,13 +39,13 @@ COURSE CONTENT: Descriptive statistics, frequency distributions, mean/median/mod
 
 YOUR RULES: Only answer within this course. Show step-by-step working for calculations. Use KNBS, CBK, and Kenya Revenue Authority data for examples. After solving, ask the student to try a variation.`,
 
-  'SBS 110': `You are Arthur, a learning companion for Principles of Management (SBS 110) at Strathmore University, taught by Dr. Omondi.
+  'SBS 110': `You are Curriculum AI, a learning companion for Principles of Management (SBS 110) at Strathmore University, taught by Dr. Omondi.
 
 COURSE CONTENT: Classical management theory (Taylor, Fayol, Weber), behavioural school (Maslow, Herzberg, McGregor), planning & decision-making, organisational design, leadership (transformational, servant, situational), motivation theories, communication, control systems, corporate governance, ethics & CSR, African management philosophy (Ubuntu). Case studies: Safaricom, Equity Bank, East African Breweries, Bidco Africa.
 
 YOUR RULES: Ground all answers in the course. Connect theory to Kenyan organisational realities. Encourage critical thinking — ask "what would you do as the manager here?"`,
 
-  'ECO 201': `You are Arthur, a learning companion for Microeconomics (ECO 201) at Strathmore University, taught by Dr. Njagi.
+  'ECO 201': `You are Curriculum AI, a learning companion for Microeconomics (ECO 201) at Strathmore University, taught by Dr. Njagi.
 
 COURSE CONTENT: Demand & supply, price elasticity, consumer theory (utility, indifference curves, budget constraints), production theory (TP, AP, MP), cost curves (short & long run), market structures (perfect competition, monopoly, oligopoly, monopolistic competition), factor markets, market failure, externalities, public goods, game theory basics. Kenyan examples: mobile money market, Unga flour pricing, EPRA fuel regulation, Standard Gauge Railway economics.
 
@@ -76,7 +76,7 @@ function jsonError(status: number, error: string) {
 const PRACTICE_INPUT = z.object({ topic: z.string(), correct: z.boolean() })
 const MISCONCEPTION_INPUT = z.object({ topic: z.string(), misconception: z.string().min(1).max(300) })
 
-// Citation markers the client inserts into Arthur's replies; stripped before replay.
+// Citation markers the client inserts into Curriculum AI's replies; stripped before replay.
 const CITATION_MARKER = /⟦\d+⟧/g
 
 // Each user turn can carry the student's mastery at the moment it was sent.
@@ -84,7 +84,7 @@ const CITATION_MARKER = /⟦\d+⟧/g
 // unchanged, so replayed turns stay byte-identical and the cache keeps hitting.
 function userContent(text: string, context?: string): Anthropic.Beta.BetaContentBlockParam[] {
   const blocks: Anthropic.Beta.BetaContentBlockParam[] = [{ type: 'text', text }]
-  if (context) blocks.push({ type: 'text', text: `[Progress snapshot from Arthur, not written by the student] Topic mastery when this message was sent: ${context}` })
+  if (context) blocks.push({ type: 'text', text: `[Progress snapshot from Curriculum AI, not written by the student] Topic mastery when this message was sent: ${context}` })
   return blocks
 }
 
@@ -93,8 +93,8 @@ const TrackedInput = z.object({
   misconceptions: z.array(z.object({ topic: z.string().max(100), note: z.string().max(300) })).max(5).optional(),
 })
 
-// The tracking tools Arthur called in an earlier turn, rebuilt as tool calls and
-// results ahead of that turn's text. Without them Arthur sees itself marking
+// The tracking tools Curriculum AI called in an earlier turn, rebuilt as tool calls and
+// results ahead of that turn's text. Without them Curriculum AI sees itself marking
 // answers without recording them, and is more likely to skip the tools.
 // Rebuilt the same way every time, so the conversation prefix stays cacheable.
 function trackedTurn(index: number, raw: unknown): Anthropic.Beta.BetaMessageParam[] {
@@ -161,7 +161,7 @@ function toDocument(m: Material): Anthropic.Beta.BetaRequestDocumentBlock {
   }
 }
 
-// Tools Arthur uses to report learning signals. The client turns them into
+// Tools Curriculum AI uses to report learning signals. The client turns them into
 // mastery changes and lecturer insights; the tool results just confirm receipt.
 function trackingTools(topics: string[]): Anthropic.Beta.BetaTool[] {
   return [
@@ -209,7 +209,7 @@ const MAX_TOOL_ROUNDS = 4
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('ANTHROPIC_API_KEY is not set')
-    return jsonError(500, 'Arthur is not configured yet.')
+    return jsonError(500, 'Curriculum AI is not configured yet.')
   }
 
   const member = await requireMember('student')
@@ -230,7 +230,7 @@ export async function POST(req: NextRequest) {
   if (!systemPrompt) return jsonError(400, 'Unknown course.')
 
   // Lecturer additions (approved uploads, saved answers) come from the database.
-  // If it can't be reached, Arthur still answers from the course notes.
+  // If it can't be reached, Curriculum AI still answers from the course notes.
   const extra = await extraMaterials(body.courseCode).catch(err => {
     console.error('Loading lecturer materials failed:', err)
     return []
@@ -255,8 +255,8 @@ export async function POST(req: NextRequest) {
   // Newline-delimited JSON events:
   //   {t:'text', v}                      reply text
   //   {t:'cite', sources}                after a cited passage, so the client can place a marker
-  //   {t:'practice', topic, correct}     Arthur marked a practice answer
-  //   {t:'misconception', topic, note}   Arthur noticed a misconception
+  //   {t:'practice', topic, correct}     Curriculum AI marked a practice answer
+  //   {t:'misconception', topic, note}   Curriculum AI noticed a misconception
   const encoder = new TextEncoder()
   let current: ReturnType<typeof api.beta.messages.stream> | null = null
   const readable = new ReadableStream({

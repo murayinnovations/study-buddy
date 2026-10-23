@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs'
 import path from 'path'
 
-// Course materials Arthur answers from. Until the Supabase materials table
+// Course materials Curriculum AI answers from. Until the Supabase materials table
 // exists, these are the markdown files under content/<course dir>/.
 const COURSE_DIRS: Record<string, string> = {
   'SBS 201': 'sbs201',

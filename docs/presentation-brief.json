@@ -1,5 +1,5 @@
 {
-  "instructions_for_claude": "This is an UPDATE to the Arthur presentation you already made, not a new deck. Keep the existing deck, its theme, layouts and every slide not mentioned below. Apply only the changes in 'changes', in order. Six new screenshots are attached; their file names match the 'screenshots' section. Style the new slide and the new screenshots exactly like the existing ones (same browser-window frame, callout style, colours, eyebrow labels and fonts). Slides are referred to by their current title, with their number in the original 13-slide outline in brackets in case titles were edited; if a slide has moved, find it by title and content. Do not invent figures. Put talking points in speaker notes. When done, list every slide you changed.",
+  "instructions_for_claude": "This is an UPDATE to the Curriculum AI presentation you already made, not a new deck. Keep the existing deck, its theme, layouts and every slide not mentioned below. Apply only the changes in 'changes', in order. Six new screenshots are attached; their file names match the 'screenshots' section. Style the new slide and the new screenshots exactly like the existing ones (same browser-window frame, callout style, colours, eyebrow labels and fonts). Slides are referred to by their current title, with their number in the original 13-slide outline in brackets in case titles were edited; if a slide has moved, find it by title and content. Do not invent figures. Put talking points in speaker notes. When done, list every slide you changed.",
 
   "what_changed_in_the_app": [
     "Sign-in: people sign in with a link emailed to them. No passwords. Only people on the pilot's members list get a link, and the sign-in page gives everyone the same reply so it can't be used to find out who has access.",
@@ -11,11 +11,11 @@
   ],
 
   "screenshots": [
-    { "file": "01-sign-in.jpg", "shows": "The sign-in page: Arthur logo on deep navy, 'Sign in' card with one email field and an 'Email me a sign-in link' button. Text: no password needed.", "callouts": ["Invited email only", "No password"] },
+    { "file": "01-sign-in.jpg", "shows": "The sign-in page: Curriculum AI logo on deep navy, 'Sign in' card with one email field and an 'Email me a sign-in link' button. Text: no password needed.", "callouts": ["Invited email only", "No password"] },
     { "file": "02-check-your-email.jpg", "shows": "After asking for a link: 'Check your email' with the address entered (eric.m@strathmore.edu). The same message shows whether or not the email has access.", "callouts": ["Link arrives by email", "Same reply for everyone"] },
-    { "file": "03-student-signed-in-eric.jpg", "shows": "Eric M. signed in as a student: top bar with a blue 'Student' badge, his name and Sign out; sidebar with his courses and 'Arthur suggests' Depreciation 38%; Arthur's welcome 'Hi Eric'; progress panel at 56% with the gaps Arthur has spotted.", "callouts": ["Role badge", "Eric's own progress", "Sign out"] },
+    { "file": "03-student-signed-in-eric.jpg", "shows": "Eric M. signed in as a student: top bar with a blue 'Student' badge, his name and Sign out; sidebar with his courses and 'Curriculum AI suggests' Depreciation 38%; Curriculum AI's welcome 'Hi Eric'; progress panel at 56% with the gaps Curriculum AI has spotted.", "callouts": ["Role badge", "Eric's own progress", "Sign out"] },
     { "file": "04-lecturer-signed-in-overview.jpg", "shows": "The lecturer signed in (top bar: teal 'Lecturer' badge, 'Muray Innovations · SBS 201 · Financial Accounting', Sign out). Class overview with the line 'Class: 1 signed-up student, whose activity updates these figures live, plus 30 synthetic students while the pilot is small', KPI cards, heatmap and the default session brief.", "callouts": ["Lecturer badge", "Real + synthetic class, labelled"] },
-    { "file": "05-lecturer-live-signed-up-student.jpg", "shows": "Individual students, with Eric's row (STR-2024-0117, ● Live, Today, 66%, On track) highlighted, and his detail panel: per-topic mastery from Depreciation 38% to Accounting equation 92%, and Arthur's recommendation to push Depreciation next.", "callouts": ["● Live: a signed-up student", "Anonymised by student number", "Arthur's recommendation"] },
+    { "file": "05-lecturer-live-signed-up-student.jpg", "shows": "Individual students, with Eric's row (STR-2024-0117, ● Live, Today, 66%, On track) highlighted, and his detail panel: per-topic mastery from Depreciation 38% to Accounting equation 92%, and Curriculum AI's recommendation to push Depreciation next.", "callouts": ["● Live: a signed-up student", "Anonymised by student number", "Curriculum AI's recommendation"] },
     { "file": "06-no-access.jpg", "shows": "Someone who signs in but isn't on the pilot list (guest@example.com) sees 'No access yet' and a Sign out button.", "callouts": ["Invite-only"] }
   ],
 
@@ -30,7 +30,7 @@
     },
     {
       "where": "'Every student gets a tutor that knows their course' (slide 3)",
-      "do": "Replace its screenshot with 03-student-signed-in-eric.jpg. Callouts: 'Student badge', 'Eric's own progress', 'Arthur suggests what to study'. Add to speaker notes: 'Eric has signed in with his own account; what you see is his data only.'"
+      "do": "Replace its screenshot with 03-student-signed-in-eric.jpg. Callouts: 'Student badge', 'Eric's own progress', 'Curriculum AI suggests what to study'. Add to speaker notes: 'Eric has signed in with his own account; what you see is his data only.'"
     },
     {
       "where": "'Every student's progress, live' (slide 8)",
@@ -38,7 +38,7 @@
     },
     {
       "where": "'See what the class doesn't get, and plan the tutorial in one click' (slide 7)",
-      "do": "Keep the existing screenshot (it shows the Arthur-drafted brief, which the new one doesn't). Add one line of small text under it: 'The dashboard counts real signed-up students plus a synthetic class, labelled on screen.'"
+      "do": "Keep the existing screenshot (it shows the Curriculum AI-drafted brief, which the new one doesn't). Add one line of small text under it: 'The dashboard counts real signed-up students plus a synthetic class, labelled on screen.'"
     },
     {
       "where": "NEW slide, insert directly after the Head of Department slide 'Early warning across the department' (slide 11) and before 'Built responsibly' (slide 12)",

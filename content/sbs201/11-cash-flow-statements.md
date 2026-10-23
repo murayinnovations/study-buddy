@@ -6,7 +6,7 @@ topics: [Cash flow statements]
 
 # Week 11 — Statement of Cash Flows (IAS 7)
 
-> Sample material written for the Arthur demo. Not an official Strathmore University document.
+> Sample material written for the Curriculum AI demo. Not an official Strathmore University document.
 
 ## Why profit and cash differ
 

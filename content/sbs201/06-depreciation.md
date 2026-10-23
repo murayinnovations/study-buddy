@@ -6,7 +6,7 @@ topics: [Depreciation]
 
 # Week 6 — Depreciation (IAS 16)
 
-> Sample material written for the Arthur demo. Not an official Strathmore University document.
+> Sample material written for the Curriculum AI demo. Not an official Strathmore University document.
 
 ## Why we depreciate
 

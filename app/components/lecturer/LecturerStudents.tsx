@@ -137,7 +137,7 @@ export default function LecturerStudents() {
             })}
 
             <div style={{ padding:'12px', background:'#FFFBEB', borderRadius:'9px', border:'1px solid #FDE68A' }}>
-              <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'5px' }}>Arthur recommendation (L7)</div>
+              <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'5px' }}>Curriculum AI recommendation (L7)</div>
               <p style={{ fontSize:'12px', color:'#78350F', lineHeight:1.5, margin:0 }}>
                 {selected.status === 'Critical' || selected.status === 'At risk'
                   ? `Last active ${daysAgoLabel(selected.daysAgo).toLowerCase()}, engagement at ${selected.engagement}%. Suggest a direct check-in before the next tutorial, focused on ${selected.weakTopic}.`
