@@ -1,6 +1,6 @@
 # Curriculum AI — Learning Companion for Strathmore University
 
-Curriculum AI is an AI study companion with three views: student, lecturer and Head of Department. The pilot course is Business Intelligence with Power BI (BI-Apr-26), with materials imported from Strathmore's data science learning platform. Courses, their topics, Curriculum AI's instructions for each course and all course material live in the database, not in the code.
+Curriculum AI is an AI study companion with three views: student, lecturer and Head of Department. The pilot course is Business Intelligence with Power BI (BI-Apr-26), with materials imported from Strathmore's data science learning platform. Courses, their topics, Curriculum AI's instructions for each course and all course material live in the database, not in the code
 
 ## Status
 
