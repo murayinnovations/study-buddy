@@ -1,10 +1,9 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { useStore } from '../../lib/demoStore'
-import { buildCohort, SYNTHETIC_COUNT, TAUGHT_TOPICS, type CohortStudent, type Status } from '../../lib/cohort'
+import { buildCohort, syntheticCount, type CohortStudent, type Status } from '../../lib/cohort'
+import { taughtTopics } from '../../lib/demoData'
 import { daysAgoLabel, masteryColor } from '../../lib/format'
-
-const COURSE = 'SBS 201'
 
 const statusCfg: Record<Status,{badge:string;color:string;bg:string}> = {
   'Critical':  { badge:'badge-red',    color:'#DC2626', bg:'#FEF2F2' },
@@ -17,7 +16,9 @@ const ORDER: Status[] = ['Critical', 'At risk', 'On track', 'Excelling']
 
 export default function LecturerStudents() {
   const { state, sendCheckIn } = useStore()
-  const cohort = useMemo(() => buildCohort(state.students), [state.students])
+  const course = state.courses[0]
+  const cohort = useMemo(() => buildCohort(state.students, course), [state.students, course])
+  const synthetic = syntheticCount(course)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | Status>('all')
 
@@ -100,7 +101,7 @@ export default function LecturerStudents() {
             </table>
           </div>
           <p style={{ fontSize:'11px', color:'#94A3B8', marginTop:'10px' }}>
-            Showing {filtered.length} of {cohort.length} students · ● Live marks signed-up students; the other {SYNTHETIC_COUNT} are synthetic
+            Showing {filtered.length} of {cohort.length} students{synthetic > 0 ? ` · ● Live marks signed-up students; the other ${synthetic} are synthetic` : ' · Students appear here once they open Curriculum AI'}
           </p>
         </div>
       </div>
@@ -120,7 +121,7 @@ export default function LecturerStudents() {
               <span className={`badge ${statusCfg[selected.status].badge}`} style={{ marginTop:'8px', display:'inline-flex' }}>{selected.status}</span>
             </div>
 
-            {[...TAUGHT_TOPICS].sort((a, b) => selected.scores[a] - selected.scores[b]).map(t => {
+            {taughtTopics(course).sort((a, b) => selected.scores[a] - selected.scores[b]).map(t => {
               const score = selected.scores[t]
               const color = masteryColor(score)
               return (

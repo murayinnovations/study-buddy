@@ -3,6 +3,7 @@ import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod'
 import { z } from 'zod/v4'
 import { MODEL, FALLBACK, getClient, logUsage } from '../../lib/claude'
 import { requireMember } from '../../lib/auth'
+import { lecturerCourse } from '../../lib/db'
 
 // Drafts the lecturer's next tutorial plan from the class's learning signals.
 
@@ -39,6 +40,8 @@ export async function POST(req: Request) {
   } catch {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
+  const course = await lecturerCourse(member).catch(() => null)
+  if (!course || course.code !== input.course) return Response.json({ error: 'Not allowed.' }, { status: 403 })
 
   const { refresh, ...data } = input
   const key = JSON.stringify(data)
@@ -54,7 +57,7 @@ export async function POST(req: Request) {
       system: 'You help university lecturers plan a 60-minute tutorial from what their students are struggling with. Be specific and practical. Write for the lecturer, in plain language.',
       messages: [{
         role: 'user',
-        content: `Plan the next ${input.course} tutorial (Week ${input.week}).
+        content: `Plan the next ${course.name} (${course.code}) tutorial (Week ${input.week}).
 
 Confusion rate is the share of students below 50% mastery on a topic.
 

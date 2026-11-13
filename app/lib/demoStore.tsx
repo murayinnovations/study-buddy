@@ -84,7 +84,10 @@ function useDemoState(member: Member) {
       update(s => ({ ...s, chats: { ...s.chats, [course]: messages } }), { type: 'setChat', course, messages }),
 
     clearChat: (course: string) =>
-      update(s => ({ ...s, chats: { ...s.chats, [course]: welcomeChat(course, member) } }), { type: 'clearChat', course }),
+      update(s => {
+        const name = s.courses.find(c => c.code === course)?.name ?? course
+        return { ...s, chats: { ...s.chats, [course]: welcomeChat(name, member) } }
+      }, { type: 'clearChat', course }),
 
     // Returns the before/after score so the chat can show the change.
     recordPractice: (course: string, topic: string, correct: boolean, countSession: boolean): ChatEvent => {
@@ -127,10 +130,11 @@ function useDemoState(member: Member) {
       update(s => ({ ...s, questions: s.questions.map(q => q.studentId === member.studentId && q.reply ? { ...q, seenByStudent: true } : q) }),
         { type: 'markRepliesSeen' }),
 
-    uploadMaterial: (m: Pick<UploadedMaterial, 'course' | 'title' | 'type' | 'topics' | 'body'>) => {
+    uploadMaterial: (m: Pick<UploadedMaterial, 'course' | 'title' | 'type' | 'topics'> & { body: string }) => {
       const id = crypto.randomUUID()
-      update(s => ({ ...s, uploads: [...s.uploads, { ...m, id, status: 'pending', uploadedAt: Date.now() }] }),
-        { type: 'uploadMaterial', id, course: m.course, title: m.title, materialType: m.type, topics: m.topics, body: m.body })
+      const { body, ...shown } = m
+      update(s => ({ ...s, uploads: [{ ...shown, id, status: 'pending', source: 'lecturer', fileName: null, uploadedAt: Date.now() }, ...s.uploads] }),
+        { type: 'uploadMaterial', id, course: m.course, title: m.title, materialType: m.type, topics: m.topics, body })
     },
 
     approveMaterial: (id: string) =>

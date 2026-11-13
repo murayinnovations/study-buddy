@@ -1,11 +1,17 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useStore } from '../../lib/demoStore'
 
-const COURSES_DATA = [
-  { code:'SBS 201', name:'Financial Accounting', lecturer:'Prof. Mwangi', students:247, active:214, avg:64, atRisk:12, questions:3, compliance:78, trend:[55,58,61,67,72,68,65,64] },
-  { code:'SBS 102', name:'Business Statistics',  lecturer:'Prof. Kariuki', students:198, active:181, avg:71, atRisk:7,  questions:1, compliance:85, trend:[60,63,65,70,74,72,71,71] },
-  { code:'SBS 110', name:'Principles of Mgmt',  lecturer:'Dr. Omondi',   students:224, active:196, avg:68, atRisk:9,  questions:2, compliance:81, trend:[58,61,64,68,70,69,68,68] },
-  { code:'ECO 201', name:'Microeconomics',       lecturer:'Dr. Njagi',    students:186, active:154, avg:59, atRisk:18, questions:5, compliance:72, trend:[50,52,55,58,62,60,59,59] },
+interface CourseRow {
+  code: string; name: string; lecturer: string; students: number; active: number; avg: number
+  atRisk: number; questions: number; compliance: number | null; trend: number[]; live: boolean
+}
+
+// Illustrative courses shown beside the live ones until more of the department is on Curriculum AI.
+const ILLUSTRATIVE: CourseRow[] = [
+  { code:'DA-PY', name:'Data Analytics with Python', lecturer:'Dr. Omondi', students:42, active:35, avg:66, atRisk:5, questions:2, compliance:81, trend:[58,61,64,68,70,69,67,66], live:false },
+  { code:'SQL-DA', name:'SQL for Data Analysis', lecturer:'Prof. Kariuki', students:38, active:33, avg:71, atRisk:3, questions:1, compliance:85, trend:[60,63,65,70,74,72,71,71], live:false },
+  { code:'ML-F', name:'Machine Learning Foundations', lecturer:'Dr. Njagi', students:31, active:24, avg:58, atRisk:7, questions:4, compliance:72, trend:[50,52,55,58,62,60,59,58], live:false },
 ]
 
 const COMPLIANCE_CHECKS = [
@@ -17,12 +23,7 @@ const COMPLIANCE_CHECKS = [
   { title:'Core unit coverage',  bcom:'94% ✓', bsc:'97% ✓', llb:'88% ✓', standard:'Min: 80%' },
 ]
 
-const AT_RISK_DEPT = [
-  { course:'ECO 201', count:18, pct:9.7, trend:'↑', urgency:'High' },
-  { course:'SBS 201', count:12, pct:4.9, trend:'↑', urgency:'High' },
-  { course:'SBS 110', count:9,  pct:4.0, trend:'→', urgency:'Medium' },
-  { course:'SBS 102', count:7,  pct:3.5, trend:'↓', urgency:'Low' },
-]
+const pctOf = (n: number, of: number) => (of ? Math.round(n / of * 1000) / 10 : 0)
 
 function MiniSparkline({ data, color }: { data:number[]; color:string }) {
   const max = Math.max(...data), min = Math.min(...data)
@@ -36,16 +37,30 @@ function MiniSparkline({ data, color }: { data:number[]; color:string }) {
 }
 
 export default function HoDView() {
+  const { state, member } = useStore()
   const [prog, setProg] = useState('bcom')
-  const [selectedCourse, setSelectedCourse] = useState<typeof COURSES_DATA[0]|null>(null)
+  const [selectedCourse, setSelectedCourse] = useState<CourseRow|null>(null)
   const chartRef = useRef<HTMLCanvasElement>(null)
   const chartInst = useRef<any>(null)
+
+  // Live courses first, from the same class data their lecturers see.
+  const COURSES_DATA = useMemo<CourseRow[]>(() => [
+    ...state.summaries.map(c => ({ ...c, compliance: null, live: true })),
+    ...ILLUSTRATIVE,
+  ], [state.summaries])
+  const liveCount = state.summaries.length
 
   const totalStudents = COURSES_DATA.reduce((s,c)=>s+c.students,0)
   const totalActive   = COURSES_DATA.reduce((s,c)=>s+c.active,0)
   const totalAtRisk   = COURSES_DATA.reduce((s,c)=>s+c.atRisk,0)
   const avgCompr      = Math.round(COURSES_DATA.reduce((s,c)=>s+c.avg,0)/COURSES_DATA.length)
   const unanswered    = COURSES_DATA.reduce((s,c)=>s+c.questions,0)
+  const AT_RISK_DEPT  = [...COURSES_DATA].sort((a,b)=>pctOf(b.atRisk,b.students)-pctOf(a.atRisk,a.students)).map(c => {
+    const pct = pctOf(c.atRisk, c.students)
+    const change = c.trend.length > 1 ? c.trend[c.trend.length-1] - c.trend[c.trend.length-2] : 0
+    // Falling comprehension means risk is rising.
+    return { course:c.code, count:c.atRisk, pct, trend: change < -1 ? '↑' : change > 1 ? '↓' : '→', urgency: pct >= 15 ? 'High' : pct >= 10 ? 'Medium' : 'Low' }
+  })
 
   const scoreMap: Record<string,number> = { bcom:78, bsc:85, llb:69 }
   const score = scoreMap[prog]
@@ -61,7 +76,7 @@ export default function HoDView() {
           labels: COURSES_DATA.map(c=>c.code),
           datasets:[
             { label:'Avg comprehension', data: COURSES_DATA.map(c=>c.avg), backgroundColor:'#BFDBFE', borderRadius:6 },
-            { label:'Engagement %', data: COURSES_DATA.map(c=>Math.round(c.active/c.students*100)), backgroundColor:'#2563EB', borderRadius:6 },
+            { label:'Engagement %', data: COURSES_DATA.map(c=>Math.round(pctOf(c.active,c.students))), backgroundColor:'#2563EB', borderRadius:6 },
           ],
         },
         options:{
@@ -69,13 +84,13 @@ export default function HoDView() {
           plugins:{ legend:{ position:'top', labels:{ font:{size:11,family:'Inter'}, color:'#475569', boxWidth:10, boxHeight:10 } } },
           scales:{
             x:{ticks:{color:'#94A3B8',font:{size:11,family:'Inter'}},grid:{display:false}},
-            y:{min:40,max:100,ticks:{color:'#94A3B8',font:{size:11,family:'Inter'},callback:(v:any)=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},
+            y:{min:0,max:100,ticks:{color:'#94A3B8',font:{size:11,family:'Inter'},callback:(v:any)=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},
           },
         },
       })
     })
     return ()=>{ if(chartInst.current) chartInst.current.destroy() }
-  }, [])
+  }, [COURSES_DATA])
 
   return (
     <div style={{ overflow:'auto', height:'100%', padding:'20px 24px', background:'#F8FAFC' }}>
@@ -85,23 +100,23 @@ export default function HoDView() {
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div>
             <h1 style={{ fontSize:'16px', fontWeight:700, color:'#0F172A', margin:0 }}>Department Overview</h1>
-            <p style={{ fontSize:'12px', color:'#94A3B8', margin:'3px 0 0' }}>Strathmore Business School · Dr. N. Njoroge, Head · Current semester</p>
+            <p style={{ fontSize:'12px', color:'#94A3B8', margin:'3px 0 0' }}>{member.subtitle} · {member.name} · Current semester</p>
           </div>
           <div style={{ display:'flex', gap:'8px' }}>
-            <span className="badge badge-blue">4 active courses</span>
+            <span className="badge badge-blue">{COURSES_DATA.length} courses · {liveCount} live</span>
             <span className="badge badge-amber">{unanswered} unanswered student questions</span>
           </div>
         </div>
 
         <div style={{ padding:'12px 16px', background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:'10px', fontSize:'12px', color:'#78350F', lineHeight:1.5 }}>
-          <strong>Illustrative data.</strong> This view shows what the Head of Department dashboard will report during the pilot. None of these figures are measured yet; the student and lecturer views show the working system.
+          <strong>Partly illustrative.</strong> Courses marked <strong>Live</strong> come from Curriculum AI, from the same class data their lecturers see. The other courses and the compliance figures show what the dashboard will report once more of the department is on Curriculum AI.
         </div>
 
         {/* Dept metrics (H3, H5, H7) */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'14px' }}>
           {[
-            { label:'Total students', val:totalStudents.toString(), sub:'Across 4 courses', delta:'↑ 12% YoY', up:true },
-            { label:'Active this week', val:`${Math.round(totalActive/totalStudents*100)}%`, sub:`${totalActive} students`, delta:'↑ healthy', up:true },
+            { label:'Total students', val:totalStudents.toString(), sub:`Across ${COURSES_DATA.length} courses`, delta:'↑ 12% YoY', up:true },
+            { label:'Active this week', val:`${Math.round(pctOf(totalActive,totalStudents))}%`, sub:`${totalActive} students`, delta:'↑ healthy', up:true },
             { label:'Avg comprehension', val:`${avgCompr}%`, sub:'Department average', delta:'All courses', up:true },
             { label:'At-risk students', val:totalAtRisk.toString(), sub:'Department-wide', delta:'Needs attention', up:false, alert:true },
             { label:'Unanswered Q\'s', val:unanswered.toString(), sub:'Across all courses', delta:'48hr SLA', up:false, warn:true },
@@ -137,17 +152,17 @@ export default function HoDView() {
                     onMouseLeave={e=>{if(selectedCourse?.code!==c.code)(e.currentTarget as HTMLElement).style.background='transparent'}}
                   >
                     <td style={{ padding:'11px 10px' }}>
-                      <div style={{ fontSize:'12px', fontWeight:600, color:'#0F172A' }}>{c.code}</div>
+                      <div style={{ fontSize:'12px', fontWeight:600, color:'#0F172A' }}>{c.code}{c.live && <span className="badge badge-green" style={{ fontSize:'9px', marginLeft:'6px' }}>Live</span>}</div>
                       <div style={{ fontSize:'10px', color:'#94A3B8' }}>{c.name}</div>
                     </td>
                     <td style={{ padding:'11px 10px', fontSize:'11px', color:'#475569' }}>{c.lecturer}</td>
-                    <td style={{ padding:'11px 10px', fontSize:'12px', color:'#475569' }}>{Math.round(c.active/c.students*100)}%</td>
+                    <td style={{ padding:'11px 10px', fontSize:'12px', color:'#475569' }}>{Math.round(pctOf(c.active,c.students))}%</td>
                     <td style={{ padding:'11px 10px', fontSize:'12px', fontWeight:600, color: c.avg>=70?'#059669':c.avg>=60?'#D97706':'#DC2626' }}>{c.avg}%</td>
                     <td style={{ padding:'11px 10px' }}>
-                      <span className={`badge ${c.atRisk>15?'badge-red':c.atRisk>8?'badge-amber':'badge-green'}`}>{c.atRisk}</span>
+                      <span className={`badge ${pctOf(c.atRisk,c.students)>=15?'badge-red':pctOf(c.atRisk,c.students)>=10?'badge-amber':'badge-green'}`}>{c.atRisk}</span>
                     </td>
                     <td style={{ padding:'11px 10px' }}><MiniSparkline data={c.trend} color={c.avg>=65?'#059669':'#D97706'}/></td>
-                    <td style={{ padding:'11px 10px', fontSize:'12px', fontWeight:600, color: c.compliance>=80?'#059669':c.compliance>=70?'#D97706':'#DC2626' }}>{c.compliance}%</td>
+                    <td style={{ padding:'11px 10px', fontSize:'12px', fontWeight:600, color: c.compliance===null?'#94A3B8':c.compliance>=80?'#059669':c.compliance>=70?'#D97706':'#DC2626' }}>{c.compliance===null?'—':`${c.compliance}%`}</td>
                   </tr>
                 ))}
               </tbody>
@@ -158,7 +173,7 @@ export default function HoDView() {
             <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A', marginBottom:'4px' }}>Comprehension vs engagement</div>
             <div style={{ fontSize:'12px', color:'#94A3B8', marginBottom:'14px' }}>Cross-course comparison · This semester</div>
             <div style={{ position:'relative', height:'220px' }}>
-              <canvas ref={chartRef} role="img" aria-label="Bar chart comparing comprehension and engagement across 4 courses"/>
+              <canvas ref={chartRef} role="img" aria-label={`Bar chart comparing comprehension and engagement across ${COURSES_DATA.length} courses`}/>
             </div>
           </div>
         </div>
@@ -174,7 +189,7 @@ export default function HoDView() {
             {[
               { label:'Enrolled', val:`${selectedCourse.students}`, sub:`${selectedCourse.active} active this week` },
               { label:'Avg comprehension', val:`${selectedCourse.avg}%`, sub:`Peak ${Math.max(...selectedCourse.trend)}% this semester` },
-              { label:'At-risk students', val:`${selectedCourse.atRisk}`, sub:`${(selectedCourse.atRisk / selectedCourse.students * 100).toFixed(1)}% of enrolled` },
+              { label:'At-risk students', val:`${selectedCourse.atRisk}`, sub:`${pctOf(selectedCourse.atRisk, selectedCourse.students)}% of enrolled` },
               { label:'Unanswered questions', val:`${selectedCourse.questions}`, sub:'Target: reply within 48 hours' },
             ].map(m => (
               <div key={m.label} className="metric">

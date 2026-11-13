@@ -1,15 +1,19 @@
 import { NextRequest } from 'next/server'
-import { loadMaterials } from '../../lib/materials'
+import { fileLink } from '../../lib/db'
 import { requireMember } from '../../lib/auth'
 
-// Lists the course notes Curriculum AI answers from (titles only, not the text).
+// Opens the original file behind a course material (/api/materials?id=…) with a
+// short-lived link, for members who can see that course.
 export async function GET(req: NextRequest) {
   const member = await requireMember()
   if (member instanceof Response) return member
-  const course = req.nextUrl.searchParams.get('course') || ''
-  const materials = await loadMaterials(course)
-  // The notes only change on deploy, so let the browser reuse this list for 5 minutes.
-  return Response.json(materials.map(m => ({ title: m.title, type: m.type, topics: m.topics })), {
-    headers: { 'Cache-Control': 'private, max-age=300' },
-  })
+  const id = req.nextUrl.searchParams.get('id') || ''
+  try {
+    const url = id && await fileLink(member, id)
+    if (!url) return Response.json({ error: 'File not found.' }, { status: 404 })
+    return Response.redirect(url, 302)
+  } catch (err) {
+    console.error('Opening a course file failed:', err)
+    return Response.json({ error: 'Could not open the file.' }, { status: 502 })
+  }
 }

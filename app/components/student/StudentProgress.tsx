@@ -1,6 +1,5 @@
 'use client'
-import type { Course } from './studentData'
-import { useStore } from '../../lib/demoStore'
+import { useStore, type Course } from '../../lib/demoStore'
 import { average, daysAgoLabel, masteryColor } from '../../lib/format'
 
 function MasteryBar({ score }: { score: number }) {
@@ -19,6 +18,7 @@ export default function StudentProgress({ selectedCourse, onClose }: { selectedC
   const strongTopics = sorted.filter(t => t.score >= 75).reverse()
   const avgScore = average(topics.map(t => t.score))
   const practice = state.practiceLog.filter(p => p.course === selectedCourse.code)
+  const files = state.files.filter(f => f.course === selectedCourse.code)
 
   return (
     <aside style={{
@@ -142,6 +142,22 @@ export default function StudentProgress({ selectedCourse, onClose }: { selectedC
                 <span style={{ fontSize:'12px', color:'#065F46' }}>{t.topic}</span>
                 <span style={{ fontSize:'11px', fontWeight:700, color:'#059669' }}>{t.score}%</span>
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* The original files Curriculum AI teaches from */}
+        {files.length > 0 && (
+          <div>
+            <div style={{ fontSize:'10px', fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.6px', marginBottom:'8px' }}>
+              Course files
+            </div>
+            {files.map(f => (
+              <a key={f.id} href={`/api/materials?id=${encodeURIComponent(f.id)}`} title={f.fileName}
+                style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'8px', padding:'7px 12px', background:'#F8FAFC', borderRadius:'7px', marginBottom:'5px', textDecoration:'none' }}>
+                <span style={{ fontSize:'12px', color:'#1E293B', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{f.title}</span>
+                <span style={{ fontSize:'10px', color:'#94A3B8', flexShrink:0 }}>{f.fileName.split('.').pop()?.toUpperCase()} ↓</span>
+              </a>
             ))}
           </div>
         )}

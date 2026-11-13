@@ -1,15 +1,14 @@
 import { z } from 'zod/v4'
-import { COURSES } from '../../components/student/studentData'
-import { hasDatabase, loadState, applyAction, mayApply, type StoreAction } from '../../lib/db'
+import { hasDatabase, loadState, applyAction, allowedCourse, type StoreAction } from '../../lib/db'
 import { requireMember } from '../../lib/auth'
 
 // The browser's only door to the database: GET reads what the signed-in member
 // can see, POST applies one change they're allowed to make. Inputs are
-// validated and sized here.
+// validated and sized here; which courses a member may touch is checked in db.ts.
 
 export const dynamic = 'force-dynamic'
 
-const course = z.enum(COURSES.map(c => c.code) as [string, ...string[]])
+const course = z.string().min(1).max(100)
 const id = z.string().min(1).max(64)
 const text = (max: number) => z.string().max(max)
 
@@ -81,9 +80,10 @@ export async function POST(req: Request) {
   } catch {
     return Response.json({ error: 'Invalid change.' }, { status: 400 })
   }
-  if (!mayApply(member, action)) return Response.json({ error: 'Not allowed.' }, { status: 403 })
   try {
-    await applyAction(member, action)
+    const course = await allowedCourse(member, action)
+    if (!course) return Response.json({ error: 'Not allowed.' }, { status: 403 })
+    await applyAction(member, action, course)
     return Response.json({ ok: true })
   } catch (err) {
     console.error(`Saving ${action.type} failed:`, err)

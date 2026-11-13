@@ -1,11 +1,13 @@
 // Manages who can sign in to Curriculum AI.
 //
 //   node --env-file=.env.local scripts/members.mjs list
-//   node --env-file=.env.local scripts/members.mjs add <email> student "<name>" <student number> [--sample] [--subtitle "<text>"] [--group <name>]
-//   node --env-file=.env.local scripts/members.mjs add <email> lecturer|hod "<name>" [--subtitle "<text>"] [--group <name>]
+//   node --env-file=.env.local scripts/members.mjs add <email> student "<name>" <student number> [--subtitle "<text>"] [--group <name>]
+//   node --env-file=.env.local scripts/members.mjs add <email> lecturer "<name>" [--course <code>] [--subtitle "<text>"] [--group <name>]
+//   node --env-file=.env.local scripts/members.mjs add <email> hod "<name>" [--subtitle "<text>"] [--group <name>]
 //   node --env-file=.env.local scripts/members.mjs remove <email>
 //
-// --sample starts a student from the demo's sample progress instead of zero (for demo accounts).
+// --course sets the course a lecturer teaches (a code from the courses table). Without it,
+// the lecturer gets the first active course.
 // --group puts an account in a demo group: members of the same group can switch between each
 // other's views with one click in the app, instead of signing in separately as each role. Give
 // the student, lecturer and HoD demo accounts the same --group value to enable that for them.
@@ -27,9 +29,8 @@ const flag = name => {
   const [, value] = args.splice(i, 2)
   return value
 }
-const sample = args.includes('--sample')
-if (sample) args.splice(args.indexOf('--sample'), 1)
 const subtitle = flag('--subtitle')
+const course = flag('--course')
 const group = flag('--group')
 const [command, rawEmail, role, name, studentId] = args
 
@@ -39,21 +40,27 @@ function fail(message) {
 }
 
 if (command === 'list') {
-  const { data, error } = await db.from('members').select('email, role, name, student_id, sample_data, demo_group').order('role').order('email')
+  const { data, error } = await db.from('members').select('email, role, name, student_id, course, demo_group').order('role').order('email')
   if (error) fail(error.message)
   console.table(data)
 } else if (command === 'add') {
   const email = rawEmail?.toLowerCase()
   if (!email?.includes('@') || !['student', 'lecturer', 'hod'].includes(role) || !name) fail('Usage: add <email> <student|lecturer|hod> "<name>" [student number]')
   if (role === 'student' && !studentId) fail('Students need a student number, e.g. STR-2024-0117.')
+  if (course && role !== 'lecturer') fail('--course is for lecturers only.')
+  if (course) {
+    const { data: found, error } = await db.from('courses').select('code').eq('code', course).maybeSingle()
+    if (error) fail(error.message)
+    if (!found) fail(`No course with code "${course}". Import it first with scripts/import-course.mjs.`)
+  }
   const { error } = await db.from('members').upsert({
     email, role, name, subtitle: subtitle ?? null,
     student_id: role === 'student' ? studentId : null,
-    sample_data: role === 'student' && sample,
+    course: role === 'lecturer' ? course ?? null : null,
     demo_group: group ?? null,
   })
   if (error) fail(error.message)
-  console.log(`${email} can now sign in as ${role}.${group ? ` In demo group "${group}".` : ''}`)
+  console.log(`${email} can now sign in as ${role}.${course ? ` Teaching ${course}.` : ''}${group ? ` In demo group "${group}".` : ''}`)
 } else if (command === 'remove') {
   const { error } = await db.from('members').delete().eq('email', rawEmail?.toLowerCase())
   if (error) fail(error.message)

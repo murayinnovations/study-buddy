@@ -1,56 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 import { z } from 'zod/v4'
-import { loadMaterials, type Material } from '../../lib/materials'
-import { courseTopics } from '../../components/student/studentData'
 import { MODEL, EFFORT, FALLBACK, getClient, logUsage } from '../../lib/claude'
-import { extraMaterials } from '../../lib/db'
+import { getCourse, courseMaterials, type Material } from '../../lib/db'
 import { requireMember } from '../../lib/auth'
-
-const COURSE_CONTEXTS: Record<string, string> = {
-  'SBS 201': `You are Curriculum AI, a learning companion for Financial Accounting (SBS 201) at Strathmore University, taught by Prof. Mwangi.
-
-YOUR IDENTITY: You are a patient, encouraging study partner — not a search engine. You remember what the student has been working on and build on it. You care whether they actually understand, not just whether they got an answer.
-
-COURSE MATERIALS: The student's first message comes with the approved SBS 201 course materials attached as documents (lecture notes, the course outline and a sample CAT with marking scheme). They are your source of truth.
-- Base explanations, definitions, methods and course conventions on these documents, and cite them.
-- Use the same terminology and conventions as the notes (e.g. "carrying amount", pro-rata part-year depreciation).
-- If the materials do not cover something the student asks about, say so plainly, give only a brief general pointer, and suggest they use "Ask lecturer".
-- Topics in the course: accounting equation, double-entry bookkeeping, ledger accounts, trial balance, income statements (IFRS), balance sheets, cash flow statements (IAS 7), accruals & prepayments, depreciation (straight-line & reducing balance, IAS 16), bank reconciliation, partnership accounts, company financial statements.
-- Standards: IFRS as adopted in Kenya. IAS 1, IAS 7, IAS 16, IAS 37.
-- Assessment: CATs 30%, final exam 70%. Exam format: structured questions with workings.
-- Context: Strathmore Business School. Kenyan business examples (Safaricom, Equity Bank, KCB, East African Breweries, Bidco Africa, Nation Media Group).
-
-YOUR RULES:
-1. Only answer from within this course. If asked outside it, say so plainly.
-2. Use Socratic method when helpful — guide with questions rather than handing over answers.
-3. Adapt depth to the student's evident level. Struggling → simpler. Confident → go deeper.
-4. After explaining, offer a practice question OR ask if they want one.
-5. Be warm and specific. Not "good job" but "you've got the debit side exactly right — now let's look at the credit."
-6. Keep responses focused. Under 200 words unless working through a detailed problem.
-7. Use **bold** for key terms. Use numbered steps for processes. Never use bullet soup.
-8. Never use markdown tables or headings; the chat window can't display them. Lay out workings as numbered lines.`,
-
-  'SBS 102': `You are Curriculum AI, a learning companion for Business Statistics (SBS 102) at Strathmore University, taught by Prof. Kariuki.
-
-YOUR IDENTITY: Patient, encouraging, precise. You show your working. You use Kenyan economic data.
-
-COURSE CONTENT: Descriptive statistics, frequency distributions, mean/median/mode, standard deviation, variance, probability theory, Bayes theorem, normal distribution, sampling methods, hypothesis testing (t-test, z-test), chi-square, correlation & regression, time series, index numbers. Tools: Excel, SPSS introduced Week 10.
-
-YOUR RULES: Only answer within this course. Show step-by-step working for calculations. Use KNBS, CBK, and Kenya Revenue Authority data for examples. After solving, ask the student to try a variation.`,
-
-  'SBS 110': `You are Curriculum AI, a learning companion for Principles of Management (SBS 110) at Strathmore University, taught by Dr. Omondi.
-
-COURSE CONTENT: Classical management theory (Taylor, Fayol, Weber), behavioural school (Maslow, Herzberg, McGregor), planning & decision-making, organisational design, leadership (transformational, servant, situational), motivation theories, communication, control systems, corporate governance, ethics & CSR, African management philosophy (Ubuntu). Case studies: Safaricom, Equity Bank, East African Breweries, Bidco Africa.
-
-YOUR RULES: Ground all answers in the course. Connect theory to Kenyan organisational realities. Encourage critical thinking — ask "what would you do as the manager here?"`,
-
-  'ECO 201': `You are Curriculum AI, a learning companion for Microeconomics (ECO 201) at Strathmore University, taught by Dr. Njagi.
-
-COURSE CONTENT: Demand & supply, price elasticity, consumer theory (utility, indifference curves, budget constraints), production theory (TP, AP, MP), cost curves (short & long run), market structures (perfect competition, monopoly, oligopoly, monopolistic competition), factor markets, market failure, externalities, public goods, game theory basics. Kenyan examples: mobile money market, Unga flour pricing, EPRA fuel regulation, Standard Gauge Railway economics.
-
-YOUR RULES: Ground answers in course only. Draw on Kenyan market examples. For graph-based questions, describe the diagram verbally in clear steps.`,
-}
 
 const MAX_MESSAGES = 40
 const MAX_MESSAGE_CHARS = 4000
@@ -194,6 +147,24 @@ function trackingTools(topics: string[]): Anthropic.Beta.BetaTool[] {
   ]
 }
 
+// The parts of Curriculum AI's instructions that are the same in every course.
+// Each course's own instructions (who teaches it, what it covers, how to teach it)
+// are in the courses table.
+
+const MATERIALS_PROMPT = `
+
+COURSE MATERIALS: The student's first message comes with the course's approved materials attached as documents (lecture notes, slides, practical workbooks, assignments, sample datasets, and answers the lecturer has saved). They are your source of truth.
+- Base explanations, definitions, methods and course conventions on these documents, and cite them.
+- Use the same terminology and conventions as the materials.
+- If the materials do not cover something the student asks about, say so plainly, give only a brief general pointer, and suggest they use "Ask lecturer".`
+
+const NO_MATERIALS_PROMPT = `
+
+COURSE MATERIALS: No course materials have been approved for this course yet. Stay within the course syllabus above, and suggest "Ask lecturer" for anything course-specific such as assessment details.`
+
+const FORMAT_PROMPT = `
+
+FORMAT: Keep responses focused, under 200 words unless working through a detailed problem. Use **bold** for key terms and numbered steps for processes. Never use markdown tables or headings; the chat window can't display them. Lay out workings as numbered lines.`
 
 const TRACKING_PROMPT = `
 
@@ -226,30 +197,32 @@ export async function POST(req: NextRequest) {
   const messages = parseMessages(body?.messages)
   if (!messages) return jsonError(400, 'Invalid messages.')
 
-  const systemPrompt = COURSE_CONTEXTS[body.courseCode]
-  if (!systemPrompt) return jsonError(400, 'Unknown course.')
+  // The course, its instructions and its material all come from the database.
+  let course: Awaited<ReturnType<typeof getCourse>> = null
+  let materials: Awaited<ReturnType<typeof courseMaterials>> | undefined
+  try {
+    course = typeof body.courseCode === 'string' ? await getCourse(body.courseCode) : null
+    if (course) materials = await courseMaterials(course.code)
+  } catch (err) {
+    console.error('Loading the course failed:', err)
+    return jsonError(502, 'Curriculum AI could not load this course. Try again in a moment.')
+  }
+  if (!course || !materials) return jsonError(400, 'Unknown course.')
 
-  // Lecturer additions (approved uploads, saved answers) come from the database.
-  // If it can't be reached, Curriculum AI still answers from the course notes.
-  const extra = await extraMaterials(body.courseCode).catch(err => {
-    console.error('Loading lecturer materials failed:', err)
-    return []
-  })
-
-  // Attach the course materials to the first user turn. The fixed course notes
+  // Attach the course material to the first user turn. The imported course notes
   // come first and carry the cache breakpoint, so lecturer additions after them
   // don't invalidate the cached notes.
-  const materials = await loadMaterials(body.courseCode)
-  if (materials.length > 0) {
-    const docs = materials.map(toDocument)
-    docs[docs.length - 1].cache_control = { type: 'ephemeral' }
-    messages[0] = { role: 'user', content: [...docs, ...extra.map(toDocument), ...(messages[0].content as Anthropic.Beta.BetaContentBlockParam[])] }
+  const notes = materials.notes.map(toDocument)
+  if (notes.length > 0) notes[notes.length - 1].cache_control = { type: 'ephemeral' }
+  const docs = [...notes, ...materials.extra.map(toDocument)]
+  if (docs.length > 0) {
+    messages[0] = { role: 'user', content: [...docs, ...(messages[0].content as Anthropic.Beta.BetaContentBlockParam[])] }
   }
 
-  const topics = courseTopics(body.courseCode)
+  const topics = course.topics.map(t => t.topic)
   const tools = trackingTools(topics)
   // Fixed per course, so the tools + system + notes prefix is cached across every turn.
-  const system = systemPrompt + TRACKING_PROMPT
+  const system = course.prompt + (docs.length > 0 ? MATERIALS_PROMPT : NO_MATERIALS_PROMPT) + FORMAT_PROMPT + TRACKING_PROMPT
   const api = getClient()
 
   // Newline-delimited JSON events:

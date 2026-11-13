@@ -6,14 +6,33 @@
 -- the signed-in member's role and use the secret key. Row-level security is enabled on
 -- every table with no policies, which blocks the publishable key entirely.
 
--- Who may sign in, and as what. Add people with scripts/add-member.mjs.
+-- The courses students see, and everything Curriculum AI needs to teach each one.
+-- Load a course and its materials with scripts/import-course.mjs.
+create table if not exists courses (
+  code            text primary key,
+  name            text not null,
+  lecturer        text not null,                 -- as students see it, e.g. 'T. Andambi & E. Chemekeki'
+  credits         int  not null default 3,
+  color           text not null default '#2563EB',
+  prompt          text not null,                 -- Curriculum AI's instructions for this course
+  topics          jsonb not null default '[]',   -- [{ "topic": "…", "week": 1 }] in teaching order
+  current_week    int,                           -- taught up to this week; null means every topic
+  total_weeks     int,
+  starters        jsonb not null default '[]',   -- [{ "label": "…", "prompt": "…" }] shown on an empty chat
+  synthetic_class boolean not null default false, -- pad the lecturer dashboards with 30 synthetic students
+  position        int  not null default 0,       -- order in the student's course list
+  active          boolean not null default true, -- inactive courses are hidden from everyone
+  created_at      timestamptz not null default now()
+);
+
+-- Who may sign in, and as what. Add people with scripts/members.mjs.
 create table if not exists members (
   email       text primary key check (email = lower(email)),
   role        text not null check (role in ('student', 'lecturer', 'hod')),
   name        text not null,
   student_id  text unique,                 -- students only: their student number
   subtitle    text,                        -- shown under the name, e.g. 'Year 2 · BCom · SBS'
-  sample_data boolean not null default false, -- students only: start from sample mastery (for demos)
+  sample_data boolean not null default false, -- no longer used: every student now starts from zero
   demo_group  text,                           -- members sharing a group can switch between each other's views
   created_at  timestamptz not null default now(),
   check ((role = 'student') = (student_id is not null))
@@ -21,6 +40,8 @@ create table if not exists members (
 
 -- Added after the table above already existed in some projects; harmless if the column is already there.
 alter table members add column if not exists demo_group text;
+-- Lecturers: the course they teach. Left empty, a lecturer gets the first active course.
+alter table members add column if not exists course text;
 
 
 create table if not exists mastery (
@@ -88,6 +109,19 @@ create table if not exists materials (
   created_at timestamptz not null default now()
 );
 
+-- Course material imported from the university's platform sits alongside lecturer uploads.
+-- body is the text Curriculum AI reads; file_path is the original in the course-files bucket.
+alter table materials add column if not exists source    text not null default 'lecturer' check (source in ('lecturer', 'platform'));
+alter table materials add column if not exists file_path text;
+alter table materials add column if not exists file_name text;
+alter table materials add column if not exists position  int not null default 0;
+create index if not exists materials_course on materials (course, status, source, position);
+
+-- Original files (PDF, Word, PowerPoint, Excel). Private: the app hands out short-lived links
+-- to signed-in members only.
+insert into storage.buckets (id, name, public) values ('course-files', 'course-files', false)
+on conflict (id) do nothing;
+
 create table if not exists goals (
   id         text primary key,
   course     text not null,
@@ -121,6 +155,7 @@ create index if not exists questions_course_created on questions (course, create
 create index if not exists misconceptions_course_created on misconceptions (course, created_at desc);
 create index if not exists practice_log_student on practice_log (student_id, course);
 
+alter table courses            enable row level security;
 alter table members            enable row level security;
 alter table mastery            enable row level security;
 alter table practice_log       enable row level security;

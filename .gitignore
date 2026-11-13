@@ -1,10 +1,31 @@
 node_modules/
 .next/
-.env*.local
-.env
 .DS_Store
-*.pem
 npm-debug.log*
 *.tsbuildinfo
-supabase/.temp/
 docs/presentation-brief.json
+
+# Secrets: every env file (any spelling) except the committed template
+.env
+.env*
+.env *
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+id_rsa*
+*.secret
+secrets/
+credentials*.json
+service-account*.json
+
+# Local tool state that can hold tokens or project links
+.vercel/
+supabase/.temp/
+supabase/.branches/
+.claude/settings.local.json
+
+# Raw exports from the university platform (may contain student or staff data)
+imports/raw/

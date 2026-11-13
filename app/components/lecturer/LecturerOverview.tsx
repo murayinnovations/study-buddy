@@ -1,11 +1,8 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore, type BriefItem } from '../../lib/demoStore'
-import { buildCohort, SYNTHETIC_COUNT, topicStats, TREND_HISTORY } from '../../lib/cohort'
-import { CURRENT_WEEK } from '../student/studentData'
+import { buildCohort, syntheticCount, topicStats, TREND_HISTORY } from '../../lib/cohort'
 import { average, timeAgo } from '../../lib/format'
-
-const COURSE = 'SBS 201'
 
 const heatLevel = (confusion: number) => confusion >= 50 ? 5 : confusion >= 40 ? 4 : confusion >= 30 ? 3 : confusion >= 20 ? 2 : 1
 
@@ -15,8 +12,13 @@ export default function LecturerOverview() {
   const chartInst = useRef<any>(null)
   const [briefState, setBriefState] = useState<'idle' | 'loading' | 'error'>('idle')
 
-  const cohort = useMemo(() => buildCohort(state.students), [state.students])
-  const stats = useMemo(() => topicStats(cohort), [cohort])
+  const course = state.courses[0]
+  const COURSE = course.code
+  // The week the next tutorial is in: the course's current week, or its last.
+  const week = course.currentWeek ?? course.totalWeeks ?? 1
+  const synthetic = syntheticCount(course)
+  const cohort = useMemo(() => buildCohort(state.students, course), [state.students, course])
+  const stats = useMemo(() => topicStats(cohort, course), [cohort, course])
   const misconceptions = state.misconceptions.filter(m => m.course === COURSE)
   const questions = state.questions.filter(q => q.course === COURSE)
 
@@ -41,7 +43,7 @@ export default function LecturerOverview() {
   // used, so we can say when it's out of date instead of redrafting automatically.
   const briefInput = {
     course: COURSE,
-    week: CURRENT_WEEK,
+    week,
     topics: stats,
     misconceptions: misconceptions.slice(0, 15).map(m => `${m.topic}: ${m.note}`),
     questions: questions.slice(0, 10).map(q => `${q.topic}: ${q.question}`.slice(0, 1000)),
@@ -73,11 +75,13 @@ export default function LecturerOverview() {
     import('chart.js/auto').then(({default:Chart}) => {
       if (!chartRef.current) return
       if (chartInst.current) chartInst.current.destroy()
-      const data = [...TREND_HISTORY, classAvg]
+      // Demo history only for courses with a synthetic class; otherwise just this week's live figure.
+      const history = synthetic > 0 && week > 1 ? TREND_HISTORY.slice(-(week - 1)) : []
+      const data = [...history, classAvg]
       chartInst.current = new Chart(chartRef.current, {
         type:'line',
         data:{
-          labels: data.map((_, i) => `Wk ${i + 1}`),
+          labels: data.map((_, i) => `Wk ${week - data.length + i + 1}`),
           datasets:[{
             label:'Comprehension %',
             data,
@@ -91,29 +95,29 @@ export default function LecturerOverview() {
           plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1E3A5F', titleColor:'#fff', bodyColor:'#93C5FD', padding:10 } },
           scales:{
             x:{ticks:{color:'#94A3B8',font:{size:11,family:'Inter'}},grid:{color:'rgba(0,0,0,.04)'}},
-            y:{min:40,max:85,ticks:{color:'#94A3B8',font:{size:11,family:'Inter'},callback:(v:any)=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},
+            y:{min:0,max:100,ticks:{color:'#94A3B8',font:{size:11,family:'Inter'},callback:(v:any)=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},
           },
         },
       })
     })
     return () => { if(chartInst.current) chartInst.current.destroy() }
-  }, [classAvg])
+  }, [classAvg, synthetic, week])
 
   return (
     <div style={{ overflow:'auto', height:'100%', padding:'20px 24px', background:'#F8FAFC' }}>
       <div style={{ maxWidth:'1100px', margin:'0 auto', display:'flex', flexDirection:'column', gap:'18px' }}>
 
         <div style={{ fontSize:'11px', color:'#94A3B8' }}>
-          Class: {cohort.length - SYNTHETIC_COUNT} signed-up student{cohort.length - SYNTHETIC_COUNT === 1 ? '' : 's'}, whose activity updates these figures live, plus {SYNTHETIC_COUNT} synthetic students while the pilot is small.
+          Class: {cohort.length - synthetic} signed-up student{cohort.length - synthetic === 1 ? '' : 's'}, whose activity updates these figures live{synthetic > 0 ? `, plus ${synthetic} synthetic students while the pilot is small` : ''}.
         </div>
 
         {/* Metrics */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'14px' }}>
           {[
             { label:'Active students', val:`${active}`, sub:`of ${cohort.length} in the class · last 7 days` },
-            { label:'Avg comprehension', val:`${classAvg}%`, sub:`Topics taught to Week ${CURRENT_WEEK}` },
+            { label:'Avg comprehension', val:`${classAvg}%`, sub: course.currentWeek ? `Topics taught to Week ${course.currentWeek}` : 'All course topics' },
             { label:'At-risk students', val:`${atRisk}`, sub:'Critical or at risk', alert:true },
-            { label:'Top confusion', val: top.topic, sub:`${top.confusion}% below 50% mastery`, warn:true },
+            { label:'Top confusion', val: top && cohort.length > 0 ? top.topic : '—', sub: top && cohort.length > 0 ? `${top.confusion}% below 50% mastery` : 'No student data yet', warn:true },
           ].map(m => (
             <div key={m.label} className="metric">
               <div className="metric-label">{m.label}</div>
@@ -156,7 +160,7 @@ export default function LecturerOverview() {
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px', gap:'8px' }}>
               <div>
                 <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Session brief</div>
-                <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Next tutorial · Week {CURRENT_WEEK}</div>
+                <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Next tutorial · Week {week}</div>
               </div>
               <button onClick={draftBrief} disabled={briefState === 'loading'} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 10px', flexShrink:0 }}>
                 {briefState === 'loading' ? 'Drafting…' : saved ? '↻ Refresh' : '✦ Draft with Curriculum AI'}
@@ -191,7 +195,7 @@ export default function LecturerOverview() {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
             <div>
               <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Weekly comprehension trend</div>
-              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>{COURSE} · Weeks 1–{CURRENT_WEEK - 1} are demo history; Week {CURRENT_WEEK} is live</div>
+              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>{COURSE} · {synthetic > 0 ? `Earlier weeks are demo history; Week ${week} is live` : `Week ${week} is live; earlier weeks build up as the class uses Curriculum AI`}</div>
             </div>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:'24px', alignItems:'start' }}>

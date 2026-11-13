@@ -1,10 +1,8 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { QUICK_STARTERS, CURRENT_WEEK, courseTopics, type Course } from './studentData'
-import { useStore, type ChatMessage, type ChatEvent, type Source } from '../../lib/demoStore'
-
-// Courses whose answers are grounded in uploaded materials (see app/lib/materials.ts).
-const GROUNDED_COURSES = ['SBS 201']
+import { useStore, type ChatMessage, type ChatEvent, type Source, type Course } from '../../lib/demoStore'
+import { taughtTopics } from '../../lib/demoData'
+import { initials } from '../../lib/format'
 
 function escapeHtml(text: string) {
   return text
@@ -51,8 +49,9 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
   clearPendingPrompt: () => void
 }) {
   const store = useStore()
-  const { state, setChat, clearChat, recordPractice, noteMisconception, askLecturer } = store
+  const { member, state, setChat, clearChat, recordPractice, noteMisconception, askLecturer } = store
   const course = selectedCourse.code
+  const grounded = selectedCourse.hasMaterials
   const messages = state.chats[course] || []
 
   // The reply being streamed; committed to the store when it finishes.
@@ -188,7 +187,8 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
     if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
-  const weakestStarted = [...topics].filter(t => t.sessions > 0 && (t.week ?? 0) <= CURRENT_WEEK).sort((a, b) => a.score - b.score)[0]
+  const taught = new Set(taughtTopics(selectedCourse))
+  const weakestStarted = [...topics].filter(t => t.sessions > 0 && taught.has(t.topic)).sort((a, b) => a.score - b.score)[0]
 
   const openFlagModal = () => {
     const lastUser = [...messages].reverse().find(m => m.role==='user')
@@ -238,7 +238,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
             {selectedCourse.name} — {selectedCourse.code}
           </div>
           <div style={{ fontSize:'11px', color:'#94A3B8', marginTop:'2px' }}>
-            {selectedCourse.lecturer} · {GROUNDED_COURSES.includes(course) ? 'Answers from approved course materials' : 'Course materials not yet uploaded'}
+            {selectedCourse.lecturer} · {grounded ? 'Answers from approved course materials' : 'Course materials not yet uploaded'}
           </div>
         </div>
         <div style={{ display:'flex', gap:'8px', alignItems:'center', flexShrink:0 }}>
@@ -278,7 +278,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
                   <path d="M12 4C9 4 7 6 7 9c0 1.8.8 3.4 2 4.4V15h6v-1.6c1.2-1 2-2.6 2-4.4 0-3-2-5-5-5z" fill="white" opacity=".9"/>
                   <rect x="9" y="15" width="6" height="1.5" rx=".75" fill="white" opacity=".7"/>
                 </svg>
-              ) : 'SK'}
+              ) : initials(member.name)}
             </div>
             <div style={{ display:'flex', flexDirection:'column', alignItems: msg.role==='user' ? 'flex-end' : 'flex-start', maxWidth:'72%' }}>
               <span style={{ fontSize:'10px', fontWeight:700, color:'#94A3B8', marginBottom:'4px', letterSpacing:'.3px' }}>
@@ -338,7 +338,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
       {/* Quick starters — only when no user messages yet */}
       {!hasUserMessages && !streaming && (
         <div style={{ padding:'0 24px 12px', display:'flex', gap:'6px', flexWrap:'wrap' }}>
-          {(QUICK_STARTERS[course] || []).map(q => (
+          {selectedCourse.starters.map(q => (
             <button
               key={q.label}
               onClick={() => send(q.prompt)}
@@ -401,7 +401,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
           </button>
         </div>
         <div style={{ marginTop:'7px', fontSize:'11px', color:'#94A3B8', textAlign:'center' }}>
-          {GROUNDED_COURSES.includes(course)
+          {grounded
             ? <>Curriculum AI answers from {course} course materials and cites the notes it used</>
             : <>Curriculum AI sticks to the {course} syllabus · Course materials not yet uploaded</>}
         </div>
@@ -425,7 +425,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
             <label style={{ fontSize:'11px', fontWeight:600, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.5px' }}>Topic</label>
             <select value={flagTopic} onChange={e => setFlagTopic(e.target.value)}
               style={{ width:'100%', margin:'5px 0 12px', fontSize:'13px', padding:'8px 10px', borderRadius:'8px', border:'1.5px solid #E2E8F0', fontFamily:'inherit', background:'#F8FAFC', color:'#0F172A' }}>
-              {courseTopics(course).map(t => <option key={t} value={t}>{t}</option>)}
+              {selectedCourse.topics.map(t => <option key={t.topic} value={t.topic}>{t.topic}</option>)}
             </select>
             <label style={{ fontSize:'11px', fontWeight:600, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.5px' }}>Your question</label>
             <textarea value={flagText} onChange={e => setFlagText(e.target.value)} rows={4} placeholder="What are you stuck on?"

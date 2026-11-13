@@ -1,8 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { COURSES, CURRENT_WEEK, type Course } from './studentData'
-import { useStore } from '../../lib/demoStore'
-import { PILOT_COURSE } from '../../lib/demoData'
+import { useStore, type Course } from '../../lib/demoStore'
+import { taughtTopics } from '../../lib/demoData'
 import { average, initials } from '../../lib/format'
 
 function ProgressRing({ value, color, size = 36 }: { value: number; color: string; size?: number }) {
@@ -34,17 +33,21 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
   const { member, state, markRepliesSeen } = useStore()
   const [showReplies, setShowReplies] = useState(false)
 
+  const courses = state.courses
   const courseProgress = (code: string) => average((state.mastery[code] || []).map(t => t.score))
-  const totalCredits = COURSES.reduce((s,c) => s + c.credits, 0)
-  const avgProgress = average(COURSES.map(c => courseProgress(c.code)))
+  const totalCredits = courses.reduce((s,c) => s + c.credits, 0)
+  const avgProgress = average(courses.map(c => courseProgress(c.code)))
 
-  // Weakest topic the student has started and the class has been taught, in the
-  // pilot course: the only one where Curriculum AI has course notes to teach from.
-  const suggestion = COURSES
-    .filter(c => c.code === PILOT_COURSE)
-    .flatMap(c => (state.mastery[c.code] || [])
-      .filter(t => t.sessions > 0 && (t.week ?? 0) <= CURRENT_WEEK)
-      .map(t => ({ course: c, ...t })))
+  // Weakest topic the student has started and the class has been taught, in a
+  // course where Curriculum AI has approved material to teach from.
+  const suggestion = courses
+    .filter(c => c.hasMaterials)
+    .flatMap(c => {
+      const taught = new Set(taughtTopics(c))
+      return (state.mastery[c.code] || [])
+        .filter(t => t.sessions > 0 && taught.has(t.topic))
+        .map(t => ({ course: c, ...t }))
+    })
     .sort((a, b) => a.score - b.score)[0]
 
   const replies = state.questions.filter(q => q.studentId === member.studentId && q.reply)
@@ -84,7 +87,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
         <div style={{ fontSize:'10px', fontWeight:600, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.7px', marginBottom:'8px', paddingLeft:'4px' }}>
           My Courses
         </div>
-        {COURSES.map(c => {
+        {courses.map(c => {
           const isActive = selectedCourse.code === c.code
           return (
             <button
@@ -134,7 +137,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
                 <div style={{ color:'#64748B', fontStyle:'italic' }}>“{q.question.length > 90 ? q.question.slice(0, 90) + '…' : q.question}”</div>
                 <div style={{ color:'#064E3B', marginTop:'4px' }}>{q.reply}</div>
                 <div style={{ fontSize:'10px', color:'#059669', marginTop:'3px' }}>
-                  {COURSES.find(c => c.code === q.course)?.lecturer} · {q.topic}
+                  {courses.find(c => c.code === q.course)?.lecturer} · {q.topic}
                 </div>
               </div>
             ))}
@@ -164,14 +167,6 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
           </div>
         )}
 
-        {/* Upcoming assessment */}
-        <div style={{ marginTop:'12px', padding:'12px', borderRadius:'10px', background:'#FFFBEB', border:'1px solid #FDE68A' }}>
-          <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'5px' }}>
-            ⏰ Upcoming
-          </div>
-          <div style={{ fontSize:'12px', color:'#78350F', fontWeight:500 }}>SBS 201 CAT 2</div>
-          <div style={{ fontSize:'11px', color:'#92400E', marginTop:'2px' }}>In 6 days · Weeks 5–10</div>
-        </div>
       </div>
 
       {/* Footer */}

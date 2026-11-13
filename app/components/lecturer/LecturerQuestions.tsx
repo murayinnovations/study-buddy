@@ -3,13 +3,13 @@ import { useState } from 'react'
 import { useStore, type LecturerQuestion } from '../../lib/demoStore'
 import { timeAgo } from '../../lib/format'
 
-const COURSE = 'SBS 201'
 
 const askedLabel = (q: LecturerQuestion) => typeof q.askedAt === 'number' ? timeAgo(q.askedAt) : q.askedAt
 const urgencyBadge = (u: string) => u==='High'?'badge-red':u==='Medium'?'badge-amber':'badge-gray'
 
 export default function LecturerQuestions() {
   const { state, replyToQuestion, saveAnswerToCourse } = useStore()
+  const COURSE = state.courses[0].code
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [reply, setReply] = useState('')
 

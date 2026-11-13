@@ -1,7 +1,5 @@
-import { TOPIC_PROGRESS, WELCOME_MESSAGES, FIRST_WELCOME, COURSES } from '../components/student/studentData'
-
-// Shapes of the state shared by the student, lecturer and HoD views, and the
-// seed data the course starts from. Used by the browser store and the database layer.
+// Shapes of the state shared by the student, lecturer and HoD views.
+// Used by the browser store and the database layer.
 
 export type Role = 'student' | 'lecturer' | 'hod'
 
@@ -12,9 +10,28 @@ export interface Member {
   name: string
   studentId: string | null   // students only
   subtitle: string
-  sampleData: boolean        // students only: started from sample mastery
+  course: string | null      // lecturers only: the course they teach
   demoGroup: string | null   // members sharing a group can switch between each other's views
 }
+
+// A course as the browser sees it, from the courses table. Curriculum AI's
+// instructions for the course stay on the server.
+export interface Course {
+  code: string
+  name: string
+  lecturer: string
+  credits: number
+  color: string
+  topics: { topic: string; week?: number }[]
+  currentWeek: number | null   // taught up to this week; null means every topic
+  totalWeeks: number | null
+  starters: { label: string; prompt: string }[]
+  syntheticClass: boolean      // lecturer dashboards add 30 synthetic students
+  hasMaterials: boolean        // Curriculum AI has approved course material to answer from
+}
+
+// A file a member can open, e.g. the original slides behind a material.
+export interface CourseFile { id: string; course: string; title: string; type: string; fileName: string }
 
 export interface TopicMastery { topic: string; score: number; sessions: number; daysAgo: number | null; week?: number }
 
@@ -53,8 +70,9 @@ export interface UploadedMaterial {
   title: string
   type: string
   topics: string[]
-  body: string
   status: 'pending' | 'approved'
+  source: 'lecturer' | 'platform'   // platform: imported from the university's learning platform
+  fileName: string | null           // set when the original file can be opened
   uploadedAt: number
 }
 
@@ -64,7 +82,7 @@ export interface BriefItem { topic: string; focus: string; minutes: number }
 // signature: the class data the brief was drafted from, to tell when it's out of date.
 export interface SavedBrief { items: BriefItem[]; generatedAt: number; signature: string }
 
-// A signed-up student in the pilot course, as their lecturer sees them.
+// A signed-up student in the lecturer's course, as their lecturer sees them.
 export interface ClassStudent {
   id: string
   mastery: TopicMastery[]
@@ -72,8 +90,23 @@ export interface ClassStudent {
   lastActive: number | null
 }
 
+// A live course as the HoD sees it, worked out from the same class the lecturer sees.
+export interface CourseSummary {
+  code: string
+  name: string
+  lecturer: string
+  students: number
+  active: number       // active in the last 7 days
+  avg: number          // class average mastery over topics taught so far
+  atRisk: number
+  questions: number    // unanswered student questions
+  trend: number[]      // weekly class average, oldest first
+}
+
 // What one member can see: a student's own work, or the lecturer's course.
 export interface DemoState {
+  courses: Course[]          // students: every active course; lecturers: the one they teach
+  files: CourseFile[]        // original files behind the approved course material
   mastery: Record<string, TopicMastery[]>
   practiceLog: { course: string; topic: string; correct: boolean; at: number }[]
   chats: Record<string, ChatMessage[]>
@@ -85,59 +118,27 @@ export interface DemoState {
   checkIns: string[]
   briefs: Record<string, SavedBrief>
   students: ClassStudent[]   // lecturers only
+  summaries: CourseSummary[] // HoD only: every active course
 }
 
-// The lecturer pages cover the pilot course only.
-export const PILOT_COURSE = 'SBS 201'
+const FIRST_WELCOME = `Hi {name} 👋 I'm Curriculum AI, your study companion for **{course}**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?`
 
 // Curriculum AI's opening message, addressed to the student by first name.
-export function welcomeChat(course: string, student: Pick<Member, 'name' | 'sampleData'>): ChatMessage[] {
+export function welcomeChat(courseName: string, student: Pick<Member, 'name'>): ChatMessage[] {
   const name = student.name.split(/\s+/)[0]
-  const courseName = COURSES.find(c => c.code === course)?.name ?? course
-  const text = student.sampleData ? WELCOME_MESSAGES[course] : FIRST_WELCOME.replace('{course}', courseName)
-  return [{ role: 'assistant', content: text.replace('{name}', name) }]
+  return [{ role: 'assistant', content: FIRST_WELCOME.replace('{course}', courseName).replace('{name}', name) }]
 }
 
-// Seeded rows carry an age so the database can store real timestamps for them.
-const HOUR = 3_600_000
-
-export const SEED_QUESTIONS: (LecturerQuestion & { ageMs: number })[] = [
-  {
-    id: 'seed-1', course: 'SBS 201', studentId: 'STR-2024-4348', topic: 'Depreciation', urgency: 'High', askedAt: '2 hours ago', ageMs: 2 * HOUR,
-    question: "I've read the notes on straight-line depreciation twice but I still don't understand why we subtract the residual value before dividing. Why can't we just divide the full cost by the useful life?",
-    context: 'Mastery: 38% · Practice attempts: 1 (0 correct) · Misconception Curriculum AI noticed: treats the full cost as the amount used up · Tried: worked through the formula in the Week 6 notes',
-  },
-  {
-    id: 'seed-2', course: 'SBS 201', studentId: 'STR-2024-3741', topic: 'Accruals & prepayments', urgency: 'Medium', askedAt: '5 hours ago', ageMs: 5 * HOUR,
-    question: "I'm confused about the difference between an accrual and a prepayment. Curriculum AI explained it but I'm still not sure which one I should use when rent is paid in advance.",
-    context: 'Mastery: 42% · Practice attempts: 3 (1 correct) · Misconception Curriculum AI noticed: mixes up paying in advance with being paid in advance',
-  },
-  {
-    id: 'seed-3', course: 'SBS 201', studentId: 'STR-2024-7079', topic: 'Cash flow statements', urgency: 'Low', askedAt: 'Yesterday', ageMs: 26 * HOUR,
-    question: "For the cash flow statement, is depreciation added back because it's a non-cash expense? Or is there another reason?",
-    context: 'Mastery: 74% · Practice attempts: 4 (3 correct)',
-    reply: "Yes, exactly right. Depreciation is added back to profit in the indirect method because it was deducted to arrive at profit, but no cash left the business when it was charged. The cash left when the asset was bought, and that is shown under investing activities. Good instinct.",
-    seenByStudent: true,
-  },
-]
-
-export const SEED_MISCONCEPTIONS: (Misconception & { ageMs: number })[] = [
-  { id: 'seed-m1', course: 'SBS 201', topic: 'Depreciation', note: 'Subtracts the residual value before applying the reducing balance rate', at: 'This week', ageMs: 30 * HOUR },
-  { id: 'seed-m2', course: 'SBS 201', topic: 'Accruals & prepayments', note: 'Treats cash paid in the year as the expense for the year', at: 'This week', ageMs: 31 * HOUR },
-  { id: 'seed-m3', course: 'SBS 201', topic: 'Trial balance', note: 'Believes an agreed trial balance proves there are no errors', at: 'This week', ageMs: 32 * HOUR },
-]
-
-export const SEED_GOALS: Goal[] = [
-  { id: 'g1', goal: 'Prepare financial statements in accordance with IFRS', week: 'By Week 10', mapped: true },
-  { id: 'g2', goal: 'Apply the matching concept to accruals and prepayments', week: 'By Week 8', mapped: true },
-  { id: 'g3', goal: 'Calculate depreciation using both methods and explain the choice', week: 'By Week 7', mapped: false },
-]
-
-export const SEED_APPROVED_PRACTICE = [1, 2]
+// Topics the class has been taught so far.
+export function taughtTopics(course: Course) {
+  return course.topics.filter(t => course.currentWeek === null || (t.week ?? 0) <= course.currentWeek).map(t => t.topic)
+}
 
 // Before the member's data has loaded.
 export function initialState(): DemoState {
   return {
+    courses: [],
+    files: [],
     mastery: {},
     practiceLog: [],
     chats: {},
@@ -149,14 +150,8 @@ export function initialState(): DemoState {
     checkIns: [],
     briefs: {},
     students: [],
+    summaries: [],
   }
-}
-
-// Where a new student starts: every topic not yet started, or the sample
-// student's progress for demo accounts.
-export function startingMastery(sample: boolean): Record<string, TopicMastery[]> {
-  return Object.fromEntries(Object.entries(TOPIC_PROGRESS).map(([course, topics]) => [course,
-    topics.map(t => sample ? { ...t } : { ...t, score: 0, sessions: 0, daysAgo: null })]))
 }
 
 // Mastery moves a quarter of the way to 100 on a correct answer, and drops 15% on a wrong one.

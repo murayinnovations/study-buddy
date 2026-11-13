@@ -16,7 +16,11 @@ const TABS = [
 export default function LecturerView() {
   const [tab, setTab] = useState('overview')
   const { state } = useStore()
-  const unanswered = state.questions.filter(q => q.course === 'SBS 201' && !q.reply).length
+  const course = state.courses[0]
+  if (!course) {
+    return <div style={{ margin:'auto', fontSize:'13px', color:'#94A3B8' }}>No course is set up for you yet. Ask the Curriculum AI team to assign one.</div>
+  }
+  const unanswered = state.questions.filter(q => q.course === course.code && !q.reply).length
 
   return (
     <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden' }}>
@@ -44,7 +48,7 @@ export default function LecturerView() {
         ))}
         <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:'6px', fontSize:'12px', color:'#94A3B8' }}>
           <span className="ai-pulse" style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#059669', display:'inline-block' }}/>
-          Financial Accounting SBS 201 · Week 9 of 14
+          {course.name} · {course.code}{course.currentWeek ? ` · Week ${course.currentWeek}${course.totalWeeks ? ` of ${course.totalWeeks}` : ''}` : ''}
         </div>
       </div>
 

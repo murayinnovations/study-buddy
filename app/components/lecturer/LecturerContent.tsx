@@ -1,37 +1,22 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useStore } from '../../lib/demoStore'
-import { courseTopics } from '../student/studentData'
 import { timeAgo } from '../../lib/format'
 
-const COURSE = 'SBS 201'
 const MAX_UPLOAD_CHARS = 40_000
-
-interface CourseMaterial { title: string; type: string; topics: string[] }
-
-const PRACTICE_QUESTIONS = [
-  { id:1, q:'What is the difference between straight-line and reducing balance depreciation?', quality:'Good' },
-  { id:2, q:'A company buys machinery for KES 240,000. Useful life 4 years, residual value KES 40,000. Calculate Year 2 depreciation using the straight-line method.', quality:'Excellent' },
-  { id:3, q:'Prepare the adjustment for rent of KES 15,000 received in advance from a tenant.', quality:'Review needed' },
-]
 
 const th: React.CSSProperties = { padding:'9px 12px', textAlign:'left', fontSize:'10px', fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.5px', borderBottom:'1px solid #E2E8F0' }
 const input: React.CSSProperties = { fontSize:'12px', padding:'7px 10px', borderRadius:'8px', border:'1.5px solid #E2E8F0', fontFamily:'inherit', background:'#fff', color:'#0F172A' }
 
 export default function LecturerContent() {
-  const { state, uploadMaterial, approveMaterial, removeMaterial, addGoal, mapGoal, approvePractice } = useStore()
-  const [materials, setMaterials] = useState<CourseMaterial[]>([])
+  const { state, uploadMaterial, approveMaterial, removeMaterial, addGoal, mapGoal } = useStore()
+  const course = state.courses[0]
+  const COURSE = course.code
+  const topicNames = course.topics.map(t => t.topic)
   const [newGoal, setNewGoal] = useState<{ goal: string; week: string } | null>(null)
   const [pendingFile, setPendingFile] = useState<{ title: string; body: string; type: string; topic: string } | null>(null)
   const [uploadError, setUploadError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    fetch(`/api/materials?course=${encodeURIComponent(COURSE)}`)
-      .then(r => r.ok ? r.json() : [])
-      .then(setMaterials)
-      .catch(() => setMaterials([]))
-  }, [])
 
   const uploads = state.uploads.filter(u => u.course === COURSE)
   const savedAnswers = state.questions.filter(q => q.course === COURSE && q.savedToCourse)
@@ -42,7 +27,7 @@ export default function LecturerContent() {
     if (!/\.(md|txt)$/i.test(file.name)) { setUploadError('For the demo, upload notes as a .md or .txt file.'); return }
     const body = await file.text()
     if (body.length > MAX_UPLOAD_CHARS) { setUploadError('That file is too long for the demo (40,000 characters max).'); return }
-    setPendingFile({ title: file.name.replace(/\.(md|txt)$/i, ''), body, type: 'Lecture notes', topic: courseTopics(COURSE)[0] })
+    setPendingFile({ title: file.name.replace(/\.(md|txt)$/i, ''), body, type: 'Lecture notes', topic: topicNames[0] ?? '' })
   }
 
   return (
@@ -103,7 +88,7 @@ export default function LecturerContent() {
                 {['Lecture notes','Reading list','Past paper','Supplement'].map(t => <option key={t}>{t}</option>)}
               </select>
               <select value={pendingFile.topic} onChange={e => setPendingFile({ ...pendingFile, topic: e.target.value })} style={input} aria-label="Topic">
-                {courseTopics(COURSE).map(t => <option key={t}>{t}</option>)}
+                {topicNames.map(t => <option key={t}>{t}</option>)}
               </select>
               <button onClick={() => { uploadMaterial({ course: COURSE, title: pendingFile.title.trim() || 'Untitled', type: pendingFile.type, topics: [pendingFile.topic], body: pendingFile.body }); setPendingFile(null) }}
                 className="btn-primary" style={{ fontSize:'12px', padding:'6px 14px' }}>Add for review</button>
@@ -120,16 +105,22 @@ export default function LecturerContent() {
                 <tr key={m.id} style={{ borderBottom:'1px solid #F8FAFC', background: m.status === 'pending' ? '#FFFBEB' : 'transparent' }}>
                   <td style={{ padding:'11px 12px' }}><span className="badge badge-gray">{m.type}</span></td>
                   <td style={{ padding:'11px 12px', fontSize:'12px', fontWeight:500, color:'#0F172A', maxWidth:'280px' }}>
-                    <div style={{ whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.title}</div>
+                    <div style={{ whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                      {m.fileName
+                        ? <a href={`/api/materials?id=${encodeURIComponent(m.id)}`} title={`Open ${m.fileName}`} style={{ color:'inherit' }}>{m.title}</a>
+                        : m.title}
+                    </div>
                   </td>
                   <td style={{ padding:'11px 12px' }}>{m.topics.map(t=><span key={t} className="badge badge-blue" style={{ marginRight:'4px', fontSize:'10px' }}>{t}</span>)}</td>
-                  <td style={{ padding:'11px 12px', fontSize:'11px', color:'#94A3B8' }}>{timeAgo(m.uploadedAt)}</td>
+                  <td style={{ padding:'11px 12px', fontSize:'11px', color:'#94A3B8' }}>{m.source === 'platform' ? 'University platform' : timeAgo(m.uploadedAt)}</td>
                   <td style={{ padding:'11px 12px' }}>
                     <span className={`badge ${m.status==='approved'?'badge-green':'badge-amber'}`}>{m.status==='approved'?'✓ Approved':'Pending review'}</span>
                   </td>
                   <td style={{ padding:'11px 12px', display:'flex', gap:'6px' }}>
                     {m.status==='pending' && <button onClick={()=>approveMaterial(m.id)} className="btn-primary" style={{ fontSize:'11px', padding:'5px 12px' }}>Approve</button>}
-                    <button onClick={()=>removeMaterial(m.id)} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 12px' }}>Remove</button>
+                    {m.source === 'lecturer'
+                      ? <button onClick={()=>removeMaterial(m.id)} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 12px' }}>Remove</button>
+                      : <span style={{ fontSize:'11px', color:'#94A3B8' }}>In use by Curriculum AI</span>}
                   </td>
                 </tr>
               ))}
@@ -145,46 +136,8 @@ export default function LecturerContent() {
                   <td style={{ padding:'11px 12px', fontSize:'11px', color:'#94A3B8' }}>From your inbox</td>
                 </tr>
               ))}
-              {materials.map(m => (
-                <tr key={m.title} style={{ borderBottom:'1px solid #F8FAFC' }}>
-                  <td style={{ padding:'11px 12px' }}><span className="badge badge-gray">{m.type}</span></td>
-                  <td style={{ padding:'11px 12px', fontSize:'12px', fontWeight:500, color:'#0F172A', maxWidth:'280px' }}>
-                    <div style={{ whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.title}</div>
-                  </td>
-                  <td style={{ padding:'11px 12px' }}>{m.topics.map(t=><span key={t} className="badge badge-blue" style={{ marginRight:'4px', fontSize:'10px' }}>{t}</span>)}</td>
-                  <td style={{ padding:'11px 12px', fontSize:'11px', color:'#94A3B8' }}>Start of semester</td>
-                  <td style={{ padding:'11px 12px' }}><span className="badge badge-green">✓ Approved</span></td>
-                  <td style={{ padding:'11px 12px', fontSize:'11px', color:'#94A3B8' }}>In use by Curriculum AI</td>
-                </tr>
-              ))}
             </tbody>
           </table>
-        </div>
-
-        {/* Practice questions (L10) */}
-        <div className="card" style={{ padding:'20px' }}>
-          <div style={{ marginBottom:'14px' }}>
-            <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Curriculum AI&apos;s practice questions</div>
-            <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Review and approve questions for the shared question bank.</div>
-          </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-            {PRACTICE_QUESTIONS.map(q => {
-              const approved = state.approvedPracticeIds.includes(q.id)
-              return (
-                <div key={q.id} style={{ padding:'14px', borderRadius:'10px', background:'#F8FAFC', border:`1.5px solid ${approved?'#A7F3D0':'#FDE68A'}` }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'12px' }}>
-                    <p style={{ fontSize:'13px', color:'#0F172A', lineHeight:1.6, margin:0, flex:1 }}>{q.q}</p>
-                    <div style={{ display:'flex', flexDirection:'column', gap:'6px', alignItems:'flex-end', flexShrink:0 }}>
-                      <span className={`badge ${q.quality==='Excellent'?'badge-green':q.quality==='Good'?'badge-blue':'badge-amber'}`}>{q.quality}</span>
-                      {approved
-                        ? <span className="badge badge-green">✓ Approved</span>
-                        : <button onClick={()=>approvePractice(q.id)} className="btn-primary" style={{ fontSize:'11px', padding:'5px 12px' }}>Approve</button>}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
         </div>
 
       </div>
