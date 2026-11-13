@@ -60,6 +60,26 @@ export async function getMember(email: string): Promise<Member | null> {
   return member
 }
 
+// Anyone can sign in. Someone signing in for the first time, with no members row,
+// joins as a student: lecturer and HoD access still has to be granted with
+// scripts/members.mjs, since those views show other students' work.
+export async function getOrCreateMember(email: string): Promise<Member> {
+  const existing = await getMember(email)
+  if (existing) return existing
+  const key = email.toLowerCase()
+  const name = key.split('@')[0].split(/[._+-]+/).filter(Boolean)
+    .map(w => w[0].toUpperCase() + w.slice(1)).join(' ') || key
+  const studentId = `SELF-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+  // ignoreDuplicates: if two first requests race, the first row wins and both read it back.
+  check(await db().from('members').upsert(
+    { email: key, role: 'student', name, student_id: studentId },
+    { onConflict: 'email', ignoreDuplicates: true }))
+  members.delete(key)
+  const member = await getMember(key)
+  if (!member) throw new Error(`Could not create a member for ${key}`)
+  return member
+}
+
 // The other role's account in the same demo group, for the one-button view switcher.
 // Not cached: it's only called right after a switch, never on every request.
 export async function getMemberByGroup(group: string, role: Role): Promise<Member | null> {

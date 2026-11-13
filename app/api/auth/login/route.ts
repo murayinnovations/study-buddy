@@ -1,53 +1,38 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod/v4'
 import { supabaseAuth } from '../../../lib/auth'
-import { getMember } from '../../../lib/db'
+import { rateLimited, tooMany } from '../../../lib/rateLimit'
 
-// Emails a sign-in link to people on the members list. Everyone gets the same
-// reply, so the form can't be used to find out who has access.
+// Signs in with email and password. Someone new joins as a student the first
+// time they open the app (see getOrCreateMember in lib/db.ts).
 
-const RATE_LIMIT = 5
-const RATE_WINDOW_MS = 10 * 60_000
-const hits = new Map<string, number[]>()
-
-function rateLimited(ip: string) {
-  const now = Date.now()
-  const recent = (hits.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS)
-  recent.push(now)
-  hits.set(ip, recent)
-  return recent.length > RATE_LIMIT
-}
-
-const Body = z.object({ email: z.email().max(254) })
+const Body = z.object({ email: z.email().max(254), password: z.string().min(1).max(200) })
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  if (rateLimited(ip)) return Response.json({ error: 'Too many attempts. Please wait a few minutes.' }, { status: 429 })
+  if (rateLimited(req, 'login')) return tooMany()
 
-  let email: string
+  let body: z.infer<typeof Body>
   try {
-    email = Body.parse(await req.json()).email.toLowerCase()
+    body = Body.parse(await req.json())
   } catch {
-    return Response.json({ error: 'Enter a valid email address.' }, { status: 400 })
+    return Response.json({ error: 'Enter your email and password.' }, { status: 400 })
   }
 
   try {
-    if (await getMember(email)) {
-      const { error } = await supabaseAuth().auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${req.nextUrl.origin}/auth/callback`, shouldCreateUser: true },
-      })
-      if (error) {
-        console.error('Sending sign-in link failed:', error.message)
-        const wait = error.status === 429
-        return Response.json(
-          { error: wait ? 'A link was sent very recently. Please wait a minute and try again.' : 'Could not send the link. Please try again.' },
-          { status: wait ? 429 : 502 })
+    const { error } = await supabaseAuth().auth.signInWithPassword({ email: body.email.toLowerCase(), password: body.password })
+    if (error) {
+      if (error.code === 'email_not_confirmed') {
+        return Response.json({ error: 'Confirm your email first: open the link we sent when you created your account.' }, { status: 403 })
       }
+      if (error.code === 'invalid_credentials') {
+        return Response.json({ error: 'Wrong email or password.' }, { status: 401 })
+      }
+      console.error('Sign-in failed:', error.message)
+      return Response.json({ error: 'Could not sign in. Please try again.' }, { status: 502 })
     }
   } catch (err) {
     console.error('Sign-in failed:', err)
-    return Response.json({ error: 'Could not send the link. Please try again.' }, { status: 502 })
+    return Response.json({ error: 'Could not sign in. Please try again.' }, { status: 502 })
   }
   return Response.json({ ok: true })
 }

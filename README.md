@@ -12,7 +12,7 @@ Curriculum AI is an AI study companion with three views: student, lecturer and H
 | Lecturer dashboards | Computed from the signed-up students in the lecturer's course (plus a synthetic class of 30 for courses with `synthetic_class` set) |
 | Material upload and approval | Live (.md and .txt). Imported platform material is approved on import |
 | Head of Department view | Illustrative data, labelled as such |
-| Sign-in | Emailed sign-in link (Supabase Auth) for people on the members list. Each person sees only their role's view, and each student their own work |
+| Sign-in | Email and password (Supabase Auth). Anyone can create an account. New people join as students; lecturer and HoD access is granted from the members list. Each person sees only their role's view, and each student their own work |
 | Storage | Supabase, through the app's `/api/store` route (`app/lib/db.ts`), which checks the member's role |
 
 The demo walkthrough is in [docs/demo-script.md](docs/demo-script.md).
@@ -41,17 +41,26 @@ Add the deployment's address to Supabase's redirect URLs (see below), or sign-in
 
 ## Sign-in
 
-People sign in with a link emailed by Supabase Auth; there are no passwords. Only emails on the members list get a link, and the page gives everyone the same reply so it can't be used to find out who has access.
+People sign in with an email and password (Supabase Auth). Anyone can create an account from the sign-in page: someone new is added to the members list as a student the first time they open the app, starting with every topic not yet started. Lecturer and HoD access still has to be granted (see [Members](#members)), since those views show other students' work.
 
 In the Supabase dashboard:
 
-1. **Authentication → URL Configuration:** set **Site URL** to the deployment address, and add `http://localhost:3000/**` and `https://<your-vercel-domain>/**` to **Redirect URLs**.
-2. **Authentication → Emails → Magic Link** (recommended): change the link in the template to
+1. **Authentication → Sign In / Providers → Email:** make sure **Email** is enabled.
+   - **Confirm email** decides whether new accounts must open an emailed link before they can sign in. Leave it on so people can't sign up with an address that isn't theirs; turn it off for a demo where people should be in straight away. The app handles both.
+   - Optionally raise **Minimum password length** to 8 to match the app.
+2. **Authentication → URL Configuration:** set **Site URL** to the deployment address, and add `http://localhost:3000/**` and `https://<your-vercel-domain>/**` to **Redirect URLs**.
+3. **Authentication → Emails** (recommended): change the link in the **Confirm signup** template to
    ```
    {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email
    ```
-   With the default template, the link only works in the browser that asked for it; with this one it works from any device, for example a link opened on a phone.
-3. **Authentication → Emails → SMTP Settings:** Supabase's own mailer sends only a few emails an hour and is meant for testing. Before the trial, add your own SMTP provider (for example Resend or Postmark).
+   and in the **Reset Password** template to
+   ```
+   {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery
+   ```
+   With the default templates, the links only work in the browser that asked for them; with these they work from any device, for example a link opened on a phone.
+4. **Authentication → Emails → SMTP Settings:** Supabase's own mailer sends only a few emails an hour and is meant for testing. With confirmation on, every new account needs one, so before the trial add your own SMTP provider (for example Resend or Postmark).
+
+People who signed in with an emailed link before passwords were added have no password yet. They click **Forgot password?** on the sign-in page to set one.
 
 ## Courses
 
@@ -70,7 +79,7 @@ To hide a course, set `active` to false in the `courses` table.
 
 ## Members
 
-The `members` table says who can sign in and as what. Manage it with the script (it reads `.env.local`):
+The `members` table says what role each person has. Students who sign in on their own are added automatically with a `SELF-…` student number; use the script to add lecturers and HoDs, to give a student a real student number, or to change someone's role. Manage it with the script (it reads `.env.local`):
 
 ```bash
 node --env-file=.env.local scripts/members.mjs add sara@example.com student "Sara Kamau" STR-2024-0117

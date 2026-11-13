@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
-import { getMember, getMemberByGroup } from './db'
+import { getOrCreateMember, getMemberByGroup } from './db'
 import type { Member, Role } from './demoData'
 
 // The one-button view switcher: members sharing a demo_group can swap into
@@ -11,7 +11,8 @@ export const VIEW_AS_COOKIE = 'view_as'
 export const ROLES: Role[] = ['student', 'lecturer', 'hod']
 
 // Sign-in sessions. Supabase Auth keeps the session in cookies; who someone is
-// in Curriculum AI (role, name, student number) comes from the members table.
+// in Curriculum AI (role, name, student number) comes from the members table,
+// which gets a student row the first time someone new signs in.
 
 export function supabaseAuth() {
   const store = cookies()
@@ -33,10 +34,11 @@ export async function signedInEmail(): Promise<string | null> {
   return typeof email === 'string' ? email : null
 }
 
-// The real signed-in member, ignoring any view-as switch.
+// The real signed-in member, ignoring any view-as switch. Anyone signed in is a
+// member: first-time sign-ins join as students (see getOrCreateMember).
 export async function realMember(): Promise<Member | null> {
   const email = await signedInEmail()
-  return email ? getMember(email) : null
+  return email ? getOrCreateMember(email) : null
 }
 
 // The real member, unless they've switched to a demo-group sibling's view,

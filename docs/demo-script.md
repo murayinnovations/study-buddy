@@ -5,7 +5,7 @@ For a live demo to Strathmore staff. One presenter, one laptop, the browser full
 ## Before you start
 
 1. Make three accounts in the same demo group (see Switching views with one click in the README): a student added with `--sample` so she starts from Sara's progress, a lecturer and a Head of Department. Use a new student number for each demo, so rehearsal activity doesn't carry over.
-2. Sign in as any one of the three — the header now shows a **Student / Lecturer / Head of Department** switcher, so the whole demo runs in one window. Sign-in links are emailed, so do this before the audience arrives.
+2. Sign in as any one of the three — the header now shows a **Student / Lecturer / Head of Department** switcher, so the whole demo runs in one window. Sign in before the audience arrives. A demo account that was created with the members script, or before passwords were added, has no password yet: use **Forgot password?** once to set one.
 3. Check the chat works: send one message in SBS 201, then click **New chat**.
 4. Have a short `.md` file ready to upload, for example a one-page note on "Disposals: common mistakes".
 5. Check the venue Wi-Fi reaches Curriculum AI: the test message in step 3 should answer within about 20 seconds. Have a phone hotspot ready as a backup.
@@ -65,4 +65,4 @@ Everyone signs in, and everything is saved in Supabase, so the Lecturer view sho
 
 - **Curriculum AI doesn't answer:** click **↻ Try again** under the message. If it fails again, check the connection (switch to the hotspot) and the API key in `.env.local` or the Vercel settings, and carry on with the lecturer view, which works without Curriculum AI.
 - **Leftover data from a rehearsal:** add a new student account with `--sample` and sign in as them. Replies and saved answers from rehearsals stay in the lecturer's inbox.
-- **"No access yet" after signing in:** the email isn't on the members list; add it and sign in again.
+- **Landed in the student view when you expected lecturer or HoD:** the email isn't on the members list with that role, so it joined as a student. Add it with the right role (`scripts/members.mjs add …`); the change shows within a minute.
