@@ -7,10 +7,11 @@ import AdminView from '../admin/AdminView'
 import { StoreProvider, useStore } from '../../lib/demoStore'
 import type { Member } from '../../lib/demoData'
 
-export default function App({ member, initialCourse }: { member: Member; initialCourse?: string }) {
+// isAdmin: the signed-in person is an admin, even while switched to another view.
+export default function App({ member, isAdmin = false, initialCourse }: { member: Member; isAdmin?: boolean; initialCourse?: string }) {
   return (
     <StoreProvider member={member}>
-      <AppShell>
+      <AppShell isAdmin={isAdmin}>
         <RoleView initialCourse={initialCourse} />
       </AppShell>
     </StoreProvider>

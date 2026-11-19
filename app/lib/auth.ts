@@ -67,7 +67,9 @@ export async function currentMember(): Promise<Member | null> {
   const real = await realMember()
   if (!real) return null
   const viewAs = cookies().get(VIEW_AS_COOKIE)?.value as Role | undefined
-  if (!viewAs || viewAs === real.role || !real.demoGroup) return real
+  // Admin is never reached by switching, only by signing in as an admin: otherwise anyone
+  // with a demo account in an admin's group could approve learning platforms.
+  if (!viewAs || viewAs === real.role || viewAs === 'admin' || !real.demoGroup) return real
   const sibling = await getMemberByGroup(real.demoGroup, viewAs)
   return sibling ?? real
 }

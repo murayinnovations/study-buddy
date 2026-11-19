@@ -27,6 +27,9 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
 
   // The platform's address stays out of the subject and isn't a link: a link to an unknown
   // site next to an "approve" button is what phishing looks like, and Gmail files it as spam.
+  // The admin page's own address: it opens the admin page even if the admin had switched views.
+  const reviewUrl = `${siteUrl.replace(/\/$/, '')}/admin`
+
   const subject = product === 'A learning platform'
     ? 'Approval needed: a learning platform wants to connect to Study Buddy'
     : `Approval needed: a ${product} site wants to connect to Study Buddy`
@@ -41,7 +44,7 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
     'Nobody can open Study Buddy from it until an admin approves it. Only approve platforms you',
     'recognise: an approved platform can sign its students and lecturers in to Study Buddy.',
     '',
-    `Review it on the admin page: ${siteUrl}`,
+    `Review it on the admin page: ${reviewUrl}`,
     '',
     "You're getting this because you're a Study Buddy admin.",
   ].join('\n')
@@ -83,7 +86,7 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
         </td></tr>
 
         <tr><td style="padding:20px 28px 8px">
-          <a href="${escape(siteUrl)}" style="display:inline-block;background:#2563EB;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;padding:12px 22px;border-radius:8px">Review and approve</a>
+          <a href="${escape(reviewUrl)}" style="display:inline-block;background:#2563EB;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;padding:12px 22px;border-radius:8px">Review and approve</a>
         </td></tr>
 
         <tr><td style="padding:16px 28px 28px">

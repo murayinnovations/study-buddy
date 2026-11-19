@@ -6,12 +6,14 @@ import type { Role } from '../../lib/demoData'
 
 // Switches the signed-in member's view to a sibling account in the same demo
 // group (or back to their own), for presenting all three roles from one window.
+// Admins can switch into their group's views and back; nobody else can switch to admin.
 export async function POST(req: NextRequest) {
   const real = await realMember()
   if (!real) return Response.json({ error: 'Please sign in again.' }, { status: 401 })
 
   const { role } = await req.json().catch(() => ({ role: undefined }))
-  if (typeof role !== 'string' || !ROLES.includes(role as Role)) return Response.json({ error: 'Invalid role.' }, { status: 400 })
+  const allowed: Role[] = real.role === 'admin' ? [...ROLES, 'admin'] : ROLES
+  if (typeof role !== 'string' || !allowed.includes(role as Role)) return Response.json({ error: 'Invalid role.' }, { status: 400 })
 
   if (role !== real.role) {
     if (!real.demoGroup) return Response.json({ error: 'This account cannot switch views.' }, { status: 403 })

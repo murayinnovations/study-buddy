@@ -9,7 +9,8 @@ const ROLE_LABEL = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Dep
 const ROLE_COLOR = { student: '#3B82F6', lecturer: '#0D9488', hod: '#D97706', admin: '#475569' }
 const ROLE_ORDER: Role[] = ['student', 'lecturer', 'hod']
 
-function ViewSwitcher({ role }: { role: Role }) {
+function ViewSwitcher({ role, isAdmin }: { role: Role; isAdmin: boolean }) {
+  const roles: Role[] = isAdmin ? [...ROLE_ORDER, 'admin'] : ROLE_ORDER
   const [switching, setSwitching] = useState<Role | null>(null)
 
   const switchTo = async (target: Role) => {
@@ -26,7 +27,7 @@ function ViewSwitcher({ role }: { role: Role }) {
 
   return (
     <div style={{ display:'flex', gap:'2px', background:'rgba(255,255,255,.08)', borderRadius:'8px', padding:'2px' }}>
-      {ROLE_ORDER.map(r => (
+      {roles.map(r => (
         <button
           key={r}
           onClick={() => switchTo(r)}
@@ -47,7 +48,7 @@ function ViewSwitcher({ role }: { role: Role }) {
   )
 }
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({ children, isAdmin = false }: { children: React.ReactNode; isAdmin?: boolean }) {
   const { member, status } = useStore()
 
   return (
@@ -77,7 +78,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {member.demoGroup ? (
-          <ViewSwitcher role={member.role} />
+          <ViewSwitcher role={member.role} isAdmin={isAdmin} />
         ) : (
           <span style={{
             fontSize:'11px', fontWeight:600, padding:'4px 10px', borderRadius:'999px',
