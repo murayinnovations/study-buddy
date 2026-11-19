@@ -86,14 +86,27 @@ export async function savePlatform(p: Registration): Promise<{ isNew: boolean; p
   return { isNew: !existing, platform }
 }
 
-// For the admin page: every platform, waiting ones first.
+// Rejected platforms are kept this long, so admins can see what was turned down, then deleted.
+export const REJECTED_KEEP_DAYS = 30
+
+// For the admin page: waiting platforms first, then approved, then rejected. Rejected ones
+// past REJECTED_KEEP_DAYS are deleted here, so no scheduled job is needed.
 export async function listPlatforms(): Promise<Platform[]> {
+  const cutoff = new Date(Date.now() - REJECTED_KEEP_DAYS * 86_400_000).toISOString()
+  check(await db().from('lti_platforms').delete().eq('status', 'rejected').lt('reviewed_at', cutoff))
   const rows: Platform[] = check(await db().from('lti_platforms').select('*').order('created_at', { ascending: false }))
-  return [...rows.filter(p => p.status === 'pending'), ...rows.filter(p => p.status !== 'pending')]
+  const order: PlatformStatus[] = ['pending', 'approved', 'rejected']
+  return order.flatMap(status => rows.filter(p => p.status === status))
 }
 
-export async function reviewPlatform(id: number, status: PlatformStatus, by: string) {
-  check(await db().from('lti_platforms').update({ status, reviewed_by: by, reviewed_at: new Date().toISOString() }).eq('id', id))
+// Approves a waiting platform, or rejects a waiting one or revokes an approved one. A rejected
+// platform can't be approved again: it's deleted after REJECTED_KEEP_DAYS, and to connect again
+// its admin registers again, which arrives as a new request.
+export async function reviewPlatform(id: number, decision: 'approve' | 'reject', by: string) {
+  const from: PlatformStatus[] = decision === 'approve' ? ['pending'] : ['pending', 'approved']
+  check(await db().from('lti_platforms')
+    .update({ status: decision === 'approve' ? 'approved' : 'rejected', reviewed_by: by, reviewed_at: new Date().toISOString() })
+    .eq('id', id).in('status', from))
 }
 
 // Emails every admin that a platform is waiting for approval, through Resend.
