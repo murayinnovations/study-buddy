@@ -56,12 +56,13 @@ export async function GET(req: NextRequest) {
         initiate_login_uri: `${origin}/lti/login`,
         redirect_uris: [launch],
         jwks_uri: `${origin}/lti/jwks`,
+        logo_uri: `${origin}/lti-icon.svg`,   // the icon on the tool's card in the platform
         token_endpoint_auth_method: 'private_key_jwt',
         scope: ROSTER_SCOPE,
         [TOOL_CONFIG]: {
           domain: req.nextUrl.host,
           target_link_uri: launch,
-          description: 'AI study companion grounded in the course materials.',
+          description: 'Your AI study companion for this course. Ask questions, practise topics and check your progress, with answers drawn from your lecturer’s approved materials.',
           // Name and email are needed to set up each person's account.
           claims: ['iss', 'sub', 'name', 'given_name', 'family_name', 'email'],
           messages: [{ type: 'LtiResourceLinkRequest', target_link_uri: launch, label: 'Curriculum AI' }],
