@@ -25,11 +25,23 @@ export class LtiError extends Error {}
 // Launches don't need it, but the platform asks for our public key at registration.
 let toolKey: Promise<JWK> | null = null
 
+// The key as PEM, however it was pasted into the hosting settings: with or without the
+// LTI_PRIVATE_KEY= name and quotes, with \n for line breaks, or with the breaks lost.
+export function keyPem(raw: string | undefined): string {
+  if (!raw?.trim()) throw new LtiError('LTI_PRIVATE_KEY is not set (make one with scripts/lti-key.mjs).')
+  const value = raw.trim().replace(/^LTI_PRIVATE_KEY\s*=\s*/, '').replace(/^["']|["']$/g, '').replace(/\\n/g, '\n')
+  const body = value.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/)?.[1].replace(/\s+/g, '')
+  if (!body) throw new LtiError('LTI_PRIVATE_KEY is not a key from scripts/lti-key.mjs: it should run from -----BEGIN PRIVATE KEY----- to -----END PRIVATE KEY-----.')
+  return `-----BEGIN PRIVATE KEY-----\n${body.match(/.{1,64}/g)!.join('\n')}\n-----END PRIVATE KEY-----\n`
+}
+
 export function publicKey(): Promise<JWK> {
   toolKey ??= (async () => {
-    const pem = process.env.LTI_PRIVATE_KEY?.replace(/\\n/g, '\n')
-    if (!pem) throw new Error('LTI_PRIVATE_KEY is not set (make one with scripts/lti-key.mjs).')
-    const { kty, n, e } = await exportJWK(await importPKCS8(pem, 'RS256', { extractable: true }))
+    let key
+    try { key = await importPKCS8(keyPem(process.env.LTI_PRIVATE_KEY), 'RS256', { extractable: true }) } catch (err) {
+      throw err instanceof LtiError ? err : new LtiError('LTI_PRIVATE_KEY could not be read as a key. Make a new one with scripts/lti-key.mjs.')
+    }
+    const { kty, n, e } = await exportJWK(key)
     const jwk: JWK = { kty, n, e }
     return { ...jwk, kid: await calculateJwkThumbprint(jwk), alg: 'RS256', use: 'sig' }
   })()
