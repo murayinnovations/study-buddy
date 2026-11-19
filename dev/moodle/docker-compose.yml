@@ -1,0 +1,57 @@
+# A Moodle 4.4 (the version Strathmore runs) for testing the LTI launch. See README.md here.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: moodle
+      POSTGRES_PASSWORD: moodle
+      POSTGRES_DB: moodle
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "moodle"]
+      interval: 3s
+      retries: 20
+    restart: unless-stopped
+
+  moodle:
+    image: moodlehq/moodle-php-apache:8.2
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NGROK_DOMAIN: ${NGROK_DOMAIN:?Set NGROK_DOMAIN in dev/moodle/.env}
+    volumes:
+      # The code lives in Docker's own storage (the code service below): run from a Windows
+      # folder, every page reads thousands of files slowly and the install takes an hour.
+      - moodlecode:/var/www/html
+      - ./config.php:/var/www/html/config.php:ro
+      - moodledata:/var/www/moodledata
+    restart: unless-stopped
+
+  # Downloads Moodle 4.4's code into Docker's storage. Run once (it replaces whatever is there),
+  # and again to update to the latest 4.4 fixes:
+  #   docker compose run --rm code
+  code:
+    image: alpine/git
+    profiles: [setup]
+    volumes:
+      - moodlecode:/dst
+    entrypoint: ["sh", "-c"]
+    command: ["rm -rf /dst/* /dst/.[!.]* ; git clone -q -b MOODLE_404_STABLE --depth 1 https://github.com/moodle/moodle.git /dst && chown -R 33:33 /dst && echo downloaded"]
+
+  # Puts Moodle on the fixed https://<NGROK_DOMAIN> address, so Curriculum AI on Vercel can reach it.
+  ngrok:
+    image: ngrok/ngrok:latest
+    depends_on: [moodle]
+    command: http moodle:80 --url=https://${NGROK_DOMAIN}
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?Set NGROK_AUTHTOKEN in dev/moodle/.env}
+    ports:
+      - "4040:4040"   # ngrok's request inspector: http://localhost:4040
+    restart: unless-stopped
+
+volumes:
+  db:
+  moodledata:
+  moodlecode:
