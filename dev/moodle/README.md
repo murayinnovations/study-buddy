@@ -48,4 +48,15 @@ sh setup-course.sh ../../imports/raw/pbi88 <student username> <teacher username>
 6. **Add the activity:** as the teacher, in the course turn on **Edit mode**, **Add an activity or resource → Curriculum AI**. Under **Show more… → Custom parameters** enter `course=BI-Apr-26`.
 7. **Launch:** sign in as the student and click the activity. Curriculum AI should open in a new tab, signed in, on the Power BI course. Then try the teacher.
 
+## Chat button
+
+`chat-button.html` adds an **Ask Curriculum AI** button in the bottom-right corner of every page inside a course that has a Curriculum AI activity. It opens Curriculum AI in a new tab, the same launch as clicking the activity; it is a link, not a chat inside Moodle. To install it, paste the file's contents into **Site administration → Appearance → Additional HTML → Before BODY is closed**, or from this folder:
+
+```bash
+docker compose cp chat-button.html moodle:/tmp/chat-button.html
+docker compose exec -u www-data moodle php -r 'define("CLI_SCRIPT", true); require "/var/www/html/config.php"; set_config("additionalhtmlfooter", file_get_contents("/tmp/chat-button.html"));'
+```
+
+It finds the activity by name, so the activity's name must include "Curriculum AI". On a real university's Moodle, this is a site-wide setting their administrator would add.
+
 ngrok's request inspector at http://localhost:4040 shows every request between Moodle and Curriculum AI, which helps when something fails.
