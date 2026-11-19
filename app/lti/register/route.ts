@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server'
 import { notifyAdmins, page, publicUrl, savePlatform, ROSTER_SCOPE, TOOL_CONFIG } from '../../lib/lti'
 
-// Registering Curriculum AI with a learning platform (LTI Dynamic Registration).
+// Registering Study Buddy with a learning platform (LTI Dynamic Registration).
 // The platform's admin pastes this address into the platform; it opens here with
 // the platform's settings address and a one-time token, we register ourselves
 // there, save what the platform sends back and tell its page we're done.
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const authUrl = publicUrl(config.authorization_endpoint)
   const jwksUrl = publicUrl(config.jwks_uri)
   if (!registrationUrl || !authUrl || !jwksUrl) {
-    return fail('The learning platform’s settings are missing addresses Curriculum AI needs.')
+    return fail('The learning platform’s settings are missing addresses Study Buddy needs.')
   }
 
   const origin = req.nextUrl.origin
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       redirect: 'error',
       body: JSON.stringify({
         application_type: 'web',
-        client_name: 'Curriculum AI',
+        client_name: 'Study Buddy',
         response_types: ['id_token'],
         grant_types: ['implicit', 'client_credentials'],
         initiate_login_uri: `${origin}/lti/login`,
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
           description: 'Your AI study companion for this course. Ask questions, practise topics and check your progress, with answers drawn from your lecturer’s approved materials.',
           // Name and email are needed to set up each person's account.
           claims: ['iss', 'sub', 'name', 'given_name', 'family_name', 'email'],
-          messages: [{ type: 'LtiResourceLinkRequest', target_link_uri: launch, label: 'Curriculum AI' }],
+          messages: [{ type: 'LtiResourceLinkRequest', target_link_uri: launch, label: 'Study Buddy' }],
         },
       }),
     })
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     console.error('LTI registration: registering with the platform failed:', err)
     return fail('The learning platform did not accept the registration. Please try again.')
   }
-  if (typeof registration.client_id !== 'string') return fail('The learning platform did not send back an id for Curriculum AI.')
+  if (typeof registration.client_id !== 'string') return fail('The learning platform did not send back an id for Study Buddy.')
 
   const deployment = registration[TOOL_CONFIG]?.deployment_id
   const { isNew, platform } = await savePlatform({
@@ -90,9 +90,9 @@ export async function GET(req: NextRequest) {
   if (isNew) await notifyAdmins(platform, origin)
 
   // Tells the platform's registration page to close this window and finish.
-  return page('Curriculum AI is registered',
+  return page('Study Buddy is registered',
     platform.status === 'approved'
-      ? 'You can close this window. Lecturers can now add Curriculum AI to a course as an activity.'
-      : 'You can close this window. The Curriculum AI team has been told and will approve this platform; until then, the activity shows a waiting message.',
+      ? 'You can close this window. Lecturers can now add Study Buddy to a course as an activity.'
+      : 'You can close this window. The Study Buddy team has been told and will approve this platform; until then, the activity shows a waiting message.',
     200, "(window.opener || window.parent).postMessage({ subject: 'org.imsglobal.lti.close' }, '*')")
 }

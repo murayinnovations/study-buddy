@@ -36,7 +36,7 @@ const DAY = 86_400_000
 
 export const FILE_BUCKET = 'course-files'
 
-const DEFAULT_SUBTITLE = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Department', admin: 'Curriculum AI team' }
+const DEFAULT_SUBTITLE = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Department', admin: 'Study Buddy team' }
 
 function toMember(row: any): Member {
   return {
@@ -94,7 +94,7 @@ export async function getMemberByGroup(group: string, role: Role): Promise<Membe
 
 // ---- Courses ----
 
-// A course with Curriculum AI's instructions, for the server only.
+// A course with Study Buddy's instructions, for the server only.
 export interface CourseConfig extends Course { prompt: string }
 
 // Courses change rarely (an import or an edit in Supabase), so keep them for a minute.
@@ -291,7 +291,7 @@ async function loadLecturer(member: Member): Promise<DemoState> {
   }
 }
 
-// Signed-up students who have opened Curriculum AI, with their progress in the course.
+// Signed-up students who have opened Study Buddy, with their progress in the course.
 async function classStudents(course: Course): Promise<ClassStudent[]> {
   const ids = check(await db().from('members').select('student_id').eq('role', 'student')).map(m => m.student_id as string)
   if (ids.length === 0) return []
@@ -417,7 +417,7 @@ export async function applyAction(member: Member, a: StoreAction, config: Course
   }
 }
 
-// ---- Material for Curriculum AI ----
+// ---- Material for Study Buddy ----
 
 export interface Material { title: string; type: string; topics: string[]; body: string }
 
@@ -425,7 +425,7 @@ export interface Material { title: string; type: string; topics: string[]; body:
 const MAX_EXTRA_MATERIALS = 10
 const MAX_EXTRA_CHARS = 80_000
 
-// What Curriculum AI answers from. notes: the approved course material from the
+// What Study Buddy answers from. notes: the approved course material from the
 // university's platform, in course order, which rarely changes and is cached as
 // one block. extra: approved lecturer uploads, then replies saved to the course.
 export async function courseMaterials(course: string): Promise<{ notes: Material[]; extra: Material[] }> {

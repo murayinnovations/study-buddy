@@ -1,8 +1,8 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 
-// The Curriculum AI team's page: approving learning platforms (such as a university's
-// Moodle) that have registered to open Curriculum AI. Admins are added with scripts/members.mjs.
+// The Study Buddy team's page: approving learning platforms (such as a university's
+// Moodle) that have registered to open Study Buddy. Admins are added with scripts/members.mjs.
 
 interface PlatformRow {
   id: number; issuer: string; name: string | null; status: 'pending' | 'approved' | 'rejected'; deployments: number
@@ -38,7 +38,7 @@ export default function AdminView() {
 
   const review = async (p: PlatformRow, action: 'approve' | 'reject') => {
     if (action === 'reject' && !window.confirm(p.status === 'approved'
-      ? `Revoke ${p.issuer}? Nobody will be able to open Curriculum AI from it. It moves to Rejected and is deleted after 30 days; to connect again, its administrator has to register again.`
+      ? `Revoke ${p.issuer}? Nobody will be able to open Study Buddy from it. It moves to Rejected and is deleted after 30 days; to connect again, its administrator has to register again.`
       : `Reject ${p.issuer}? It moves to Rejected and is deleted after 30 days. It can't be approved later; if it registers again, it comes back as a new request.`)) return
     setBusy(p.id)
     try {
@@ -62,8 +62,8 @@ export default function AdminView() {
       <div style={{ maxWidth:'900px', margin:'0 auto' }}>
         <h1 style={{ fontSize:'20px', fontWeight:700, color:'#0F172A', margin:0 }}>Learning platforms</h1>
         <p style={{ fontSize:'13px', color:'#64748B', lineHeight:1.6, margin:'6px 0 20px' }}>
-          Platforms such as a university&apos;s Moodle register themselves to open Curriculum AI. Nobody can open
-          Curriculum AI from one until it&apos;s approved here. Approved platforms sign their students and lecturers in,
+          Platforms such as a university&apos;s Moodle register themselves to open Study Buddy. Nobody can open
+          Study Buddy from one until it&apos;s approved here. Approved platforms sign their students and lecturers in,
           so only approve addresses you recognise.
         </p>
 

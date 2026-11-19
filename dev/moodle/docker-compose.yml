@@ -40,7 +40,7 @@ services:
     entrypoint: ["sh", "-c"]
     command: ["rm -rf /dst/* /dst/.[!.]* ; git clone -q -b MOODLE_404_STABLE --depth 1 https://github.com/moodle/moodle.git /dst && chown -R 33:33 /dst && echo downloaded"]
 
-  # Puts Moodle on the fixed https://<NGROK_DOMAIN> address, so Curriculum AI on Vercel can reach it.
+  # Puts Moodle on the fixed https://<NGROK_DOMAIN> address, so Study Buddy on Vercel can reach it.
   ngrok:
     image: ngrok/ngrok:latest
     depends_on: [moodle]

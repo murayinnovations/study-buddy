@@ -2,7 +2,7 @@ import { z } from 'zod/v4'
 import { requireMember } from '../../../lib/auth'
 import { listPlatforms, reviewPlatform, REJECTED_KEEP_DAYS } from '../../../lib/lti'
 
-// The learning platforms registered to open Curriculum AI, for admins to approve.
+// The learning platforms registered to open Study Buddy, for admins to approve.
 
 export const dynamic = 'force-dynamic'
 

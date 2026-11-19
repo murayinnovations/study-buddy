@@ -7,7 +7,7 @@ interface CourseRow {
   atRisk: number; questions: number; compliance: number | null; trend: number[]; live: boolean
 }
 
-// Illustrative courses shown beside the live ones until more of the department is on Curriculum AI.
+// Illustrative courses shown beside the live ones until more of the department is on Study Buddy.
 const ILLUSTRATIVE: CourseRow[] = [
   { code:'DA-PY', name:'Data Analytics with Python', lecturer:'Dr. Omondi', students:42, active:35, avg:66, atRisk:5, questions:2, compliance:81, trend:[58,61,64,68,70,69,67,66], live:false },
   { code:'SQL-DA', name:'SQL for Data Analysis', lecturer:'Prof. Kariuki', students:38, active:33, avg:71, atRisk:3, questions:1, compliance:85, trend:[60,63,65,70,74,72,71,71], live:false },
@@ -109,7 +109,7 @@ export default function HoDView() {
         </div>
 
         <div style={{ padding:'12px 16px', background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:'10px', fontSize:'12px', color:'#78350F', lineHeight:1.5 }}>
-          <strong>Partly illustrative.</strong> Courses marked <strong>Live</strong> come from Curriculum AI, from the same class data their lecturers see. The other courses and the compliance figures show what the dashboard will report once more of the department is on Curriculum AI.
+          <strong>Partly illustrative.</strong> Courses marked <strong>Live</strong> come from Study Buddy, from the same class data their lecturers see. The other courses and the compliance figures show what the dashboard will report once more of the department is on Study Buddy.
         </div>
 
         {/* Dept metrics (H3, H5, H7) */}
@@ -223,7 +223,7 @@ export default function HoDView() {
               ))}
             </div>
             <div style={{ marginTop:'14px', padding:'11px 14px', background:'#FEF2F2', borderRadius:'9px', border:'1px solid #FECACA', fontSize:'12px', color:'#7F1D1D' }}>
-              <strong>Total: {totalAtRisk} students</strong> across the department are below the engagement threshold. Curriculum AI has flagged these to their respective lecturers.
+              <strong>Total: {totalAtRisk} students</strong> across the department are below the engagement threshold. Study Buddy has flagged these to their respective lecturers.
             </div>
           </div>
 
@@ -283,11 +283,11 @@ export default function HoDView() {
           </div>
         </div>
 
-        {/* Curriculum AI accuracy & fairness (H8, H9) */}
+        {/* Study Buddy accuracy & fairness (H8, H9) */}
         <div className="card" style={{ padding:'20px' }}>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'20px' }}>
             <div>
-              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Curriculum AI accuracy</div>
+              <div style={{ fontWeight:600, fontSize:'13px', color:'#0F172A', marginBottom:'10px' }}>Study Buddy accuracy</div>
               {[
                 { label:'Answers backed by course material', pct:99.2 },
                 { label:'Answers reviewed and approved by lecturers', pct:94.8 },

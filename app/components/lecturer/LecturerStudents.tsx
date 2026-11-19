@@ -101,7 +101,7 @@ export default function LecturerStudents() {
             </table>
           </div>
           <p style={{ fontSize:'11px', color:'#94A3B8', marginTop:'10px' }}>
-            Showing {filtered.length} of {cohort.length} students{synthetic > 0 ? ` · ● Live marks signed-up students; the other ${synthetic} are synthetic` : ' · Students appear here once they open Curriculum AI'}
+            Showing {filtered.length} of {cohort.length} students{synthetic > 0 ? ` · ● Live marks signed-up students; the other ${synthetic} are synthetic` : ' · Students appear here once they open Study Buddy'}
           </p>
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function LecturerStudents() {
             })}
 
             <div style={{ padding:'12px', background:'#FFFBEB', borderRadius:'9px', border:'1px solid #FDE68A' }}>
-              <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'5px' }}>Curriculum AI recommendation</div>
+              <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'5px' }}>Study Buddy recommendation</div>
               <p style={{ fontSize:'12px', color:'#78350F', lineHeight:1.5, margin:0 }}>
                 {selected.status === 'Critical' || selected.status === 'At risk'
                   ? `Last active ${daysAgoLabel(selected.daysAgo).toLowerCase()}, engagement at ${selected.engagement}%. Suggest a direct check-in before the next tutorial, focused on ${selected.weakTopic}.`

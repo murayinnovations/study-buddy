@@ -1,14 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-// Model and effort for Curriculum AI. Override with CURRICULUM_AI_MODEL / CURRICULUM_AI_EFFORT
-// (e.g. CURRICULUM_AI_MODEL=claude-opus-5-5, CURRICULUM_AI_EFFORT=medium) to compare quality.
+// Model and effort for Study Buddy. Override with STUDY_BUDDY_MODEL / STUDY_BUDDY_EFFORT
+// (e.g. STUDY_BUDDY_MODEL=claude-opus-5-5, STUDY_BUDDY_EFFORT=medium) to compare quality.
+// The names from before the rename (CURRICULUM_AI_MODEL / _EFFORT) still work.
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'] as const
 export type Effort = typeof EFFORTS[number]
 
-export const MODEL = process.env.CURRICULUM_AI_MODEL || 'claude-sonnet-5-5'
-export const EFFORT: Effort = (EFFORTS as readonly string[]).includes(process.env.CURRICULUM_AI_EFFORT || '')
-  ? process.env.CURRICULUM_AI_EFFORT as Effort
-  : 'low'
+const effortSetting = process.env.STUDY_BUDDY_EFFORT || process.env.CURRICULUM_AI_EFFORT || ''
+export const MODEL = process.env.STUDY_BUDDY_MODEL || process.env.CURRICULUM_AI_MODEL || 'claude-sonnet-5-5'
+export const EFFORT: Effort = (EFFORTS as readonly string[]).includes(effortSetting) ? effortSetting as Effort : 'low'
 
 // If a safety classifier declines, retry server-side on Anthropic's recommended model.
 export const FALLBACK: { betas: Anthropic.Beta.AnthropicBeta[]; fallbacks: 'default' } = {

@@ -10,12 +10,12 @@ export const dynamic = 'force-dynamic'
 async function login(req: NextRequest, params: URLSearchParams) {
   const issuer = params.get('iss')
   const loginHint = params.get('login_hint')
-  if (!issuer || !loginHint) return page('Could not open Curriculum AI', 'The learning platform sent an incomplete request.', 400)
+  if (!issuer || !loginHint) return page('Could not open Study Buddy', 'The learning platform sent an incomplete request.', 400)
 
   const platform = await findPlatform(issuer, params.get('client_id') ?? undefined)
-  if (!platform) return page('Could not open Curriculum AI', 'This learning platform is not registered with Curriculum AI.', 403)
+  if (!platform) return page('Could not open Study Buddy', 'This learning platform is not registered with Study Buddy.', 403)
   const blocked = platformBlocked(platform)
-  if (blocked) return page('Could not open Curriculum AI', blocked, 403)
+  if (blocked) return page('Could not open Study Buddy', blocked, 403)
 
   const state = crypto.randomUUID()
   const auth = new URL(platform.auth_url)

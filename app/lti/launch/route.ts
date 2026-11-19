@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
   const idToken = form.get('id_token')
   const state = form.get('state')
   const jar = cookies()
-  if (!idToken || !state) return page('Could not open Curriculum AI', 'The learning platform sent an incomplete launch.', 400)
+  if (!idToken || !state) return page('Could not open Study Buddy', 'The learning platform sent an incomplete launch.', 400)
   if (!jar.get(STATE_COOKIE + state)) {
-    return page('Could not open Curriculum AI', 'This launch was started in a different browser or took too long. Please open Curriculum AI from the course again.', 400)
+    return page('Could not open Study Buddy', 'This launch was started in a different browser or took too long. Please open Study Buddy from the course again.', 400)
   }
   jar.delete({ name: STATE_COOKIE + state, path: '/lti/launch' })
 
@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
     jar.delete(VIEW_AS_COOKIE)
     return NextResponse.redirect(new URL(`/?course=${encodeURIComponent(course.code)}`, req.url), 303)
   } catch (err) {
-    if (err instanceof LtiError) return page('Could not open Curriculum AI', err.message, 403)
+    if (err instanceof LtiError) return page('Could not open Study Buddy', err.message, 403)
     console.error('LTI launch failed:', err)
-    return page('Could not open Curriculum AI', 'Something went wrong on our side. Please try again in a minute.', 500)
+    return page('Could not open Study Buddy', 'Something went wrong on our side. Please try again in a minute.', 500)
   }
 }

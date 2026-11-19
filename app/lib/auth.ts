@@ -11,7 +11,7 @@ export const VIEW_AS_COOKIE = 'view_as'
 export const ROLES: Role[] = ['student', 'lecturer', 'hod']
 
 // Sign-in sessions. Supabase Auth keeps the session in cookies; who someone is
-// in Curriculum AI (role, name, student number) comes from the members table,
+// in Study Buddy (role, name, student number) comes from the members table,
 // which gets a student row the first time someone new signs in.
 
 export function supabaseAuth() {

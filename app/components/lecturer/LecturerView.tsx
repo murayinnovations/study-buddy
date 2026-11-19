@@ -18,7 +18,7 @@ export default function LecturerView() {
   const { state } = useStore()
   const course = state.courses[0]
   if (!course) {
-    return <div style={{ margin:'auto', fontSize:'13px', color:'#94A3B8' }}>No course is set up for you yet. Ask the Curriculum AI team to assign one.</div>
+    return <div style={{ margin:'auto', fontSize:'13px', color:'#94A3B8' }}>No course is set up for you yet. Ask the Study Buddy team to assign one.</div>
   }
   const unanswered = state.questions.filter(q => q.course === course.code && !q.reply).length
 

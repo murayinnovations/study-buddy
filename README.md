@@ -1,18 +1,18 @@
-# Curriculum AI — Learning Companion for Strathmore University
+# Study Buddy — Learning Companion for Strathmore University
 
-Curriculum AI is an AI study companion with three views: student, lecturer and Head of Department. The pilot course is Business Intelligence with Power BI (BI-Apr-26), with materials imported from Strathmore's data science learning platform. Courses, their topics, Curriculum AI's instructions for each course and all course material live in the database, not in the code
+Study Buddy is an AI study companion with three views: student, lecturer and Head of Department. The pilot course is Business Intelligence with Power BI (BI-Apr-26), with materials imported from Strathmore's data science learning platform. Courses, their topics, Study Buddy's instructions for each course and all course material live in the database, not in the code
 
 ## Status
 
 | Area | State |
 |---|---|
 | Student chat | Live. Answers from the course's approved materials in the database and cites them; students can also open the original files |
-| Mastery tracking | Live. Curriculum AI records practice results with a tool call and the student's scores update |
+| Mastery tracking | Live. Study Buddy records practice results with a tool call and the student's scores update |
 | Ask lecturer → inbox → reply → save to course | Live, shared across browsers |
 | Lecturer dashboards | Computed from the signed-up students in the lecturer's course (plus a synthetic class of 30 for courses with `synthetic_class` set) |
 | Material upload and approval | Live (.md and .txt). Imported platform material is approved on import |
 | Head of Department view | Illustrative data, labelled as such |
-| Sign-in | Email and password (Supabase Auth). Anyone can create an account. New people join as students; lecturer and HoD access is granted from the members list. People can also open Curriculum AI from a Moodle course (LTI 1.3). Each person sees only their role's view, and each student their own work |
+| Sign-in | Email and password (Supabase Auth). Anyone can create an account. New people join as students; lecturer and HoD access is granted from the members list. People can also open Study Buddy from a Moodle course (LTI 1.3). Each person sees only their role's view, and each student their own work |
 | Storage | Supabase, through the app's `/api/store` route (`app/lib/db.ts`), which checks the member's role |
 
 The demo walkthrough is in [docs/demo-script.md](docs/demo-script.md).
@@ -64,7 +64,7 @@ People who signed in with an emailed link before passwords were added have no pa
 
 ## Opening from Moodle (LTI 1.3)
 
-Curriculum AI can be added to a course on a learning platform such as Moodle. A student clicks the activity, Curriculum AI opens in a new tab with that course already open, and they're signed in without a password. People who aren't on the members list yet are added on their first launch: platform students become students and platform teachers become lecturers of that course. Platform admins get no special role; HoD is only set with the members script. Existing members keep their role. Email and password sign-in still works for everyone; if someone signed up with a platform user's email but never confirmed it, the first launch replaces that password.
+Study Buddy can be added to a course on a learning platform such as Moodle. A student clicks the activity, Study Buddy opens in a new tab with that course already open, and they're signed in without a password. People who aren't on the members list yet are added on their first launch: platform students become students and platform teachers become lecturers of that course. Platform admins get no special role; HoD is only set with the members script. Existing members keep their role. Email and password sign-in still works for everyone; if someone signed up with a platform user's email but never confirmed it, the first launch replaces that password.
 
 The code is in `app/lti/` (the four addresses below) and `app/lib/lti.ts`.
 
@@ -73,11 +73,11 @@ The code is in `app/lti/` (the four addresses below) and `app/lib/lti.ts`.
 | `/lti/register` | The platform's admin pastes this into the platform once, and the two exchange settings automatically |
 | `/lti/login` | The platform sends people here first when they click the activity |
 | `/lti/launch` | The platform posts the signed launch here; this signs the person in |
-| `/lti/jwks` | Curriculum AI's public key |
+| `/lti/jwks` | Study Buddy's public key |
 
 Setup:
 
-1. Make Curriculum AI's key once and add the line it prints to `.env.local` and to Vercel's environment variables. Keep it: a new key means registering with each platform again.
+1. Make Study Buddy's key once and add the line it prints to `.env.local` and to Vercel's environment variables. Keep it: a new key means registering with each platform again.
    ```bash
    node scripts/lti-key.mjs
    ```
@@ -85,11 +85,11 @@ Setup:
 3. Add yourself as an admin (see [Members](#members)), and set `RESEND_API_KEY` from [resend.com](https://resend.com) so admins get an email when a platform registers. Without a domain verified in Resend, leave `ALERT_FROM_EMAIL` unset: Resend's test sender only delivers to the address you signed up to Resend with, so sign up with an admin's email.
 4. On Moodle (4.x), the site admin goes to **Site administration → Plugins → Activity modules → External tool → Manage tools**, pastes `https://<your-vercel-domain>/lti/register` into **Tool URL** and clicks **Add LTI Advantage**, then activates the tool. In the tool's settings: **Share launcher's name with tool** and **Share launcher's email with tool** set to **Always**, and **Default launch container** set to **New window**. Moodle only talks to HTTPS addresses, so register the deployed site, not localhost.
 5. Anyone can register, but a new platform waits for approval: admins get an email, and until one approves it on the admin page (sign in as an admin), the activity shows a waiting message. An approved platform signs people in, so only approve addresses you recognise. Revoking stops new launches from it.
-6. The lecturer adds the tool to their course as an activity and, under **Show more… → Custom parameters**, enters `course=<course code>`, for example `course=BI-Apr-26`. Curriculum AI remembers which course that Moodle course opens, but the parameter is what sets it.
+6. The lecturer adds the tool to their course as an activity and, under **Show more… → Custom parameters**, enters `course=<course code>`, for example `course=BI-Apr-26`. Study Buddy remembers which course that Moodle course opens, but the parameter is what sets it.
 
 ## Courses
 
-A course is a row in the `courses` table: its name, lecturer, topics (in teaching order, with the week each is taught), the starter prompts shown on an empty chat, and Curriculum AI's instructions for teaching it. Its materials are rows in `materials`; the original files are in the private `course-files` storage bucket, and students open them through the app.
+A course is a row in the `courses` table: its name, lecturer, topics (in teaching order, with the week each is taught), the starter prompts shown on an empty chat, and Study Buddy's instructions for teaching it. Its materials are rows in `materials`; the original files are in the private `course-files` storage bucket, and students open them through the app.
 
 Load a course with the import script (it reads `.env.local`):
 
@@ -115,7 +115,7 @@ node --env-file=.env.local scripts/members.mjs list
 node --env-file=.env.local scripts/members.mjs remove sara@example.com
 ```
 
-Admins are the Curriculum AI team: they see the admin page, where they approve learning platforms that register to open Curriculum AI, and get an email when one registers. Remove someone's admin access with `remove`, or by adding them again with another role.
+Admins are the Study Buddy team: they see the admin page, where they approve learning platforms that register to open Study Buddy, and get an email when one registers. Remove someone's admin access with `remove`, or by adding them again with another role.
 
 Students see every active course and start with every topic not yet started; courses and topics added later appear for them automatically. Lecturers see the course given with `--course`, or the first active course if none is set. A Gmail address with `+` (`you+lecturer@gmail.com`) arrives in the same inbox, which is handy for having one account per role.
 

@@ -1,8 +1,8 @@
 <?php
-// Builds a test course in this Moodle from a Curriculum AI course folder (imports/raw/<course>,
+// Builds a test course in this Moodle from a Study Buddy course folder (imports/raw/<course>,
 // the same folder scripts/import-course.mjs reads): one section per week with the course's files
-// and pages, the test student and teacher enrolled, and a Curriculum AI activity at the top that
-// opens the matching Curriculum AI course. Run it with setup-course.sh; running again replaces the course.
+// and pages, the test student and teacher enrolled, and a Study Buddy activity at the top that
+// opens the matching Study Buddy course. Run it with setup-course.sh; running again replaces the course.
 
 define('CLI_SCRIPT', true);
 require('/var/www/html/config.php');
@@ -10,7 +10,7 @@ require_once($CFG->libdir . '/clilib.php');
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->libdir . '/testing/generator/lib.php');
 
-[$options] = cli_get_params(['dir' => '/tmp/course', 'shortname' => 'PBI-test', 'student' => '', 'teacher' => '', 'tool' => 'Curriculum AI']);
+[$options] = cli_get_params(['dir' => '/tmp/course', 'shortname' => 'PBI-test', 'student' => '', 'teacher' => '', 'tool' => 'Study Buddy']);
 $dir = rtrim($options['dir'], '/');
 $config = json_decode(file_get_contents("$dir/course.json"), true) ?: cli_error("No course.json in $dir");
 $manifest = is_file("$dir/manifest.json") ? json_decode(file_get_contents("$dir/manifest.json"), true) : ['activities' => []];
@@ -19,7 +19,7 @@ $info = $config['course'];
 \core\session\manager::set_user(get_admin());
 $gen = new testing_data_generator();
 
-// ---- The Curriculum AI tool: share name and email, open in a new window ----
+// ---- The Study Buddy tool: share name and email, open in a new window ----
 
 $typeid = $DB->get_field('lti_types', 'id', ['name' => $options['tool'], 'state' => 1])
     ?: cli_error("No active external tool called \"{$options['tool']}\". Register and activate it first.");
@@ -48,7 +48,7 @@ $course = $gen->create_course([
     'category' => $DB->get_field_sql('SELECT MIN(id) FROM {course_categories}'),
     'format' => 'topics',
     'numsections' => $weeks,
-    'summary' => "<p>A copy of {$info['name']} for testing Curriculum AI. Lecturers: " . s($info['lecturer']) . '.</p>',
+    'summary' => "<p>A copy of {$info['name']} for testing Study Buddy. Lecturers: " . s($info['lecturer']) . '.</p>',
     'summaryformat' => FORMAT_HTML,
 ], ['createsections' => true]);
 
@@ -60,14 +60,17 @@ for ($week = 1; $week <= $weeks; $week++) {
     ]);
 }
 
-// ---- Curriculum AI at the top ----
+// ---- Study Buddy at the top ----
 
 $gen->create_module('lti', [
     'course' => $course->id, 'section' => 0,
-    'name' => 'Curriculum AI: your study companion',
+    'name' => 'Study Buddy: your study companion',
     'intro' => '<p>Ask questions, practise topics and check your progress, with answers drawn from this course\'s materials.</p>',
     'showdescription' => 1,
     'typeid' => $typeid, 'toolurl' => '',
+    // The test generator otherwise fills in a placeholder key ('12345'), which Moodle then sends
+    // instead of the tool's client id, so the launch matches no registered platform.
+    'resourcekey' => '', 'password' => '', 'grade' => 0, 'instructorchoiceacceptgrades' => 0,
     'instructorcustomparameters' => "course={$info['code']}",
 ]);
 

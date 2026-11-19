@@ -27,7 +27,7 @@ export default function LecturerOverview() {
   const atRisk = cohort.filter(s => s.status === 'Critical' || s.status === 'At risk').length
   const top = stats[0]
 
-  // Students who use Curriculum AI more vs less, for the insight card.
+  // Students who use Study Buddy more vs less, for the insight card.
   const frequent = cohort.filter(s => s.sessions >= 10)
   const occasional = cohort.filter(s => s.sessions < 10)
 
@@ -163,7 +163,7 @@ export default function LecturerOverview() {
                 <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Next tutorial · Week {week}</div>
               </div>
               <button onClick={draftBrief} disabled={briefState === 'loading'} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 10px', flexShrink:0 }}>
-                {briefState === 'loading' ? 'Drafting…' : saved ? '↻ Refresh' : '✦ Draft with Curriculum AI'}
+                {briefState === 'loading' ? 'Drafting…' : saved ? '↻ Refresh' : '✦ Draft with Study Buddy'}
               </button>
             </div>
             {shownBrief.map((b,i)=>(
@@ -178,14 +178,14 @@ export default function LecturerOverview() {
             ))}
             <div style={{ marginTop:'12px', padding:'10px 12px', background: briefState === 'error' ? '#FEF2F2' : outOfDate && briefState !== 'loading' ? '#FFFBEB' : '#EFF6FF', borderRadius:'8px', fontSize:'11px', color: briefState === 'error' ? '#B91C1C' : outOfDate && briefState !== 'loading' ? '#92400E' : '#1D4ED8', fontWeight:500 }}>
               {briefState === 'loading'
-                ? '✦ Curriculum AI is drafting from class mastery, misconceptions and student questions. This takes about 20–30 seconds.'
+                ? '✦ Study Buddy is drafting from class mastery, misconceptions and student questions. This takes about 20–30 seconds.'
                 : briefState === 'error'
-                ? saved ? 'Curriculum AI could not refresh the brief. Showing the last draft.' : 'Curriculum AI could not draft the brief. Showing the plan built from class data.'
+                ? saved ? 'Study Buddy could not refresh the brief. Showing the last draft.' : 'Study Buddy could not draft the brief. Showing the plan built from class data.'
                 : saved
                   ? outOfDate
                     ? `Drafted ${timeAgo(saved.generatedAt).toLowerCase()}. Class data has changed since; refresh to update it.`
-                    : `✦ Drafted by Curriculum AI ${timeAgo(saved.generatedAt).toLowerCase()} from class mastery, misconceptions and student questions`
-                  : '✦ Built from class mastery. Ask Curriculum AI to add teaching suggestions.'}
+                    : `✦ Drafted by Study Buddy ${timeAgo(saved.generatedAt).toLowerCase()} from class mastery, misconceptions and student questions`
+                  : '✦ Built from class mastery. Ask Study Buddy to add teaching suggestions.'}
             </div>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function LecturerOverview() {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
             <div>
               <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Weekly comprehension trend</div>
-              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>{COURSE} · {synthetic > 0 ? `Earlier weeks are demo history; Week ${week} is live` : `Week ${week} is live; earlier weeks build up as the class uses Curriculum AI`}</div>
+              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>{COURSE} · {synthetic > 0 ? `Earlier weeks are demo history; Week ${week} is live` : `Week ${week} is live; earlier weeks build up as the class uses Study Buddy`}</div>
             </div>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:'24px', alignItems:'start' }}>
@@ -204,13 +204,13 @@ export default function LecturerOverview() {
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
               <div style={{ padding:'12px', background:'#FEF3C7', borderRadius:'10px', border:'1px solid #FDE68A' }}>
-                <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'4px' }}>Curriculum AI insight</div>
+                <div style={{ fontSize:'10px', fontWeight:700, color:'#92400E', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'4px' }}>Study Buddy insight</div>
                 <p style={{ fontSize:'12px', color:'#78350F', lineHeight:1.5, margin:0 }}>
-                  Students with 10+ Curriculum AI sessions average {average(frequent.map(s => s.score))}% mastery, against {average(occasional.map(s => s.score))}% for those with fewer ({frequent.length} vs {occasional.length} students).
+                  Students with 10+ Study Buddy sessions average {average(frequent.map(s => s.score))}% mastery, against {average(occasional.map(s => s.score))}% for those with fewer ({frequent.length} vs {occasional.length} students).
                 </p>
               </div>
               <div style={{ padding:'12px', background:'#F8FAFC', borderRadius:'10px', border:'1px solid #E2E8F0' }}>
-                <div style={{ fontSize:'10px', fontWeight:700, color:'#475569', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'6px' }}>Misconceptions Curriculum AI noticed</div>
+                <div style={{ fontSize:'10px', fontWeight:700, color:'#475569', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'6px' }}>Misconceptions Study Buddy noticed</div>
                 {misconceptions.length === 0 && <p style={{ fontSize:'12px', color:'#94A3B8', margin:0 }}>None this week.</p>}
                 {misconceptions.slice(0, 5).map((m, i) => (
                   <div key={i} style={{ fontSize:'12px', color:'#334155', lineHeight:1.45, padding:'5px 0', borderTop: i > 0 ? '1px solid #F1F5F9' : 'none' }}>

@@ -105,7 +105,7 @@ check(await db.from('practice_log').insert(practice))
 
 const firstName = 'Eric'
 const messages = [
-  { role: 'assistant', content: `Hi ${firstName} 👋 I'm Curriculum AI, your study companion for **Business Intelligence with Power BI**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?` },
+  { role: 'assistant', content: `Hi ${firstName} 👋 I'm Study Buddy, your study companion for **Business Intelligence with Power BI**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?` },
   { role: 'user', content: 'When should I use XLOOKUP instead of VLOOKUP?' },
   {
     role: 'assistant',

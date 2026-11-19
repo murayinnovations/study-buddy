@@ -1,4 +1,4 @@
--- Curriculum AI database. Run in the Supabase SQL Editor (Dashboard → SQL Editor → New query).
+-- Study Buddy database. Run in the Supabase SQL Editor (Dashboard → SQL Editor → New query).
 -- Every statement is safe to run again, so after a change just run the whole file.
 --
 -- People sign in with Supabase Auth (an emailed link), but the browser still never reads
@@ -6,7 +6,7 @@
 -- the signed-in member's role and use the secret key. Row-level security is enabled on
 -- every table with no policies, which blocks the publishable key entirely.
 
--- The courses students see, and everything Curriculum AI needs to teach each one.
+-- The courses students see, and everything Study Buddy needs to teach each one.
 -- Load a course and its materials with scripts/import-course.mjs.
 create table if not exists courses (
   code            text primary key,
@@ -14,7 +14,7 @@ create table if not exists courses (
   lecturer        text not null,                 -- as students see it, e.g. 'T. Andambi & E. Chemekeki'
   credits         int  not null default 3,
   color           text not null default '#2563EB',
-  prompt          text not null,                 -- Curriculum AI's instructions for this course
+  prompt          text not null,                 -- Study Buddy's instructions for this course
   topics          jsonb not null default '[]',   -- [{ "topic": "…", "week": 1 }] in teaching order
   current_week    int,                           -- taught up to this week; null means every topic
   total_weeks     int,
@@ -42,7 +42,7 @@ create table if not exists members (
 alter table members add column if not exists demo_group text;
 -- Lecturers: the course they teach. Left empty, a lecturer gets the first active course.
 alter table members add column if not exists course text;
--- Admins: the Curriculum AI team. They approve learning platforms and get an email when one registers.
+-- Admins: the Study Buddy team. They approve learning platforms and get an email when one registers.
 alter table members drop constraint if exists members_role_check;
 alter table members add constraint members_role_check check (role in ('student', 'lecturer', 'hod', 'admin'));
 
@@ -113,7 +113,7 @@ create table if not exists materials (
 );
 
 -- Course material imported from the university's platform sits alongside lecturer uploads.
--- body is the text Curriculum AI reads; file_path is the original in the course-files bucket.
+-- body is the text Study Buddy reads; file_path is the original in the course-files bucket.
 alter table materials add column if not exists source    text not null default 'lecturer' check (source in ('lecturer', 'platform'));
 alter table materials add column if not exists file_path text;
 alter table materials add column if not exists file_name text;
@@ -154,14 +154,14 @@ create table if not exists briefs (
   signature    text not null
 );
 
--- ---- Opening Curriculum AI from a learning platform (LTI 1.3, see app/lti) ----
+-- ---- Opening Study Buddy from a learning platform (LTI 1.3, see app/lti) ----
 
 -- Each learning platform registered with /lti/register, e.g. a university's Moodle site.
--- Anyone can register; nobody can open Curriculum AI from it until an admin approves it.
+-- Anyone can register; nobody can open Study Buddy from it until an admin approves it.
 create table if not exists lti_platforms (
   id             bigint generated always as identity primary key,
   issuer         text not null,                -- the platform's address, e.g. 'https://datascience.strathmore.edu/elearning'
-  client_id      text not null,                -- the id the platform gave Curriculum AI
+  client_id      text not null,                -- the id the platform gave Study Buddy
   deployment_ids text[] not null default '{}', -- installs of the tool on that platform
   auth_url       text not null,                -- where /lti/login sends people back to the platform
   token_url      text,
@@ -184,7 +184,7 @@ create table if not exists lti_identities (
   primary key (platform_id, sub)
 );
 
--- Which Curriculum AI course a platform course opens. Filled from the activity's
+-- Which Study Buddy course a platform course opens. Filled from the activity's
 -- course=<code> custom parameter on launch.
 create table if not exists lti_courses (
   platform_id bigint not null references lti_platforms (id) on delete cascade,

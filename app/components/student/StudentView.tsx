@@ -14,7 +14,7 @@ export default function StudentView({ initialCourse }: { initialCourse?: string 
 
   const selectedCourse = state.courses.find(c => c.code === selectedCode) ?? state.courses[0]
   if (!selectedCourse) {
-    return <div style={{ margin:'auto', fontSize:'13px', color:'#94A3B8' }}>No courses are open on Curriculum AI yet.</div>
+    return <div style={{ margin:'auto', fontSize:'13px', color:'#94A3B8' }}>No courses are open on Study Buddy yet.</div>
   }
 
   const setSelectedCourse = (c: Course) => setSelectedCode(c.code)

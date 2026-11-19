@@ -28,22 +28,22 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
   // The platform's address stays out of the subject and isn't a link: a link to an unknown
   // site next to an "approve" button is what phishing looks like, and Gmail files it as spam.
   const subject = product === 'A learning platform'
-    ? 'Approval needed: a learning platform wants to connect to Curriculum AI'
-    : `Approval needed: a ${product} site wants to connect to Curriculum AI`
+    ? 'Approval needed: a learning platform wants to connect to Study Buddy'
+    : `Approval needed: a ${product} site wants to connect to Study Buddy`
 
   const text = [
-    `${product} at ${host} has registered to open Curriculum AI and is waiting for your approval.`,
+    `${product} at ${host} has registered to open Study Buddy and is waiting for your approval.`,
     '',
     `Platform:   ${product}`,
     `Address:    ${host}`,
     `Registered: ${when}`,
     '',
-    'Nobody can open Curriculum AI from it until an admin approves it. Only approve platforms you',
-    'recognise: an approved platform can sign its students and lecturers in to Curriculum AI.',
+    'Nobody can open Study Buddy from it until an admin approves it. Only approve platforms you',
+    'recognise: an approved platform can sign its students and lecturers in to Study Buddy.',
     '',
     `Review it on the admin page: ${siteUrl}`,
     '',
-    "You're getting this because you're a Curriculum AI admin.",
+    "You're getting this because you're a Study Buddy admin.",
   ].join('\n')
 
   const row = (label: string, value: string) => `
@@ -61,16 +61,16 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden">
         <tr><td style="background:#0F172A;padding:18px 28px">
           <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:32px;height:32px;background:#2563EB;border-radius:9px;text-align:center;vertical-align:middle;color:#FFFFFF;font-weight:700;font-size:15px">C</td>
-            <td style="padding-left:10px;color:#FFFFFF;font-weight:600;font-size:15px">Curriculum AI</td>
+            <td style="width:32px;height:32px;background:#2563EB;border-radius:9px;text-align:center;vertical-align:middle;color:#FFFFFF;font-weight:700;font-size:15px">S</td>
+            <td style="padding-left:10px;color:#FFFFFF;font-weight:600;font-size:15px">Study Buddy</td>
           </tr></table>
         </td></tr>
 
         <tr><td style="padding:28px 28px 8px">
           <div style="display:inline-block;font-size:11px;font-weight:600;color:#92400E;background:#FEF3C7;border-radius:999px;padding:4px 10px">Waiting for approval</div>
-          <h1 style="font-size:20px;line-height:1.35;color:#0F172A;margin:14px 0 8px">${escape(product)} wants to connect to Curriculum AI</h1>
+          <h1 style="font-size:20px;line-height:1.35;color:#0F172A;margin:14px 0 8px">${escape(product)} wants to connect to Study Buddy</h1>
           <p style="font-size:14px;line-height:1.6;color:#475569;margin:0">
-            A ${escape(product)} site has registered Curriculum AI as a tool. Nobody can open Curriculum AI from it until an admin approves it.
+            A ${escape(product)} site has registered Study Buddy as a tool. Nobody can open Study Buddy from it until an admin approves it.
           </p>
         </td></tr>
 
@@ -88,12 +88,12 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
 
         <tr><td style="padding:16px 28px 28px">
           <p style="font-size:12px;line-height:1.6;color:#64748B;margin:0;border-left:3px solid #F59E0B;padding-left:12px">
-            Only approve platforms you recognise. An approved platform can sign its students and lecturers in to Curriculum AI.
+            Only approve platforms you recognise. An approved platform can sign its students and lecturers in to Study Buddy.
             If you don't recognise this address, reject it on the admin page.
           </p>
         </td></tr>
       </table>
-      <p style="font-size:11px;color:#94A3B8;margin:16px 0 0">You're getting this because you're a Curriculum AI admin.</p>
+      <p style="font-size:11px;color:#94A3B8;margin:16px 0 0">You're getting this because you're a Study Buddy admin.</p>
     </td></tr>
   </table>
 </body>

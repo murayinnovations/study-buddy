@@ -20,7 +20,7 @@ export default function App({ member, initialCourse }: { member: Member; initial
 function RoleView({ initialCourse }: { initialCourse?: string }) {
   const { member, status } = useStore()
   if (status === 'loading' && member.role !== 'hod' && member.role !== 'admin') {
-    return <div style={{ margin:'auto', fontSize:'13px', color:'#94A3B8' }}>Loading your Curriculum AI…</div>
+    return <div style={{ margin:'auto', fontSize:'13px', color:'#94A3B8' }}>Loading your Study Buddy…</div>
   }
   if (member.role === 'student') return <StudentView initialCourse={initialCourse} />
   if (member.role === 'lecturer') return <LecturerView />

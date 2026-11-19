@@ -19,7 +19,7 @@ export default function AuthCard({ children }: { children: React.ReactNode }) {
             </svg>
           </div>
           <div>
-            <div style={{ color:'#fff', fontWeight:700, fontSize:'20px', lineHeight:1 }}>Curriculum AI</div>
+            <div style={{ color:'#fff', fontWeight:700, fontSize:'20px', lineHeight:1 }}>Study Buddy</div>
             <div style={{ color:'rgba(255,255,255,.5)', fontSize:'11px', marginTop:'3px' }}>Strathmore University · Pilot</div>
           </div>
         </div>

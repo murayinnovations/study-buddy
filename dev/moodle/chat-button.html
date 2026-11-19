@@ -1,24 +1,24 @@
-<!-- Curriculum AI chat button. Goes in Moodle's Site administration → Appearance → Additional HTML →
-     "Before BODY is closed" (see README.md). On pages inside a course that has a Curriculum AI
-     activity, it shows a chat-style button that opens Curriculum AI in a new tab, the same launch
+<!-- Study Buddy chat button. Goes in Moodle's Site administration → Appearance → Additional HTML →
+     "Before BODY is closed" (see README.md). On pages inside a course that has a Study Buddy
+     activity, it shows a chat-style button that opens Study Buddy in a new tab, the same launch
      as clicking the activity. Courses without the activity don't get the button. -->
 <style>
-  .cai-chat { position: fixed; right: 24px; bottom: 24px; z-index: 1040; display: flex; align-items: center; gap: 10px;
+  .sb-chat { position: fixed; right: 24px; bottom: 24px; z-index: 1040; display: flex; align-items: center; gap: 10px;
     height: 56px; padding: 0 20px 0 8px; border-radius: 999px; background: #2563EB; color: #fff !important;
     font: 600 14px/1 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; text-decoration: none !important;
     box-shadow: 0 6px 20px rgba(37, 99, 235, .35); transition: transform .15s, box-shadow .15s; }
-  .cai-chat:hover, .cai-chat:focus-visible { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(37, 99, 235, .45); }
-  .cai-chat:focus-visible { outline: 3px solid #93C5FD; outline-offset: 3px; }
-  .cai-chat svg { flex: none; width: 40px; height: 40px; }
-  .cai-chat small { display: block; margin-top: 4px; font-size: 11px; font-weight: 500; opacity: .8; }
-  @media (max-width: 576px) { .cai-chat { padding-right: 8px; } .cai-chat span { display: none; } }
+  .sb-chat:hover, .sb-chat:focus-visible { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(37, 99, 235, .45); }
+  .sb-chat:focus-visible { outline: 3px solid #93C5FD; outline-offset: 3px; }
+  .sb-chat svg { flex: none; width: 40px; height: 40px; }
+  .sb-chat small { display: block; margin-top: 4px; font-size: 11px; font-weight: 500; opacity: .8; }
+  @media (max-width: 576px) { .sb-chat { padding-right: 8px; } .sb-chat span { display: none; } }
 </style>
 <script>
 (function () {
   // Course pages carry a course-<id> class on <body>; course 1 is the site front page.
   var match = document.body.className.match(/\bcourse-(\d+)\b/);
   if (!match || match[1] === '1' || !window.M || !M.cfg) return;
-  var courseId = match[1], cacheKey = 'cai-launch-' + courseId;
+  var courseId = match[1], cacheKey = 'sb-launch-' + courseId;
 
   function show(href) {
     if (!href) return;
@@ -26,26 +26,26 @@
     a.href = href;
     a.target = '_blank';
     a.rel = 'noopener';
-    a.className = 'cai-chat';
-    a.title = 'Opens Curriculum AI in a new tab';
+    a.className = 'sb-chat';
+    a.title = 'Opens Study Buddy in a new tab';
     a.innerHTML =
       '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="#fff" fill-opacity=".18"/>' +
       '<g transform="translate(4 4)"><path d="M12 3C8 3 5 6 5 10c0 2.5 1.2 4.7 3 6.1V18h8v-1.9c1.8-1.4 3-3.6 3-6.1 0-4-3-7-7-7z" fill="#fff" opacity=".95"/>' +
       '<rect x="9" y="18" width="6" height="2" rx="1" fill="#fff" opacity=".75"/><rect x="10" y="20" width="4" height="1.5" rx=".75" fill="#fff" opacity=".55"/></g></svg>' +
-      '<span>Ask Curriculum AI<small>Opens in a new tab</small></span>';
+      '<span>Ask Study Buddy<small>Opens in a new tab</small></span>';
     document.body.appendChild(a);
   }
 
   // Remembered for this browser tab, so the course's activity list is fetched once, not on every page.
   try { var cached = sessionStorage.getItem(cacheKey); if (cached !== null) return show(cached); } catch (e) {}
 
-  // The course's external tool activities; the first one named Curriculum AI is the one to open.
+  // The course's external tool activities; the first one named Study Buddy is the one to open.
   fetch(M.cfg.wwwroot + '/mod/lti/index.php?id=' + courseId, { credentials: 'same-origin' })
     .then(function (res) { return res.ok ? res.text() : ''; })
     .then(function (html) {
       var doc = new DOMParser().parseFromString(html, 'text/html');
       var links = Array.prototype.slice.call(doc.querySelectorAll('a[href*="view.php?id="]'));
-      var link = links.filter(function (l) { return /curriculum ai/i.test(l.textContent); })[0];
+      var link = links.filter(function (l) { return /study buddy/i.test(l.textContent); })[0];
       var href = '';
       if (link) {
         var id = new URL(link.getAttribute('href'), M.cfg.wwwroot + '/mod/lti/').searchParams.get('id');

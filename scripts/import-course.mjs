@@ -1,4 +1,4 @@
-// Loads a course and its approved materials into Curriculum AI's database.
+// Loads a course and its approved materials into Study Buddy's database.
 //
 //   node --env-file=.env.local scripts/import-course.mjs <folder> [--dry-run | --prepare]
 //
@@ -9,7 +9,7 @@
 //   course.json   the course (a row for the courses table) and its materials, in teaching order:
 //                 { "course": { "code", "name", "lecturer", "prompt", "topics", ... },
 //                   "materials": [{ "file" | "manifestText", "title", "type", "topics", "transcribe"? }] }
-//   text/<file>.md  the text of each file, extracted beforehand (Curriculum AI reads this text)
+//   text/<file>.md  the text of each file, extracted beforehand (Study Buddy reads this text)
 //   manifest.json   optional: page text captured from the platform, for "manifestText" materials
 //
 // Each original file is uploaded to the private course-files bucket, and its text is saved as an

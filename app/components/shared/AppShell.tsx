@@ -57,7 +57,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         background:'#1E3A5F', padding:'0 24px', display:'flex',
         alignItems:'center', justifyContent:'space-between', height:'52px', flexShrink:0,
       }}>
-        {/* Curriculum AI logo */}
+        {/* Study Buddy logo */}
         <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
           <div style={{
             width:'32px', height:'32px', borderRadius:'9px',
@@ -71,7 +71,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </svg>
           </div>
           <div>
-            <div style={{ color:'#fff', fontWeight:600, fontSize:'15px', lineHeight:1 }}>Curriculum AI</div>
+            <div style={{ color:'#fff', fontWeight:600, fontSize:'15px', lineHeight:1 }}>Study Buddy</div>
             <div style={{ color:'rgba(255,255,255,.45)', fontSize:'10px', letterSpacing:'.3px' }}>Strathmore University · Pilot</div>
           </div>
         </div>
@@ -91,7 +91,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div style={{ display:'flex', alignItems:'center', gap:'9px' }}>
           {status === 'offline' && (
             <span
-              title="Curriculum AI's database can't be reached, so changes stay in this tab only"
+              title="Study Buddy's database can't be reached, so changes stay in this tab only"
               style={{ fontSize:'11px', padding:'4px 9px', borderRadius:'6px', background:'#FEF3C7', color:'#92400E', fontWeight:500 }}
             >
               Not saving

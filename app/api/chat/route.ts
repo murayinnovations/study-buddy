@@ -29,7 +29,7 @@ function jsonError(status: number, error: string) {
 const PRACTICE_INPUT = z.object({ topic: z.string(), correct: z.boolean() })
 const MISCONCEPTION_INPUT = z.object({ topic: z.string(), misconception: z.string().min(1).max(300) })
 
-// Citation markers the client inserts into Curriculum AI's replies; stripped before replay.
+// Citation markers the client inserts into Study Buddy's replies; stripped before replay.
 const CITATION_MARKER = /⟦\d+⟧/g
 
 // Each user turn can carry the student's mastery at the moment it was sent.
@@ -37,7 +37,7 @@ const CITATION_MARKER = /⟦\d+⟧/g
 // unchanged, so replayed turns stay byte-identical and the cache keeps hitting.
 function userContent(text: string, context?: string): Anthropic.Beta.BetaContentBlockParam[] {
   const blocks: Anthropic.Beta.BetaContentBlockParam[] = [{ type: 'text', text }]
-  if (context) blocks.push({ type: 'text', text: `[Progress snapshot from Curriculum AI, not written by the student] Topic mastery when this message was sent: ${context}` })
+  if (context) blocks.push({ type: 'text', text: `[Progress snapshot from Study Buddy, not written by the student] Topic mastery when this message was sent: ${context}` })
   return blocks
 }
 
@@ -46,8 +46,8 @@ const TrackedInput = z.object({
   misconceptions: z.array(z.object({ topic: z.string().max(100), note: z.string().max(300) })).max(5).optional(),
 })
 
-// The tracking tools Curriculum AI called in an earlier turn, rebuilt as tool calls and
-// results ahead of that turn's text. Without them Curriculum AI sees itself marking
+// The tracking tools Study Buddy called in an earlier turn, rebuilt as tool calls and
+// results ahead of that turn's text. Without them Study Buddy sees itself marking
 // answers without recording them, and is more likely to skip the tools.
 // Rebuilt the same way every time, so the conversation prefix stays cacheable.
 function trackedTurn(index: number, raw: unknown): Anthropic.Beta.BetaMessageParam[] {
@@ -114,7 +114,7 @@ function toDocument(m: Material): Anthropic.Beta.BetaRequestDocumentBlock {
   }
 }
 
-// Tools Curriculum AI uses to report learning signals. The client turns them into
+// Tools Study Buddy uses to report learning signals. The client turns them into
 // mastery changes and lecturer insights; the tool results just confirm receipt.
 function trackingTools(topics: string[]): Anthropic.Beta.BetaTool[] {
   return [
@@ -147,7 +147,7 @@ function trackingTools(topics: string[]): Anthropic.Beta.BetaTool[] {
   ]
 }
 
-// The parts of Curriculum AI's instructions that are the same in every course.
+// The parts of Study Buddy's instructions that are the same in every course.
 // Each course's own instructions (who teaches it, what it covers, how to teach it)
 // are in the courses table.
 
@@ -180,7 +180,7 @@ const MAX_TOOL_ROUNDS = 4
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('ANTHROPIC_API_KEY is not set')
-    return jsonError(500, 'Curriculum AI is not configured yet.')
+    return jsonError(500, 'Study Buddy is not configured yet.')
   }
 
   const member = await requireMember('student')
@@ -205,7 +205,7 @@ export async function POST(req: NextRequest) {
     if (course) materials = await courseMaterials(course.code)
   } catch (err) {
     console.error('Loading the course failed:', err)
-    return jsonError(502, 'Curriculum AI could not load this course. Try again in a moment.')
+    return jsonError(502, 'Study Buddy could not load this course. Try again in a moment.')
   }
   if (!course || !materials) return jsonError(400, 'Unknown course.')
 
@@ -228,8 +228,8 @@ export async function POST(req: NextRequest) {
   // Newline-delimited JSON events:
   //   {t:'text', v}                      reply text
   //   {t:'cite', sources}                after a cited passage, so the client can place a marker
-  //   {t:'practice', topic, correct}     Curriculum AI marked a practice answer
-  //   {t:'misconception', topic, note}   Curriculum AI noticed a misconception
+  //   {t:'practice', topic, correct}     Study Buddy marked a practice answer
+  //   {t:'misconception', topic, note}   Study Buddy noticed a misconception
   const encoder = new TextEncoder()
   let current: ReturnType<typeof api.beta.messages.stream> | null = null
   const readable = new ReadableStream({

@@ -6,7 +6,7 @@ type Mode = 'signin' | 'signup' | 'forgot'
 
 const TITLES: Record<Mode, { title: string; blurb: string; button: string; busy: string }> = {
   signin: { title: 'Sign in', blurb: 'Welcome back. Sign in with your email and password.', button: 'Sign in', busy: 'Signing in…' },
-  signup: { title: 'Create an account', blurb: 'New to Curriculum AI? Create an account to start studying.', button: 'Create account', busy: 'Creating account…' },
+  signup: { title: 'Create an account', blurb: 'New to Study Buddy? Create an account to start studying.', button: 'Create account', busy: 'Creating account…' },
   forgot: { title: 'Reset your password', blurb: "Enter your email and we'll send you a link to choose a new password.", button: 'Email me a reset link', busy: 'Sending…' },
 }
 

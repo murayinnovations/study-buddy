@@ -36,7 +36,7 @@ export default function LecturerQuestions() {
       <div style={{ width:'380px', flexShrink:0, background:'#fff', borderRight:'1px solid #E2E8F0', display:'flex', flexDirection:'column', overflow:'hidden' }}>
         <div style={{ padding:'16px 20px', borderBottom:'1px solid #E2E8F0' }}>
           <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Student questions</div>
-          <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Each question arrives with context from Curriculum AI</div>
+          <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Each question arrives with context from Study Buddy</div>
           <div style={{ display:'flex', gap:'10px', marginTop:'12px', fontSize:'12px' }}>
             <span className="badge badge-red">{unanswered.length} unanswered</span>
             <span className="badge badge-green">{answered.length} answered</span>
@@ -93,10 +93,10 @@ export default function LecturerQuestions() {
             </div>
           </div>
 
-          {/* Context from Curriculum AI */}
+          {/* Context from Study Buddy */}
           <div style={{ padding:'14px 16px', background:'#EFF6FF', borderRadius:'10px', border:'1px solid #BFDBFE' }}>
             <div style={{ fontSize:'10px', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'6px' }}>
-              Context Curriculum AI collected
+              Context Study Buddy collected
             </div>
             <p style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.6, margin:0 }}>{selected.context}</p>
           </div>
@@ -120,7 +120,7 @@ export default function LecturerQuestions() {
               </div>
               {selected.savedToCourse && (
                 <p style={{ fontSize:'12px', color:'#059669', marginTop:'8px', textAlign:'center' }}>
-                  ✓ Curriculum AI now uses this answer when any {COURSE} student asks about {selected.topic.toLowerCase()}.
+                  ✓ Study Buddy now uses this answer when any {COURSE} student asks about {selected.topic.toLowerCase()}.
                 </p>
               )}
             </div>
@@ -130,7 +130,7 @@ export default function LecturerQuestions() {
               <textarea
                 value={reply}
                 onChange={e=>setReply(e.target.value)}
-                placeholder="Type your answer here. You can then save strong answers to the course material, so Curriculum AI uses them for every student..."
+                placeholder="Type your answer here. You can then save strong answers to the course material, so Study Buddy uses them for every student..."
                 rows={6}
                 style={{
                   width:'100%', padding:'12px 14px', borderRadius:'10px', fontSize:'13px',

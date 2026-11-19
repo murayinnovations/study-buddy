@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds the Moodle test course from a Curriculum AI course folder (see setup-course.php).
+# Builds the Moodle test course from a Study Buddy course folder (see setup-course.php).
 # From this folder, with Moodle running:
 #   sh setup-course.sh ../../imports/raw/pbi88 <student username> <teacher username>
 set -e

@@ -1,4 +1,4 @@
-// Makes the key Curriculum AI signs its learning-platform (LTI) messages with.
+// Makes the key Study Buddy signs its learning-platform (LTI) messages with.
 //
 //   node scripts/lti-key.mjs
 //

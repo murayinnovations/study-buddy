@@ -39,7 +39,7 @@ export default function LecturerContent() {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px' }}>
             <div>
               <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Learning goals</div>
-              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>What students are marked against. Curriculum AI teaches towards mapped goals.</div>
+              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>What students are marked against. Study Buddy teaches towards mapped goals.</div>
             </div>
             {!newGoal && <button onClick={() => setNewGoal({ goal:'', week:'' })} className="btn-primary" style={{ fontSize:'12px', padding:'6px 14px' }}>+ Add goal</button>}
           </div>
@@ -51,9 +51,9 @@ export default function LecturerContent() {
                 </div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:'13px', fontWeight:500, color:'#0F172A' }}>{g.goal}</div>
-                  <div style={{ fontSize:'11px', color:'#94A3B8', marginTop:'1px' }}>{g.week} · {g.mapped?'Mapped to Curriculum AI':'Not yet mapped to Curriculum AI'}</div>
+                  <div style={{ fontSize:'11px', color:'#94A3B8', marginTop:'1px' }}>{g.week} · {g.mapped?'Mapped to Study Buddy':'Not yet mapped to Study Buddy'}</div>
                 </div>
-                {!g.mapped && <button onClick={() => mapGoal(g.id)} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 12px' }}>Map to Curriculum AI</button>}
+                {!g.mapped && <button onClick={() => mapGoal(g.id)} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 12px' }}>Map to Study Buddy</button>}
               </div>
             ))}
             {newGoal && (
@@ -72,7 +72,7 @@ export default function LecturerContent() {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px', gap:'12px' }}>
             <div>
               <div style={{ fontWeight:600, fontSize:'14px', color:'#0F172A' }}>Course material approval</div>
-              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Nothing reaches students until you approve it. Curriculum AI answers only from approved material.</div>
+              <div style={{ fontSize:'12px', color:'#94A3B8', marginTop:'2px' }}>Nothing reaches students until you approve it. Study Buddy answers only from approved material.</div>
             </div>
             <button onClick={() => fileRef.current?.click()} className="btn-primary" style={{ fontSize:'12px', padding:'6px 14px', flexShrink:0 }}>Upload material</button>
             <input ref={fileRef} type="file" accept=".md,.txt,text/plain,text/markdown" style={{ display:'none' }}
@@ -120,7 +120,7 @@ export default function LecturerContent() {
                     {m.status==='pending' && <button onClick={()=>approveMaterial(m.id)} className="btn-primary" style={{ fontSize:'11px', padding:'5px 12px' }}>Approve</button>}
                     {m.source === 'lecturer'
                       ? <button onClick={()=>removeMaterial(m.id)} className="btn-ghost" style={{ fontSize:'11px', padding:'5px 12px' }}>Remove</button>
-                      : <span style={{ fontSize:'11px', color:'#94A3B8' }}>In use by Curriculum AI</span>}
+                      : <span style={{ fontSize:'11px', color:'#94A3B8' }}>In use by Study Buddy</span>}
                   </td>
                 </tr>
               ))}

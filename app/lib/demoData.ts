@@ -14,7 +14,7 @@ export interface Member {
   demoGroup: string | null   // members sharing a group can switch between each other's views
 }
 
-// A course as the browser sees it, from the courses table. Curriculum AI's
+// A course as the browser sees it, from the courses table. Study Buddy's
 // instructions for the course stay on the server.
 export interface Course {
   code: string
@@ -27,7 +27,7 @@ export interface Course {
   totalWeeks: number | null
   starters: { label: string; prompt: string }[]
   syntheticClass: boolean      // lecturer dashboards add 30 synthetic students
-  hasMaterials: boolean        // Curriculum AI has approved course material to answer from
+  hasMaterials: boolean        // Study Buddy has approved course material to answer from
 }
 
 // A file a member can open, e.g. the original slides behind a material.
@@ -42,7 +42,7 @@ export interface ChatMessage {
   content: string
   sources?: Source[]
   events?: ChatEvent[]
-  misconceptions?: { topic: string; note: string }[]   // assistant turns: what Curriculum AI noted for the lecturer
+  misconceptions?: { topic: string; note: string }[]   // assistant turns: what Study Buddy noted for the lecturer
   context?: string    // user turns: mastery snapshot sent with the message, replayed unchanged
   failed?: boolean    // assistant turns: an error placeholder, not a real reply
 }
@@ -121,9 +121,9 @@ export interface DemoState {
   summaries: CourseSummary[] // HoD only: every active course
 }
 
-const FIRST_WELCOME = `Hi {name} 👋 I'm Curriculum AI, your study companion for **{course}**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?`
+const FIRST_WELCOME = `Hi {name} 👋 I'm Study Buddy, your study companion for **{course}**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?`
 
-// Curriculum AI's opening message, addressed to the student by first name.
+// Study Buddy's opening message, addressed to the student by first name.
 export function welcomeChat(courseName: string, student: Pick<Member, 'name'>): ChatMessage[] {
   const name = student.name.split(/\s+/)[0]
   return [{ role: 'assistant', content: FIRST_WELCOME.replace('{course}', courseName).replace('{name}', name) }]

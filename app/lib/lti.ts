@@ -3,7 +3,7 @@ import { db, check, getMember, forgetMember, getCourse, type CourseConfig } from
 import type { Role } from './demoData'
 import { alertEmail } from './alertEmail'
 
-// Opening Curriculum AI from a learning platform such as Moodle, with LTI 1.3.
+// Opening Study Buddy from a learning platform such as Moodle, with LTI 1.3.
 // The routes in app/lti use this: register (the platform's admin adds the tool),
 // login and launch (someone clicks the activity), jwks (our public key).
 //
@@ -22,7 +22,7 @@ export class LtiError extends Error {}
 
 // ---- Our key ----
 
-// The key Curriculum AI signs with, from LTI_PRIVATE_KEY (make one with scripts/lti-key.mjs).
+// The key Study Buddy signs with, from LTI_PRIVATE_KEY (make one with scripts/lti-key.mjs).
 // Launches don't need it, but the platform asks for our public key at registration.
 let toolKey: Promise<JWK> | null = null
 
@@ -121,7 +121,7 @@ export async function notifyAdmins(p: Platform, siteUrl: string) {
       method: 'POST',
       headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
       body: JSON.stringify({
-        from: process.env.ALERT_FROM_EMAIL || 'Curriculum AI <onboarding@resend.dev>',
+        from: process.env.ALERT_FROM_EMAIL || 'Study Buddy <onboarding@resend.dev>',
         to: admins,
         ...alertEmail(p, siteUrl),
       }),
@@ -134,13 +134,13 @@ export async function notifyAdmins(p: Platform, siteUrl: string) {
 
 // Why a platform can't be used yet, or null if it can.
 export function platformBlocked(p: Platform): string | null {
-  if (p.status === 'pending') return 'The Curriculum AI team has not approved this learning platform yet. Please try again later.'
-  if (p.status === 'rejected') return 'This learning platform is not registered with Curriculum AI.'
+  if (p.status === 'pending') return 'The Study Buddy team has not approved this learning platform yet. Please try again later.'
+  if (p.status === 'rejected') return 'This learning platform is not registered with Study Buddy.'
   return null
 }
 
 // The platform a login or launch comes from. Without a client id, the platform must
-// have registered Curriculum AI only once.
+// have registered Study Buddy only once.
 export async function findPlatform(issuer: string, clientId?: string): Promise<Platform | null> {
   let query = db().from('lti_platforms').select('*').eq('issuer', issuer)
   if (clientId) query = query.eq('client_id', clientId)
@@ -209,7 +209,7 @@ export async function checkLaunch(idToken: string): Promise<Launch> {
   const aud = unverified.aud
   const clientId = Array.isArray(aud) ? str(unverified.azp) ?? (aud.length === 1 ? aud[0] : null) : str(aud)
   const platform = unverified.iss && clientId ? await findPlatform(unverified.iss, clientId) : null
-  if (!platform) throw new LtiError('This learning platform is not registered with Curriculum AI.')
+  if (!platform) throw new LtiError('This learning platform is not registered with Study Buddy.')
   const blocked = platformBlocked(platform)
   if (blocked) throw new LtiError(blocked)
 
@@ -219,24 +219,24 @@ export async function checkLaunch(idToken: string): Promise<Launch> {
       issuer: platform.issuer, audience: platform.client_id, algorithms: ['RS256'], maxTokenAge: '10m',
     }))
   } catch {
-    throw new LtiError('The launch from the learning platform could not be verified. Please open Curriculum AI from the course again.')
+    throw new LtiError('The launch from the learning platform could not be verified. Please open Study Buddy from the course again.')
   }
   if (Array.isArray(claims.aud) && claims.aud.length > 1 && claims.azp !== platform.client_id) {
     throw new LtiError('The launch was meant for a different tool.')
   }
   if (typeof claims.nonce !== 'string' || !(await useNonce(claims.nonce))) {
-    throw new LtiError('This launch link has already been used or has expired. Please open Curriculum AI from the course again.')
+    throw new LtiError('This launch link has already been used or has expired. Please open Study Buddy from the course again.')
   }
   if (claims[`${LTI}message_type`] !== 'LtiResourceLinkRequest' || claims[`${LTI}version`] !== '1.3.0') {
-    throw new LtiError('The learning platform sent a kind of launch Curriculum AI does not support.')
+    throw new LtiError('The learning platform sent a kind of launch Study Buddy does not support.')
   }
 
   const deployment = str(claims[`${LTI}deployment_id`])
-  if (!deployment) throw new LtiError('The launch did not say which installation of Curriculum AI it came from.')
+  if (!deployment) throw new LtiError('The launch did not say which installation of Study Buddy it came from.')
   if (!platform.deployment_ids.includes(deployment)) {
     // Registration normally records the deployment. If the platform didn't send one then,
     // the first launch records it; any other deployment is refused.
-    if (platform.deployment_ids.length > 0) throw new LtiError('This installation of Curriculum AI is not registered.')
+    if (platform.deployment_ids.length > 0) throw new LtiError('This installation of Study Buddy is not registered.')
     check(await db().from('lti_platforms').update({ deployment_ids: [deployment] }).eq('id', platform.id))
   }
 
@@ -266,7 +266,7 @@ export async function checkLaunch(idToken: string): Promise<Launch> {
 export async function launchCourse(l: Launch): Promise<CourseConfig> {
   if (l.courseParam) {
     const course = await getCourse(l.courseParam)
-    if (!course) throw new LtiError(`This activity is set to open the course "${l.courseParam}", which Curriculum AI doesn't have. Ask the lecturer to check the course code in the activity's settings.`)
+    if (!course) throw new LtiError(`This activity is set to open the course "${l.courseParam}", which Study Buddy doesn't have. Ask the lecturer to check the course code in the activity's settings.`)
     if (l.contextId) {
       check(await db().from('lti_courses').upsert({
         platform_id: l.platform.id, context_id: l.contextId, course: course.code, title: l.contextTitle, updated_at: new Date().toISOString(),
@@ -278,11 +278,11 @@ export async function launchCourse(l: Launch): Promise<CourseConfig> {
     ? check(await db().from('lti_courses').select('course').match({ platform_id: l.platform.id, context_id: l.contextId }).maybeSingle())
     : null
   const course = row && await getCourse(row.course)
-  if (!course) throw new LtiError("This activity isn't linked to a Curriculum AI course yet. Ask the lecturer to add course=<course code> to the activity's custom parameters.")
+  if (!course) throw new LtiError("This activity isn't linked to a Study Buddy course yet. Ask the lecturer to add course=<course code> to the activity's custom parameters.")
   return course
 }
 
-// The member to sign in as: whoever this platform user opened Curriculum AI as before,
+// The member to sign in as: whoever this platform user opened Study Buddy as before,
 // else the member with their email, else a new member made from the launch.
 // Existing members keep their role and details; only new ones take them from the platform.
 export async function launchMember(l: Launch, course: CourseConfig): Promise<string> {
@@ -291,10 +291,10 @@ export async function launchMember(l: Launch, course: CourseConfig): Promise<str
   if (linked) return linked.email
 
   if (!l.email) {
-    throw new LtiError("The learning platform didn't share your email address, which Curriculum AI needs to set up your account. Ask the platform's administrator to set the tool to share the user's email.")
+    throw new LtiError("The learning platform didn't share your email address, which Study Buddy needs to set up your account. Ask the platform's administrator to set the tool to share the user's email.")
   }
   if (!(await getMember(l.email))) {
-    if (!l.role) throw new LtiError('Open Curriculum AI from a course you teach or are enrolled in.')
+    if (!l.role) throw new LtiError('Open Study Buddy from a course you teach or are enrolled in.')
     check(await db().from('members').upsert({
       email: l.email, role: l.role, name: l.name,
       student_id: l.role === 'student' ? await studentNumber(l) : null,
@@ -325,7 +325,7 @@ const escape = (s: string) => s.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`
 // A plain page for the end of registration and for launch errors. script runs on the page.
 export function page(title: string, message: string, status = 200, script = '') {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escape(title)} · Curriculum AI</title>
+<title>${escape(title)} · Study Buddy</title>
 <style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#F8FAFC;font-family:system-ui,sans-serif}
 div{max-width:440px;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:28px}
 h1{font-size:17px;color:#0F172A;margin:0}p{font-size:13px;color:#64748B;line-height:1.6;margin:8px 0 0}</style></head>

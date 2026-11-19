@@ -1,6 +1,6 @@
 import { publicKey, LtiError } from '../../lib/lti'
 
-// Curriculum AI's public key, so the learning platform can check messages we sign.
+// Study Buddy's public key, so the learning platform can check messages we sign.
 
 export const dynamic = 'force-dynamic'
 

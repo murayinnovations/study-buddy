@@ -39,7 +39,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
   const avgProgress = average(courses.map(c => courseProgress(c.code)))
 
   // Weakest topic the student has started and the class has been taught, in a
-  // course where Curriculum AI has approved material to teach from.
+  // course where Study Buddy has approved material to teach from.
   const suggestion = courses
     .filter(c => c.hasMaterials)
     .flatMap(c => {
@@ -144,7 +144,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
           </div>
         )}
 
-        {/* Curriculum AI insight */}
+        {/* Study Buddy insight */}
         {suggestion && (
           <div style={{
             marginTop:'16px', padding:'12px', borderRadius:'10px',
@@ -153,7 +153,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
           }}>
             <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'6px' }}>
               <span className="ai-pulse" style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#2563EB', display:'inline-block' }}/>
-              <span style={{ fontSize:'10px', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'.5px' }}>Curriculum AI suggests</span>
+              <span style={{ fontSize:'10px', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'.5px' }}>Study Buddy suggests</span>
             </div>
             <p style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.5, margin:0 }}>
               Your <strong>{suggestion.topic}</strong> score in {suggestion.course.code} is {suggestion.score}%, your lowest so far. Let&apos;s work on it today.
@@ -173,7 +173,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
       <div style={{ padding:'12px 16px', borderTop:'1px solid #E2E8F0' }}>
         <div style={{ fontSize:'11px', color:'#94A3B8', display:'flex', alignItems:'center', gap:'5px' }}>
           <span className="ai-pulse" style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#059669', display:'inline-block' }}/>
-          Curriculum AI uses your lecturers&apos; approved materials
+          Study Buddy uses your lecturers&apos; approved materials
         </div>
       </div>
     </aside>
