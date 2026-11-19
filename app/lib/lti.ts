@@ -1,6 +1,7 @@
 import { createRemoteJWKSet, decodeJwt, exportJWK, importPKCS8, calculateJwkThumbprint, jwtVerify, type JWK } from 'jose'
 import { db, check, getMember, forgetMember, getCourse, type CourseConfig } from './db'
 import type { Role } from './demoData'
+import { alertEmail } from './alertEmail'
 
 // Opening Curriculum AI from a learning platform such as Moodle, with LTI 1.3.
 // The routes in app/lti use this: register (the platform's admin adds the tool),
@@ -109,16 +110,7 @@ export async function notifyAdmins(p: Platform, siteUrl: string) {
       body: JSON.stringify({
         from: process.env.ALERT_FROM_EMAIL || 'Curriculum AI <onboarding@resend.dev>',
         to: admins,
-        subject: `Approve a new learning platform: ${p.issuer}`,
-        text: [
-          'A learning platform has registered to open Curriculum AI and is waiting for approval:',
-          '',
-          `Address: ${p.issuer}`,
-          `Platform: ${p.name ?? 'not given'}`,
-          '',
-          'Nobody can open Curriculum AI from it until it is approved. Sign in to review it:',
-          siteUrl,
-        ].join('\n'),
+        ...alertEmail(p, siteUrl),
       }),
     })
     if (!res.ok) console.error('Emailing admins about the new platform failed:', res.status, await res.text())
