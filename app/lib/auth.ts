@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
-import { getOrCreateMember, getMemberByGroup } from './db'
+import { db, getOrCreateMember, getMemberByGroup } from './db'
 import type { Member, Role } from './demoData'
 
 // The one-button view switcher: members sharing a demo_group can swap into
@@ -25,6 +25,26 @@ export function supabaseAuth() {
       },
     },
   })
+}
+
+// Signs someone in without an emailed link, for launches a learning platform has
+// already vouched for (app/lti). Creates the same session the emailed link does:
+// a one-time sign-in token is made server-side and used straight away.
+export async function signInAs(email: string) {
+  const admin = db().auth.admin
+  const created = await admin.createUser({ email, email_confirm: true })
+  if (created.error && created.error.code !== 'email_exists') throw new Error(created.error.message)
+  const link = await admin.generateLink({ type: 'magiclink', email })
+  if (link.error) throw new Error(link.error.message)
+  // Anyone can sign up with any address. If this account's email was never confirmed,
+  // its password was set by someone who never proved they own the address, and
+  // signing in here confirms it, so replace that password first.
+  if (!link.data.user.email_confirmed_at) {
+    const reset = await admin.updateUserById(link.data.user.id, { password: crypto.randomUUID() + crypto.randomUUID() })
+    if (reset.error) throw new Error(reset.error.message)
+  }
+  const { error } = await supabaseAuth().auth.verifyOtp({ token_hash: link.data.properties.hashed_token, type: 'email' })
+  if (error) throw new Error(error.message)
 }
 
 // The signed-in email, verified from the session token.

@@ -1,7 +1,7 @@
 // Shapes of the state shared by the student, lecturer and HoD views.
 // Used by the browser store and the database layer.
 
-export type Role = 'student' | 'lecturer' | 'hod'
+export type Role = 'student' | 'lecturer' | 'hod' | 'admin'
 
 // A signed-in person, from the members table.
 export interface Member {

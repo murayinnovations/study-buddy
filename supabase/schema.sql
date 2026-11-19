@@ -42,6 +42,9 @@ create table if not exists members (
 alter table members add column if not exists demo_group text;
 -- Lecturers: the course they teach. Left empty, a lecturer gets the first active course.
 alter table members add column if not exists course text;
+-- Admins: the Curriculum AI team. They approve learning platforms and get an email when one registers.
+alter table members drop constraint if exists members_role_check;
+alter table members add constraint members_role_check check (role in ('student', 'lecturer', 'hod', 'admin'));
 
 
 create table if not exists mastery (
@@ -151,6 +154,53 @@ create table if not exists briefs (
   signature    text not null
 );
 
+-- ---- Opening Curriculum AI from a learning platform (LTI 1.3, see app/lti) ----
+
+-- Each learning platform registered with /lti/register, e.g. a university's Moodle site.
+-- Anyone can register; nobody can open Curriculum AI from it until an admin approves it.
+create table if not exists lti_platforms (
+  id             bigint generated always as identity primary key,
+  issuer         text not null,                -- the platform's address, e.g. 'https://datascience.strathmore.edu/elearning'
+  client_id      text not null,                -- the id the platform gave Curriculum AI
+  deployment_ids text[] not null default '{}', -- installs of the tool on that platform
+  auth_url       text not null,                -- where /lti/login sends people back to the platform
+  token_url      text,
+  jwks_url       text not null,                -- the platform's public keys, to check its launches
+  name           text,
+  created_at     timestamptz not null default now(),
+  unique (issuer, client_id)
+);
+alter table lti_platforms add column if not exists status      text not null default 'pending' check (status in ('pending', 'approved', 'rejected'));
+alter table lti_platforms add column if not exists reviewed_by text;
+alter table lti_platforms add column if not exists reviewed_at timestamptz;
+
+-- Which member a platform user is. Kept after the first launch, so a later change of
+-- email on the platform still opens the same account.
+create table if not exists lti_identities (
+  platform_id bigint not null references lti_platforms (id) on delete cascade,
+  sub         text not null,                  -- the platform's id for the user
+  email       text not null references members (email) on delete cascade,
+  created_at  timestamptz not null default now(),
+  primary key (platform_id, sub)
+);
+
+-- Which Curriculum AI course a platform course opens. Filled from the activity's
+-- course=<code> custom parameter on launch.
+create table if not exists lti_courses (
+  platform_id bigint not null references lti_platforms (id) on delete cascade,
+  context_id  text not null,                  -- the platform's id for the course
+  course      text not null references courses (code) on delete cascade,
+  title       text,                           -- the course's name on the platform
+  updated_at  timestamptz not null default now(),
+  primary key (platform_id, context_id)
+);
+
+-- One-time codes from /lti/login. Each launch uses one up, so a captured launch can't be replayed.
+create table if not exists lti_nonces (
+  nonce      text primary key,
+  expires_at timestamptz not null
+);
+
 create index if not exists questions_course_created on questions (course, created_at desc);
 create index if not exists misconceptions_course_created on misconceptions (course, created_at desc);
 create index if not exists practice_log_student on practice_log (student_id, course);
@@ -167,6 +217,10 @@ alter table goals              enable row level security;
 alter table practice_approvals enable row level security;
 alter table check_ins          enable row level security;
 alter table briefs             enable row level security;
+alter table lti_platforms      enable row level security;
+alter table lti_identities     enable row level security;
+alter table lti_courses        enable row level security;
+alter table lti_nonces         enable row level security;
 
 -- The old "Reset demo" button emptied every table. With real accounts that would wipe
 -- students' work, so it's gone.

@@ -4,8 +4,9 @@ import App from './components/shared/App'
 
 export const dynamic = 'force-dynamic'
 
-export default async function Home() {
+// ?course=<code> opens that course, e.g. after a launch from the learning platform (app/lti).
+export default async function Home({ searchParams }: { searchParams: { course?: string } }) {
   const member = await currentMember()
   if (!member) redirect('/login')
-  return <App member={member} />
+  return <App member={member} initialCourse={searchParams.course} />
 }

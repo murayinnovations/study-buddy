@@ -5,9 +5,9 @@ import StudentChat from './StudentChat'
 import StudentProgress from './StudentProgress'
 import { useStore, type Course } from '../../lib/demoStore'
 
-export default function StudentView() {
+export default function StudentView({ initialCourse }: { initialCourse?: string }) {
   const { state } = useStore()
-  const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const [selectedCode, setSelectedCode] = useState<string | null>(initialCourse ?? null)
   const [showProgress, setShowProgress] = useState(true)
   // A message to send as soon as the chat for this course is showing.
   const [pendingPrompt, setPendingPrompt] = useState<{ course: string; text: string } | null>(null)

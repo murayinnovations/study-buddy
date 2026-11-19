@@ -16,7 +16,7 @@ export function hasDatabase() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SECRET_KEY)
 }
 
-function db() {
+export function db() {
   client ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false },
     // Next 14 caches fetch in route handlers by default; state must always be fresh.
@@ -26,7 +26,7 @@ function db() {
 }
 
 // Supabase returns errors instead of throwing; turn them into exceptions.
-function check<T>({ data, error }: { data: T; error: { message: string } | null }): T {
+export function check<T>({ data, error }: { data: T; error: { message: string } | null }): T {
   if (error) throw new Error(error.message)
   return data
 }
@@ -36,7 +36,7 @@ const DAY = 86_400_000
 
 export const FILE_BUCKET = 'course-files'
 
-const DEFAULT_SUBTITLE = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Department' }
+const DEFAULT_SUBTITLE = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Department', admin: 'Curriculum AI team' }
 
 function toMember(row: any): Member {
   return {
@@ -78,6 +78,11 @@ export async function getOrCreateMember(email: string): Promise<Member> {
   const member = await getMember(key)
   if (!member) throw new Error(`Could not create a member for ${key}`)
   return member
+}
+
+// Drops a cached lookup, for a member just added outside the members script.
+export function forgetMember(email: string) {
+  members.delete(email.toLowerCase())
 }
 
 // The other role's account in the same demo group, for the one-button view switcher.
@@ -165,7 +170,9 @@ async function courseFiles(codes: string[]): Promise<CourseFile[]> {
 export async function loadState(member: Member): Promise<DemoState> {
   if (member.role === 'student') return loadStudent(member)
   if (member.role === 'lecturer') return loadLecturer(member)
-  return loadHod()
+  if (member.role === 'hod') return loadHod()
+  // Admins' page loads its own data from /api/admin.
+  return initialState()
 }
 
 // Every active course, summarised from the same class the lecturer dashboards show.

@@ -4,6 +4,7 @@
 //   node --env-file=.env.local scripts/members.mjs add <email> student "<name>" <student number> [--subtitle "<text>"] [--group <name>]
 //   node --env-file=.env.local scripts/members.mjs add <email> lecturer "<name>" [--course <code>] [--subtitle "<text>"] [--group <name>]
 //   node --env-file=.env.local scripts/members.mjs add <email> hod "<name>" [--subtitle "<text>"] [--group <name>]
+//   node --env-file=.env.local scripts/members.mjs add <email> admin "<name>"
 //   node --env-file=.env.local scripts/members.mjs remove <email>
 //
 // --course sets the course a lecturer teaches (a code from the courses table). Without it,
@@ -11,6 +12,8 @@
 // --group puts an account in a demo group: members of the same group can switch between each
 // other's views with one click in the app, instead of signing in separately as each role. Give
 // the student, lecturer and HoD demo accounts the same --group value to enable that for them.
+// Admins are the Curriculum AI team: they approve learning platforms that register to open
+// Curriculum AI (LTI), and get an email when one does.
 // Adding an existing email updates it. Changes reach a running app within a minute.
 import { createClient } from '@supabase/supabase-js'
 
@@ -45,7 +48,7 @@ if (command === 'list') {
   console.table(data)
 } else if (command === 'add') {
   const email = rawEmail?.toLowerCase()
-  if (!email?.includes('@') || !['student', 'lecturer', 'hod'].includes(role) || !name) fail('Usage: add <email> <student|lecturer|hod> "<name>" [student number]')
+  if (!email?.includes('@') || !['student', 'lecturer', 'hod', 'admin'].includes(role) || !name) fail('Usage: add <email> <student|lecturer|hod|admin> "<name>" [student number]')
   if (role === 'student' && !studentId) fail('Students need a student number, e.g. STR-2024-0117.')
   if (course && role !== 'lecturer') fail('--course is for lecturers only.')
   if (course) {

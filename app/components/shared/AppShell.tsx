@@ -5,8 +5,8 @@ import { initials } from '../../lib/format'
 import type { Role } from '../../lib/demoData'
 import DemoGuide from './DemoGuide'
 
-const ROLE_LABEL = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Department' }
-const ROLE_COLOR = { student: '#3B82F6', lecturer: '#0D9488', hod: '#D97706' }
+const ROLE_LABEL = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Department', admin: 'Admin' }
+const ROLE_COLOR = { student: '#3B82F6', lecturer: '#0D9488', hod: '#D97706', admin: '#475569' }
 const ROLE_ORDER: Role[] = ['student', 'lecturer', 'hod']
 
 function ViewSwitcher({ role }: { role: Role }) {

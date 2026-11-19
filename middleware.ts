@@ -32,6 +32,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Pages only: not API routes, Next's own files or static assets.
-  matcher: ['/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
+  // Pages only: not API routes, the learning-platform launch (app/lti signs people in
+  // itself), Next's own files or static assets.
+  matcher: ['/((?!api/|lti/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
 }
