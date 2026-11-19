@@ -25,13 +25,17 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
     timeZone: 'Africa/Nairobi', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
   }) + ' (Nairobi time)'
 
-  const subject = `Approval needed: ${product} at ${host}`
+  // The platform's address stays out of the subject and isn't a link: a link to an unknown
+  // site next to an "approve" button is what phishing looks like, and Gmail files it as spam.
+  const subject = product === 'A learning platform'
+    ? 'Approval needed: a learning platform wants to connect to Curriculum AI'
+    : `Approval needed: a ${product} site wants to connect to Curriculum AI`
 
   const text = [
     `${product} at ${host} has registered to open Curriculum AI and is waiting for your approval.`,
     '',
     `Platform:   ${product}`,
-    `Address:    ${p.issuer}`,
+    `Address:    ${host}`,
     `Registered: ${when}`,
     '',
     'Nobody can open Curriculum AI from it until an admin approves it. Only approve platforms you',
@@ -52,7 +56,6 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(subject)}</title></head>
 <body style="margin:0;padding:0;background:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
-  <div style="display:none;max-height:0;overflow:hidden">${escape(product)} at ${escape(host)} is waiting for your approval.</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F1F5F9;padding:32px 16px">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden">
@@ -74,7 +77,7 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
         <tr><td style="padding:16px 28px 4px">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px 16px">
             ${row('Platform', escape(product))}
-            ${row('Address', `<a href="${escape(p.issuer)}" style="color:#2563EB;text-decoration:none">${escape(p.issuer)}</a>`)}
+            ${row('Address', escape(host))}
             ${row('Registered', escape(when))}
           </table>
         </td></tr>
