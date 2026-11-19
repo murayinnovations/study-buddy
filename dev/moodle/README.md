@@ -34,6 +34,12 @@ docker compose down -v   # delete everything, including Moodle's database and co
 
 Curriculum AI must be deployed (Moodle only talks to HTTPS addresses), and you must be an admin in Curriculum AI.
 
+Steps 1, 2 and 6 can be done in one go: after the tool is registered and activated (steps 3 to 5), create the student and teacher users in Moodle, then build the course from a Curriculum AI course folder (the one `scripts/import-course.mjs` reads). It makes one section per week with the course's files, enrols the two users, adds the Curriculum AI activity with the right `course=` code, and sets the tool to share name and email and open in a new window. Running it again replaces the course.
+
+```bash
+sh setup-course.sh ../../imports/raw/pbi88 <student username> <teacher username>
+```
+
 1. **Test people:** in Moodle, **Site administration → Users → Add a new user**: one student and one teacher, with real inboxes or Gmail `+` addresses (e.g. `murayinnovations+student@gmail.com`).
 2. **Test course:** **Site administration → Courses → Add a new course**, then enrol the student as Student and the teacher as Teacher (course → **Participants → Enrol users**).
 3. **Register Curriculum AI:** **Site administration → Plugins → Activity modules → External tool → Manage tools**. Paste `https://<curriculum-ai-domain>/lti/register` into **Tool URL** and click **Add LTI Advantage**. Then click **Activate** on the new tool.
