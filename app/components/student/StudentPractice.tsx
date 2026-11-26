@@ -81,7 +81,8 @@ export default function StudentPractice({ course, kind }: { course: Course; kind
 
 function QuizRunner({ course, topic, questions, onAgain }: { course: Course; topic: string; questions: Question[]; onAgain: () => void }) {
   const { state, recordPractice } = useStore()
-  const askConfidence = state.profile?.calibration === 'over'
+  // Every learner rates how sure they are before the answer shows: it keeps their confidence
+  // calibration up to date (adaptToPractice), and helps the over-confident spot gaps.
   const [index, setIndex] = useState(0)
   const [choice, setChoice] = useState<number | null>(null)
   const [confidence, setConfidence] = useState<number | null>(null)
@@ -93,7 +94,7 @@ function QuizRunner({ course, topic, questions, onAgain }: { course: Course; top
 
   const reveal = () => {
     const correct = choice === q.answer
-    const ev = recordPractice(course.code, topic, correct, index === 0)
+    const ev = recordPractice(course.code, topic, correct, index === 0, confidence ?? undefined)
     setScores(s => ({ before: s?.before ?? ev.before, after: ev.after }))
     if (correct) setCorrectCount(n => n + 1)
     setRevealed(true)
@@ -113,7 +114,7 @@ function QuizRunner({ course, topic, questions, onAgain }: { course: Course; top
     )
   }
 
-  const ready = choice !== null && (!askConfidence || confidence !== null)
+  const ready = choice !== null && confidence !== null
   return (
     <div style={panel}>
       <div style={eyebrow}>{topic} · question {index + 1} of {questions.length}</div>
@@ -133,7 +134,7 @@ function QuizRunner({ course, topic, questions, onAgain }: { course: Course; top
         })}
       </div>
 
-      {askConfidence && choice !== null && !revealed && (
+      {choice !== null && !revealed && (
         <div style={{ marginTop: '16px' }}>
           <div style={{ fontSize: '14px', color: INK, marginBottom: '8px' }}>How sure are you?</div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -148,7 +149,7 @@ function QuizRunner({ course, topic, questions, onAgain }: { course: Course; top
         <div style={{ marginTop: '16px', padding: '12px 14px', borderRadius: '10px', background: '#F6F7FA', border: `1px solid ${LINE}` }}>
           <div style={{ fontSize: '14px', fontWeight: 600, color: choice === q.answer ? '#047857' : '#B91C1C', marginBottom: '4px' }}>
             {choice === q.answer ? 'Correct.' : 'Not quite.'}
-            {askConfidence && confidence !== null && confidence >= 4 && choice !== q.answer ? ' You were sure about this one, so it is worth another look.' : ''}
+            {confidence !== null && confidence >= 4 && choice !== q.answer ? ' You were sure about this one, so it is worth another look.' : ''}
             {state.profile?.calibration === 'under' && choice === q.answer ? ' Your reasoning was sound.' : ''}
           </div>
           <div style={{ fontSize: '14px', color: '#334155', lineHeight: 1.6 }}>{q.explanation}</div>

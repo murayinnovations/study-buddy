@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import { useStore, type Course } from '../../lib/demoStore'
 import { average, daysAgoLabel, masteryColor } from '../../lib/format'
 import { BAND_LABEL, SET_SIZE } from '../../lib/profile'
@@ -7,6 +8,42 @@ function MasteryBar({ score }: { score: number }) {
   return (
     <div style={{ height:'5px', background:'#F1F5F9', borderRadius:'3px', overflow:'hidden', width:'100%' }}>
       <div style={{ height:'5px', width:`${score}%`, background:masteryColor(score), borderRadius:'3px', transition:'width .5s ease' }}/>
+    </div>
+  )
+}
+
+const linkButton = { fontSize:'11px', color:'#0D1B3D', background:'none', border:'none', textDecoration:'underline', cursor:'pointer', fontFamily:'inherit', padding:0 } as const
+
+// Deletes the student's profile and the scoring behind it, as the consent screen promises.
+// Asks once more inline (not a browser dialog) before deleting.
+function DeleteProfile() {
+  const { refresh } = useStore()
+  const [stage, setStage] = useState<'idle' | 'confirm' | 'deleting'>('idle')
+  const [error, setError] = useState('')
+  async function remove() {
+    setStage('deleting')
+    setError('')
+    try {
+      const res = await fetch('/api/assessment?answers=delete', { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      await refresh()
+    } catch {
+      setError('Could not delete it. Please try again.')
+      setStage('confirm')
+    }
+  }
+  return (
+    <div style={{ marginTop:'10px', fontSize:'11px', color:'#64748B' }}>
+      {stage === 'idle' && <button onClick={() => setStage('confirm')} style={{ ...linkButton, color:'#64748B' }}>Delete my profile and answers</button>}
+      {stage !== 'idle' && (
+        <>
+          This deletes your profile and every assessment result, for good. Study Buddy goes back to its standard settings.{' '}
+          <button onClick={remove} disabled={stage === 'deleting'} style={{ ...linkButton, color:'#B91C1C' }}>{stage === 'deleting' ? 'Deleting…' : 'Delete'}</button>
+          {' · '}
+          <button onClick={() => setStage('idle')} disabled={stage === 'deleting'} style={linkButton}>Keep it</button>
+        </>
+      )}
+      {error && <div role="alert" style={{ color:'#B91C1C', marginTop:'4px' }}>{error}</div>}
     </div>
   )
 }
@@ -49,6 +86,14 @@ export default function StudentProgress({ selectedCourse, onClose, onRetake }: {
               <dt style={{ color:'#64748B' }}>Practice sets</dt><dd style={{ margin:0 }}>{SET_SIZE[state.profile.chunkSize]} questions</dd>
               <dt style={{ color:'#64748B' }}>Sessions</dt><dd style={{ margin:0 }}>About {state.profile.pace.sessionMinutes} minutes</dd>
             </dl>
+            <DeleteProfile />
+          </section>
+        )}
+        {!state.profile && state.profileReady && (
+          <section style={{ border:'1px solid #E2E8F0', borderRadius:'10px', padding:'12px', background:'#F6F7FA', fontSize:'11.5px', color:'#334155' }}>
+            <div style={{ fontSize:'12px', fontWeight:600, color:'#0D1B3D', marginBottom:'4px' }}>No learning profile</div>
+            Study Buddy is using its standard settings.{' '}
+            <button onClick={onRetake} style={linkButton}>Take the assessment</button> to have it fitted to you.
           </section>
         )}
 

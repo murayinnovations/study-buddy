@@ -124,6 +124,7 @@ export interface DemoState {
   summaries: CourseSummary[] // HoD only: every active course
   profile: CognitiveProfile | null  // students only: the current cognitive profile, if they have one
   profileReady: boolean      // the profile table could be read; false sends nobody to the assessment
+  profileOptedOut: boolean   // students only: chose to study without a profile (or deleted theirs)
 }
 
 const FIRST_WELCOME = `Hi {name}, I'm Study Buddy, your study companion for **{course}**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?`
@@ -158,6 +159,7 @@ export function initialState(): DemoState {
     summaries: [],
     profile: null,
     profileReady: false,
+    profileOptedOut: false,
   }
 }
 

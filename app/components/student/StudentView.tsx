@@ -15,10 +15,10 @@ export default function StudentView({ initialCourse }: { initialCourse?: string 
   // A message to send as soon as the chat for this course is showing.
   const [pendingPrompt, setPendingPrompt] = useState<{ course: string; text: string } | null>(null)
 
-  // Every student takes the onboarding assessment before studying. Kept open until they
-  // press "Start learning", so a background refresh that picks up the new profile
-  // doesn't swap their profile card for the chat mid-read.
-  const needsProfile = state.profileReady && !state.profile
+  // Every student is offered the onboarding assessment before studying, and can continue
+  // without it. Kept open until they press "Start learning", so a background refresh that
+  // picks up the new profile doesn't swap their profile card for the chat mid-read.
+  const needsProfile = state.profileReady && !state.profile && !state.profileOptedOut
   const [assessing, setAssessing] = useState<'required' | 'retake' | null>(null)
   useEffect(() => { if (needsProfile) setAssessing('required') }, [needsProfile])
 

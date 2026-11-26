@@ -89,8 +89,9 @@ function useDemoState(member: Member) {
         return { ...s, chats: { ...s.chats, [course]: welcomeChat(name, member) } }
       }, { type: 'clearChat', course }),
 
-    // Returns the before/after score so the chat can show the change.
-    recordPractice: (course: string, topic: string, correct: boolean, countSession: boolean): ChatEvent => {
+    // Returns the before/after score so the chat can show the change. confidence (1 to 5)
+    // comes from the quiz, where the learner rates how sure they were.
+    recordPractice: (course: string, topic: string, correct: boolean, countSession: boolean, confidence?: number): ChatEvent => {
       const before = stateRef.current.mastery[course]?.find(t => t.topic === topic)?.score ?? 0
       const event: ChatEvent = { kind: 'practice', topic, correct, before, after: nextScore(before, correct) }
       update(s => {
@@ -102,7 +103,7 @@ function useDemoState(member: Member) {
           mastery: { ...s.mastery, [course]: mastery },
           practiceLog: [...s.practiceLog, { course, topic, correct, at: Date.now() }],
         }
-      }, { type: 'recordPractice', course, topic, correct, countSession })
+      }, { type: 'recordPractice', course, topic, correct, countSession, confidence })
       return event
     },
 

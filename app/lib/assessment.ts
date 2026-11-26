@@ -1,19 +1,27 @@
-import type { Band, Calibration, ChunkSize, CognitiveProfile, ReadingLevel } from './profile'
+import { createHmac, randomInt, timingSafeEqual } from 'crypto'
+import { calibrationOf, type Band, type Calibration, type ChunkSize, type CognitiveProfile, type ReadingLevel } from './profile'
 
 // The onboarding assessment: what it asks and how it is scored. Server only, because
 // the answers are here; the browser gets publicAssessment() without them.
 //
 // Five short blocks, about 12 minutes:
-//   1. Prior knowledge: course questions, easy to hard (only for courses with a bank below)
-//   2. Working memory: remember a sequence of digits, 3 to 7 long
-//   3. Reading: two short passages, two questions each, timed silently
+//   1. Prior knowledge: 8 course questions, easy to hard, for the first course with a bank
+//      (the lecturer's approved one in assessment_banks, else a built-in one below)
+//   2. Working memory: remember a sequence of digits, 4 to 8 long, two tries per length
+//   3. Reading: three short passages, two questions each, timed silently
 //   4. Confidence: how sure they were, after each block 1 answer
 //   5. Study context: time, device, preferences, accessibility, and familiarity with
 //      any course that has no question bank yet
+// Questions and passages are drawn from larger pools, avoiding the ones the learner saw in
+// their last sitting, so a retake isn't a memory test of the first one.
 // There is deliberately no "learning styles" block: that model has weak evidence.
+//
+// Every result is a starting point, not a measurement: practice moves the profile as the
+// learner goes (adaptToPractice in profile.ts), and scripts/validate-profiles.mjs checks
+// how well starting levels predicted practice.
 
 export interface Choice { id: string; prompt: string; options: string[]; answer: number }
-interface KnowledgeItem extends Choice { level: 1 | 2 | 3 }
+export interface KnowledgeItem extends Choice { level: 1 | 2 | 3 }
 
 interface Bank { match: (course: { code: string; name: string }) => boolean; items: KnowledgeItem[] }
 
@@ -52,10 +60,27 @@ const POWER_BI: Bank = {
         'The visual needs to be a chart instead of a table',
         'The data has not been refreshed today',
       ], answer: 1 },
+    { id: 'pbi-9', level: 1, prompt: 'Where do you publish a report so that colleagues can open it in a web browser?',
+      options: ['Power BI Service', 'Power Query Editor', 'Model view', 'A calculated column'], answer: 0 },
+    { id: 'pbi-10', level: 1, prompt: 'Which visual shows a single headline number, such as total revenue?',
+      options: ['Scatter chart', 'Matrix', 'Card', 'Map'], answer: 2 },
+    { id: 'pbi-11', level: 2, prompt: 'What does the cross-filter direction on a relationship control?',
+      options: ['The sort order of a column', 'Which table\'s filters pass through to the other table', 'How often the data refreshes', 'Who is allowed to see the report'], answer: 1 },
+    { id: 'pbi-12', level: 2, prompt: 'Why would you build a separate Date table and mark it as a date table?',
+      options: ['To make the report load faster on phones', 'Because Power BI cannot read dates stored in other tables', 'To hide dates from report viewers', 'So time-intelligence functions such as year-to-date work reliably'], answer: 3 },
+    { id: 'pbi-13', level: 3, prompt: 'What is the difference between SUM and SUMX?',
+      options: [
+        'SUMX can only add up text columns',
+        'They are the same function with different names',
+        'SUM adds up one column; SUMX works out an expression row by row over a table and adds the results',
+        'SUM only works in calculated columns',
+      ], answer: 2 },
+    { id: 'pbi-14', level: 3, prompt: 'To show each region\'s share of sales, a measure needs total sales for all regions, ignoring the Region slicer. Which function removes that filter?',
+      options: ['FILTER', 'RELATED', 'VALUES', 'ALL'], answer: 3 },
   ],
 }
 
-const BANKS: Bank[] = [POWER_BI]
+const BUILT_IN: Bank[] = [POWER_BI]
 
 export const PASSAGES: { id: string; text: string; questions: Choice[] }[] = [
   {
@@ -89,28 +114,145 @@ export const PASSAGES: { id: string; text: string; questions: Choice[] }[] = [
       { id: 'spacing-2', prompt: 'In the passage, "retain" most nearly means:', answer: 3, options: ['Repeat', 'Understand', 'Enjoy', 'Keep in memory'] },
     ],
   },
+  {
+    id: 'mpesa',
+    text: 'When mobile money first spread in Kenya, many people used it only to send money home to relatives. Over time, small businesses found another use. A kiosk owner who accepts payments by phone has a record of every sale without writing anything down. Some lenders now look at these records when deciding whether to give a small loan, because a steady history of payments shows that the business is active. For owners with no bank account and no formal accounts, this record can be the first proof of income they have ever had.',
+    questions: [
+      { id: 'mpesa-1', prompt: 'What is the main point of the passage?', answer: 1, options: [
+        'Mobile money is mainly used to send money to relatives',
+        'Mobile money records can serve as evidence of a small business\'s income',
+        'Kiosks should stop accepting cash',
+        'Banks no longer lend to small businesses',
+      ] },
+      { id: 'mpesa-2', prompt: 'Why do some lenders look at mobile money records?', answer: 2, options: [
+        'The records list the owner\'s relatives',
+        'The law requires them to',
+        'A steady history of payments shows the business is active',
+        'The records mean the owner no longer needs a loan',
+      ] },
+    ],
+  },
+  {
+    id: 'average',
+    text: 'An average can hide as much as it shows. Suppose five people in a small office earn 40,000, 45,000, 50,000, 55,000 and 400,000 shillings a month. The mean salary is 118,000 shillings, yet four of the five earn less than half of that. The median, the middle value once the salaries are sorted, is 50,000 shillings, which describes a typical worker far better. When a few values are much larger than the rest, analysts often report the median alongside the mean, or instead of it.',
+    questions: [
+      { id: 'average-1', prompt: 'What is the passage mainly about?', answer: 3, options: [
+        'Office salaries are too low',
+        'The mean is always the wrong figure to use',
+        'How to work out a salary increase',
+        'One very large value can make the mean misleading, so the median is often more typical',
+      ] },
+      { id: 'average-2', prompt: 'According to the passage, the median salary is:', answer: 1, options: ['40,000 shillings', '50,000 shillings', '118,000 shillings', '400,000 shillings'] },
+    ],
+  },
+  {
+    id: 'meeting',
+    text: 'Before a project meeting, Wanjiru sends each person a one-page summary of the decision to be made, the options, and the figures behind each. People arrive having already read it, so the meeting starts with questions rather than a presentation. Her meetings are shorter than her colleagues\', and her decisions hold, because objections are raised in the room rather than by email a week later.',
+    questions: [
+      { id: 'meeting-1', prompt: 'According to the passage, why do Wanjiru\'s decisions hold?', answer: 0, options: [
+        'Objections are raised during the meeting, not afterwards',
+        'Her meetings are shorter',
+        'She makes the decisions on her own',
+        'She presents the figures in detail at the start',
+      ] },
+      { id: 'meeting-2', prompt: 'In "her decisions hold", "hold" most nearly means:', answer: 2, options: ['Are delayed', 'Are written down', 'Stay in place', 'Are kept secret'] },
+    ],
+  },
 ]
 
 const strip = ({ answer, ...rest }: Choice) => rest
 
-// What the browser needs to run the assessment, with no answers in it.
-export function publicAssessment(courses: { code: string; name: string }[]) {
-  const withBank = courses.map(c => ({ course: c, bank: BANKS.find(b => b.match(c)) })).filter(x => x.bank)
-  const first = withBank[0]
+const KNOWLEDGE_PER_LEVEL: Record<1 | 2 | 3, number> = { 1: 3, 2: 3, 3: 2 }
+const PASSAGES_PER_SITTING = 3
+
+// Working memory: two tries at each length. The span is the longest length recalled
+// exactly at least once; the browser stops once both tries at a length are missed.
+export const SPAN_LENGTHS = [4, 5, 6, 7, 8]
+export const TRIALS_PER_LENGTH = 2
+const SITTING_TTL_MS = 3 * 60 * 60 * 1000
+
+// A course's question pool: the lecturer's approved bank, else a built-in one, else none.
+export function bankFor(course: { code: string; name: string }, approved: Map<string, KnowledgeItem[]>) {
+  return approved.get(course.code) ?? BUILT_IN.find(b => b.match(course))?.items ?? null
+}
+
+// count items from pool, preferring ones not in avoid, in random order.
+function draw<T extends { id: string }>(pool: T[], count: number, avoid: Set<string>) {
+  const shuffled = pool.map(item => ({ item, key: (avoid.has(item.id) ? 1 : 0) + Math.random() })).sort((a, b) => a.key - b.key)
+  return shuffled.slice(0, count).map(x => x.item)
+}
+
+function digitsOf(length: number) {
+  let out = ''
+  while (out.length < length) {
+    const d = String(randomInt(10))
+    if (d !== out.at(-1)) out += d
+  }
+  return out
+}
+
+// What one sitting showed the learner. It travels to the browser and back in a signed
+// token, so the sitting is scored against what was shown, not what was sent back.
+export interface Sitting {
+  span: string[]
+  knowledge: { course: string; ids: string[] } | null
+  passages: string[]
+}
+
+const sign = (payload: string) =>
+  createHmac('sha256', process.env.SUPABASE_SECRET_KEY ?? '').update(`sitting:${payload}`).digest('base64url')
+
+function sittingToken(sitting: Sitting, studentId: string) {
+  const payload = Buffer.from(JSON.stringify({ ...sitting, u: studentId, e: Date.now() + SITTING_TTL_MS })).toString('base64url')
+  return `${payload}.${sign(payload)}`
+}
+
+// The sitting a token was issued for, or null if it is forged, expired or someone else's.
+export function readSitting(token: string, studentId: string): Sitting | null {
+  const [payload, sig] = token.split('.')
+  if (!payload || !sig) return null
+  const expected = Buffer.from(sign(payload)), given = Buffer.from(sig)
+  if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null
+  try {
+    const { span, knowledge, passages, u, e } = JSON.parse(Buffer.from(payload, 'base64url').toString())
+    if (u !== studentId || !(Date.now() < e) || !Array.isArray(span) || !Array.isArray(passages)) return null
+    return { span, knowledge: knowledge ?? null, passages }
+  } catch {
+    return null
+  }
+}
+
+// What the browser needs to run a sitting, with no answers in it. approved: courses' approved
+// banks by code. lastServed: what the learner's previous sitting showed, to avoid repeating it.
+export function publicAssessment(
+  courses: { code: string; name: string }[], studentId: string,
+  approved: Map<string, KnowledgeItem[]>, lastServed: Partial<Sitting> = {},
+) {
+  const first = courses.map(course => ({ course, pool: bankFor(course, approved) })).find(x => x.pool?.length)
+  const seenItems = new Set(lastServed.knowledge?.ids ?? [])
+  const items = first
+    ? ([1, 2, 3] as const).flatMap(level => draw(first.pool!.filter(i => i.level === level), KNOWLEDGE_PER_LEVEL[level], seenItems))
+    : []
+  const passages = draw(PASSAGES, PASSAGES_PER_SITTING, new Set(lastServed.passages ?? []))
+  const sitting: Sitting = {
+    span: SPAN_LENGTHS.flatMap(n => Array.from({ length: TRIALS_PER_LENGTH }, () => digitsOf(n))),
+    knowledge: first ? { course: first.course.code, ids: items.map(i => i.id) } : null,
+    passages: passages.map(p => p.id),
+  }
   return {
-    knowledge: first ? {
-      course: first.course.code, courseName: first.course.name,
-      items: first.bank!.items.map(i => strip(i)),
-    } : null,
-    passages: PASSAGES.map(p => ({ id: p.id, text: p.text, questions: p.questions.map(strip) })),
+    token: sittingToken(sitting, studentId),
+    knowledge: first ? { course: first.course.code, courseName: first.course.name, items: items.map(strip) } : null,
+    span: { sequences: sitting.span, trialsPerLength: TRIALS_PER_LENGTH },
+    passages: passages.map(p => ({ id: p.id, text: p.text, questions: p.questions.map(strip) })),
     // Courses with no question bank: the learner rates their own familiarity instead.
     selfRated: courses.filter(c => c.code !== first?.course.code).slice(0, 4).map(c => ({ code: c.code, name: c.name })),
   }
 }
 
 export interface Submission {
-  knowledge?: { course: string; answers: { id: string; choice: number; confidence: number }[] }
-  span: { sequence: string; answer: string }[]
+  token: string
+  knowledge?: { answers: { id: string; choice: number; confidence: number }[] }
+  span: string[]
   reading: { id: string; choice: number }[]
   readingSeconds: number
   context: {
@@ -127,45 +269,50 @@ export interface Submission {
 const FAMILIARITY: Record<'new' | 'some' | 'confident', Band> = { new: 'foundation', some: 'developing', confident: 'proficient' }
 
 // Turns one sitting into a profile, plus the evidence behind each band (kept with the
-// profile for staff, never shown to the learner and never sent to Claude).
-export function scoreAssessment(s: Submission, courses: { code: string; name: string }[]) {
+// profile for staff, never shown to the learner and never sent to Claude). sitting is the
+// token's, already checked with readSitting().
+export function scoreAssessment(
+  s: Submission, courses: { code: string; name: string }[], sitting: Sitting, approved: Map<string, KnowledgeItem[]>,
+) {
   const priorKnowledge: Record<string, Band> = {}
-  const evidence: Record<string, unknown> = {}
+  const evidence: Record<string, unknown> = { source: 'assessment', served: sitting }
 
-  // 1 and 4: prior knowledge and confidence calibration.
+  // 1 and 4: prior knowledge and confidence calibration, over the questions this sitting showed.
   let calibration: Calibration = 'calibrated'
-  const course = s.knowledge && courses.find(c => c.code === s.knowledge!.course)
-  const bank = course && BANKS.find(b => b.match(course))
-  if (course && bank) {
-    const byId = new Map(bank.items.map(i => [i.id, i]))
-    const answered = s.knowledge!.answers.filter(a => byId.has(a.id))
-    const total = bank.items.reduce((n, i) => n + i.level, 0)
+  const course = sitting.knowledge && courses.find(c => c.code === sitting.knowledge!.course)
+  const pool = course ? bankFor(course, approved) : null
+  if (course && pool) {
+    const served = new Set(sitting.knowledge!.ids)
+    const byId = new Map(pool.filter(i => served.has(i.id)).map(i => [i.id, i]))
+    const answered = (s.knowledge?.answers ?? []).filter(a => byId.has(a.id))
+    const total = Array.from(byId.values()).reduce((n, i) => n + i.level, 0)
     const earned = answered.reduce((n, a) => n + (byId.get(a.id)!.answer === a.choice ? byId.get(a.id)!.level : 0), 0)
     const share = total ? earned / total : 0
     priorKnowledge[course.code] = share >= 0.7 ? 'proficient' : share >= 0.4 ? 'developing' : 'foundation'
-    const correct = answered.filter(a => byId.get(a.id)!.answer === a.choice).length
-    const accuracy = answered.length ? correct / answered.length : 0
-    const confidence = answered.length ? answered.reduce((n, a) => n + (a.confidence - 1) / 4, 0) / answered.length : 0
-    const gap = confidence - accuracy
-    if (answered.length >= 4) calibration = gap > 0.2 ? 'over' : gap < -0.2 ? 'under' : 'calibrated'
-    evidence.knowledge = { course: course.code, weighted: Math.round(share * 100), correct, of: answered.length, confidence: Math.round(confidence * 100), gap: Math.round(gap * 100) }
+    const marked = answered.map(a => ({ correct: byId.get(a.id)!.answer === a.choice, confidence: a.confidence }))
+    const c = marked.length ? calibrationOf(marked) : { calibration, confidence: 0, gap: 0 }
+    if (answered.length >= 4) calibration = c.calibration
+    evidence.knowledge = { course: course.code, weighted: Math.round(share * 100), correct: marked.filter(a => a.correct).length, of: answered.length, confidence: Math.round(c.confidence * 100), gap: Math.round(c.gap * 100) }
   }
   for (const c of courses) {
     const f = s.context.familiarity[c.code]
     if (!priorKnowledge[c.code] && f) priorKnowledge[c.code] = FAMILIARITY[f]
   }
 
-  // 2: working memory, as the longest sequence recalled exactly.
+  // 2: working memory. Adults typically recall 6 or 7 digits; the bands sit around that.
   const digits = (t: string) => t.replace(/\D/g, '')
-  const span = s.span.reduce((best, t) => digits(t.answer) === digits(t.sequence) ? Math.max(best, digits(t.sequence).length) : best, 0)
-  const chunkSize: ChunkSize = span >= 6 ? 'large' : span === 5 ? 'medium' : 'small'
-  evidence.span = span
+  const recalled = sitting.span.map((seq, i) => digits(s.span[i] ?? '') === seq)
+  const span = sitting.span.reduce((best, seq, i) => recalled[i] ? Math.max(best, seq.length) : best, 0)
+  const chunkSize: ChunkSize = span >= 7 ? 'large' : span >= 5 ? 'medium' : 'small'
+  evidence.span = { span, recalled: recalled.filter(Boolean).length, of: s.span.length }
 
   // 3: reading level, from accuracy, with very slow reading as a tiebreaker.
-  const questions = new Map(PASSAGES.flatMap(p => p.questions).map(q => [q.id, q]))
+  const shown = new Set(sitting.passages)
+  const questions = new Map(PASSAGES.filter(p => shown.has(p.id)).flatMap(p => p.questions).map(q => [q.id, q]))
   const readingCorrect = s.reading.filter(r => questions.get(r.id)?.answer === r.choice).length
-  let readingLevel: ReadingLevel = readingCorrect >= 4 ? 'advanced' : readingCorrect >= 2 ? 'standard' : 'plain'
-  if (readingLevel === 'advanced' && s.readingSeconds > 300) readingLevel = 'standard'
+  const readingShare = questions.size ? readingCorrect / questions.size : 0
+  let readingLevel: ReadingLevel = readingShare >= 0.8 ? 'advanced' : readingShare >= 0.5 ? 'standard' : 'plain'
+  if (readingLevel === 'advanced' && s.readingSeconds > 150 * shown.size) readingLevel = 'standard'
   evidence.reading = { correct: readingCorrect, of: questions.size, seconds: Math.round(s.readingSeconds) }
 
   const profile: CognitiveProfile = {

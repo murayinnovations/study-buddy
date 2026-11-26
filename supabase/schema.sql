@@ -65,8 +65,10 @@ create table if not exists practice_log (
   course     text not null,
   topic      text not null,
   correct    boolean not null,
+  confidence int check (confidence between 1 and 5),  -- how sure they were, 1 to 5, from the quiz; null from chat
   created_at timestamptz not null default now()
 );
+alter table practice_log add column if not exists confidence int check (confidence between 1 and 5);
 
 create table if not exists chats (
   student_id text not null,
@@ -166,6 +168,23 @@ create table if not exists cognitive_profiles (
 );
 create index if not exists cognitive_profiles_student on cognitive_profiles (student_id, created_at desc);
 
+-- Students who chose to study without a profile, or deleted theirs. Taking the assessment
+-- again removes the row.
+create table if not exists profile_opt_outs (
+  student_id text primary key,
+  created_at timestamptz not null default now()
+);
+
+-- Each course's starting-level questions for the onboarding assessment, written by Claude
+-- from the course's approved material and approved by the lecturer before students see them.
+-- items: [{ id, level (1 to 3), prompt, options, answer }].
+create table if not exists assessment_banks (
+  course      text primary key,
+  items       jsonb not null,
+  status      text not null default 'draft' check (status in ('draft', 'approved')),
+  updated_at  timestamptz not null default now()
+);
+
 -- ---- Opening Study Buddy from a learning platform (LTI 1.3, see app/lti) ----
 
 -- Each learning platform registered with /lti/register, e.g. a university's Moodle site.
@@ -234,6 +253,8 @@ alter table lti_identities     enable row level security;
 alter table lti_courses        enable row level security;
 alter table lti_nonces         enable row level security;
 alter table cognitive_profiles enable row level security;
+alter table profile_opt_outs   enable row level security;
+alter table assessment_banks   enable row level security;
 
 -- The old "Reset demo" button emptied every table. With real accounts that would wipe
 -- students' work, so it's gone.

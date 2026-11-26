@@ -5,7 +5,8 @@ import {
 } from './demoData'
 import { buildCohort, syntheticCount, TREND_HISTORY } from './cohort'
 import { average } from './format'
-import { learnerContext, profileBands, type CognitiveProfile } from './profile'
+import { ADAPT_WINDOW, adaptToPractice, learnerContext, profileBands, type CognitiveProfile } from './profile'
+import type { KnowledgeItem, Sitting } from './assessment'
 
 // Server-side database access. Uses the secret key, so import this from API
 // routes and server components only, never from client components. Callers
@@ -255,6 +256,7 @@ async function loadStudent(member: Member, synced = false): Promise<DemoState> {
     questions: questions.map(toQuestion),
     profile: profile.profile,
     profileReady: profile.ready,
+    profileOptedOut: profile.optedOut,
   }
 }
 
@@ -336,7 +338,7 @@ async function classStudents(course: Course): Promise<ClassStudent[]> {
 export type StoreAction =
   | { type: 'setChat'; course: string; messages: ChatMessage[] }
   | { type: 'clearChat'; course: string }
-  | { type: 'recordPractice'; course: string; topic: string; correct: boolean; countSession: boolean }
+  | { type: 'recordPractice'; course: string; topic: string; correct: boolean; countSession: boolean; confidence?: number }
   | { type: 'noteMisconception'; id: string; course: string; topic: string; note: string }
   | { type: 'askLecturer'; id: string; course: string; topic: string; urgency: 'High' | 'Medium' | 'Low'; question: string; context: string }
   | { type: 'markRepliesSeen' }
@@ -389,8 +391,10 @@ export async function applyAction(member: Member, a: StoreAction, config: Course
         db().from('mastery').update({
           score: nextScore(row.score, a.correct), sessions: row.sessions + (a.countSession ? 1 : 0), practised_at: now,
         }).match({ student_id: sid, course, topic: a.topic }).then(check),
-        db().from('practice_log').insert({ student_id: sid, course, topic: a.topic, correct: a.correct }).then(check),
+        logPractice({ student_id: sid, course, topic: a.topic, correct: a.correct }, a.confidence),
       ])
+      // The answer is saved either way; a profile that can't move this time moves on a later one.
+      await adaptProfile(sid, course).catch(err => console.error('Updating the profile from practice failed:', err))
       return
     }
     case 'noteMisconception':
@@ -433,21 +437,98 @@ export async function applyAction(member: Member, a: StoreAction, config: Course
 
 // ---- Cognitive profiles ----
 
-// The student's newest profile. ready is false when the table can't be read (for
-// example schema.sql hasn't been run since the profiles were added): then nobody is
-// sent to the assessment, rather than the whole app failing to load.
-export async function currentProfile(studentId: string): Promise<{ ready: boolean; profile: CognitiveProfile | null }> {
-  const { data, error } = await db().from('cognitive_profiles').select('profile')
-    .eq('student_id', studentId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+// The student's newest profile, and whether they chose to study without one. ready is
+// false when the table can't be read (for example schema.sql hasn't been run since the
+// profiles were added): then nobody is sent to the assessment, rather than the whole app
+// failing to load.
+export async function currentProfile(studentId: string): Promise<{ ready: boolean; profile: CognitiveProfile | null; optedOut: boolean }> {
+  const [{ data, error }, optOut] = await Promise.all([
+    db().from('cognitive_profiles').select('profile')
+      .eq('student_id', studentId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    db().from('profile_opt_outs').select('student_id').eq('student_id', studentId).maybeSingle(),
+  ])
   if (error) {
     console.error('Reading the cognitive profile failed (has supabase/schema.sql been run?):', error.message)
-    return { ready: false, profile: null }
+    return { ready: false, profile: null, optedOut: false }
   }
-  return { ready: true, profile: (data?.profile as CognitiveProfile) ?? null }
+  if (optOut.error) console.error('Reading profile opt-outs failed (has supabase/schema.sql been run?):', optOut.error.message)
+  return { ready: true, profile: (data?.profile as CognitiveProfile) ?? null, optedOut: Boolean(optOut.data) }
 }
 
+// A new sitting's profile. Taking the assessment ends any earlier opt-out.
 export async function saveProfile(studentId: string, profile: CognitiveProfile, evidence: Record<string, unknown>) {
   check(await db().from('cognitive_profiles').insert({ student_id: studentId, profile, evidence }))
+  if (evidence.source === 'assessment') check(await db().from('profile_opt_outs').delete().eq('student_id', studentId))
+}
+
+// Study without a profile. With deleteAnswers, every profile row (and the scoring behind
+// it) is deleted too, as the consent screen promises.
+export async function optOutOfProfile(studentId: string, deleteAnswers: boolean) {
+  if (deleteAnswers) check(await db().from('cognitive_profiles').delete().eq('student_id', studentId))
+  check(await db().from('profile_opt_outs').upsert({ student_id: studentId }, { ignoreDuplicates: true }))
+}
+
+// What the student's last sitting showed, so the next one can avoid repeating it.
+export async function lastServed(studentId: string): Promise<Partial<Sitting>> {
+  const { data } = await db().from('cognitive_profiles').select('evidence')
+    .eq('student_id', studentId).not('evidence->served', 'is', null)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle()
+  return (data?.evidence as { served?: Sitting } | undefined)?.served ?? {}
+}
+
+// ---- Starting-level question banks (assessment_banks) ----
+
+export interface AssessmentBank { course: string; items: KnowledgeItem[]; status: 'draft' | 'approved'; updatedAt: number }
+
+// Approved banks by course code. Empty if the table can't be read yet.
+export async function approvedBanks(): Promise<Map<string, KnowledgeItem[]>> {
+  const { data, error } = await db().from('assessment_banks').select('course, items').eq('status', 'approved')
+  if (error) console.error('Reading assessment banks failed (has supabase/schema.sql been run?):', error.message)
+  return new Map((data ?? []).map(b => [b.course as string, b.items as KnowledgeItem[]]))
+}
+
+export async function getBank(course: string): Promise<AssessmentBank | null> {
+  const row = check(await db().from('assessment_banks').select('*').eq('course', course).maybeSingle())
+  return row && { course: row.course, items: row.items, status: row.status, updatedAt: ms(row.updated_at)! }
+}
+
+export async function saveBank(course: string, items: KnowledgeItem[]) {
+  check(await db().from('assessment_banks').upsert({ course, items, status: 'draft', updated_at: new Date().toISOString() }))
+}
+
+export async function setBankStatus(course: string, status: 'draft' | 'approved') {
+  check(await db().from('assessment_banks').update({ status, updated_at: new Date().toISOString() }).eq('course', course))
+}
+
+export async function deleteBank(course: string) {
+  check(await db().from('assessment_banks').delete().eq('course', course))
+}
+
+// One practice answer. If the confidence column isn't there yet (schema.sql not yet run),
+// the answer is saved without it rather than lost.
+async function logPractice(row: { student_id: string; course: string; topic: string; correct: boolean }, confidence?: number) {
+  if (confidence !== undefined) {
+    const { error } = await db().from('practice_log').insert({ ...row, confidence })
+    if (!error) return
+    console.error('Saving practice with confidence failed (has supabase/schema.sql been run?):', error.message)
+  }
+  check(await db().from('practice_log').insert(row))
+}
+
+// Lets the student's practice in a course, since their profile was last written, move it
+// (see adaptToPractice). No profile yet: nothing to move.
+async function adaptProfile(studentId: string, course: string) {
+  const current = check(await db().from('cognitive_profiles').select('profile, created_at')
+    .eq('student_id', studentId).order('created_at', { ascending: false }).limit(1).maybeSingle())
+  if (!current) return
+  const latest = (columns: string) => db().from('practice_log').select(columns)
+    .match({ student_id: studentId, course }).gt('created_at', current.created_at)
+    .order('created_at', { ascending: false }).limit(ADAPT_WINDOW)
+  const recent = check(await latest('correct').returns<{ correct: boolean }[]>())
+  // Without the confidence column (schema.sql not yet run), calibration just doesn't move.
+  const rated = await latest('correct, confidence').not('confidence', 'is', null).returns<{ correct: boolean; confidence: number }[]>()
+  const moved = adaptToPractice(current.profile as CognitiveProfile, course, recent, rated.error ? [] : rated.data)
+  if (moved) await saveProfile(studentId, moved.profile, moved.evidence)
 }
 
 // The profile block Study Buddy reads in this course's chat, or null without a profile.

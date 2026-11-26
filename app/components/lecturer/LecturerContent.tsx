@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react'
 import { useStore } from '../../lib/demoStore'
 import { timeAgo } from '../../lib/format'
+import LecturerAssessmentBank from './LecturerAssessmentBank'
 
 const MAX_UPLOAD_CHARS = 40_000
 
@@ -139,6 +140,8 @@ export default function LecturerContent() {
             </tbody>
           </table>
         </div>
+
+        <LecturerAssessmentBank courseName={course.name} />
 
       </div>
     </div>

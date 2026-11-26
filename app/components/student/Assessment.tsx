@@ -11,22 +11,13 @@ const NAVY = '#0D1B3D', YELLOW = '#E8D44D', INK = '#0F172A', QUIET = '#64748B', 
 
 interface Item { id: string; prompt: string; options: string[] }
 interface Loaded {
+  token: string
   knowledge: { course: string; courseName: string; items: Item[] } | null
+  span: { sequences: string[]; trialsPerLength: number }
   passages: { id: string; text: string; questions: Item[] }[]
   selfRated: { code: string; name: string }[]
 }
 type Step = 'intro' | 'knowledge' | 'span' | 'reading' | 'context' | 'saving' | 'done'
-
-const SPAN_LENGTHS = [3, 4, 5, 6, 7]
-
-function digitsOf(length: number) {
-  let out = ''
-  while (out.length < length) {
-    const d = String(Math.floor(Math.random() * 10))
-    if (d !== out.at(-1)) out += d
-  }
-  return out
-}
 
 export default function Assessment({ onDone, onCancel }: { onDone: () => Promise<void> | void; onCancel?: () => void }) {
   const { state } = useStore()
@@ -36,7 +27,7 @@ export default function Assessment({ onDone, onCancel }: { onDone: () => Promise
   const [consent, setConsent] = useState(false)
 
   const [knowledge, setKnowledge] = useState<{ id: string; choice: number; confidence: number }[]>([])
-  const [span, setSpan] = useState<{ sequence: string; answer: string }[]>([])
+  const [spanAnswers, setSpanAnswers] = useState<string[]>([])
   const [reading, setReading] = useState<{ id: string; choice: number }[]>([])
   const [readingSeconds, setReadingSeconds] = useState(0)
   const [profile, setProfile] = useState<CognitiveProfile | null>(null)
@@ -69,8 +60,9 @@ export default function Assessment({ onDone, onCancel }: { onDone: () => Promise
       const res = await fetch('/api/assessment', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          knowledge: data.knowledge ? { course: data.knowledge.course, answers: knowledge } : undefined,
-          span, reading, readingSeconds, context,
+          token: data.token,
+          knowledge: data.knowledge ? { answers: knowledge } : undefined,
+          span: spanAnswers, reading, readingSeconds, context,
         }),
       })
       const body = await res.json().catch(() => ({}))
@@ -80,6 +72,21 @@ export default function Assessment({ onDone, onCancel }: { onDone: () => Promise
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save your profile.')
       setStep('context')
+    }
+  }
+
+  // Taking part is optional: without a profile, Study Buddy teaches with its default settings.
+  const [skipping, setSkipping] = useState(false)
+  async function skip() {
+    setSkipping(true)
+    setError('')
+    try {
+      const res = await fetch('/api/assessment', { method: 'DELETE' })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Could not save that.')
+      await onDone()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save that.')
+      setSkipping(false)
     }
   }
 
@@ -111,17 +118,20 @@ export default function Assessment({ onDone, onCancel }: { onDone: () => Promise
               <ul style={{ ...p, paddingLeft: '18px' }}>
                 {data?.knowledge && <li>A few questions on {data.knowledge.courseName}, to find your starting point</li>}
                 <li>A short memory exercise, to decide how much to teach at once</li>
-                <li>Two short reading passages, to set how explanations are worded</li>
+                <li>Three short reading passages, to set how explanations are worded</li>
                 <li>A few questions about your time, device and preferences</li>
               </ul>
-              <p style={p}>Study Buddy uses the result to set the level, length and wording of your practice. You see a plain summary at the end. Your lecturer sees the summary (your starting level and how Study Buddy pitches your practice), not your individual answers. You can retake it at any time, and ask for your answers to be deleted.</p>
+              <p style={p}>Study Buddy uses the result as a starting point for the level, length and wording of your practice, and adjusts it as you practise. You see a plain summary at the end. Your lecturer sees the summary (your starting level and how Study Buddy pitches your practice), not your individual answers. You can retake it at any time, or delete your profile and answers from Your Progress.</p>
+              <p style={p}>Taking part is optional. If you continue without it, Study Buddy uses its standard settings for everyone.</p>
               <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '14px', color: INK, margin: '8px 0 20px', cursor: 'pointer' }}>
                 <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} style={{ marginTop: '3px' }} />
                 I understand what is collected and why, and I agree to take part.
               </label>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <Primary disabled={!consent || !data} onClick={() => next('intro')}>{data ? 'Begin' : 'Loading…'}</Primary>
-                {onCancel && <Secondary onClick={onCancel}>Not now</Secondary>}
+                {onCancel
+                  ? <Secondary onClick={onCancel}>Not now</Secondary>
+                  : <Secondary disabled={skipping} onClick={skip}>{skipping ? 'Saving…' : 'Continue without a profile'}</Secondary>}
               </div>
             </>
           )}
@@ -134,7 +144,7 @@ export default function Assessment({ onDone, onCancel }: { onDone: () => Promise
             />
           )}
 
-          {step === 'span' && <SpanBlock onDone={trials => { setSpan(trials); next('span') }} />}
+          {step === 'span' && data && <SpanBlock sequences={data.span.sequences} trialsPerLength={data.span.trialsPerLength} onDone={answers => { setSpanAnswers(answers); next('span') }} />}
 
           {step === 'reading' && data && (
             <ReadingBlock
@@ -203,18 +213,22 @@ function KnowledgeBlock({ courseName, items, onDone }: {
 
 // ---- Block 2: digits shown one at a time, then typed back ----
 
-function SpanBlock({ onDone }: { onDone: (trials: { sequence: string; answer: string }[]) => void }) {
+// The sequences come from the server, which scores the answers against them: trialsPerLength
+// tries at each length, stopping once every try at a length is missed. Answers go in on an
+// on-screen keypad as well as the keyboard, so a phone's keyboard doesn't cost anyone digits.
+function SpanBlock({ sequences, trialsPerLength, onDone }: { sequences: string[]; trialsPerLength: number; onDone: (answers: string[]) => void }) {
   const [round, setRound] = useState(0)
   const [phase, setPhase] = useState<'ready' | 'showing' | 'recall'>('ready')
-  const [sequence, setSequence] = useState('')
   const [shown, setShown] = useState<string | null>(null)
   const [answer, setAnswer] = useState('')
-  const [trials, setTrials] = useState<{ sequence: string; answer: string }[]>([])
+  const [answers, setAnswers] = useState<string[]>([])
+  const [touch, setTouch] = useState(false)
   const input = useRef<HTMLInputElement>(null)
+  const sequence = sequences[round]
+  const lengths = sequences.length / trialsPerLength
+  useEffect(() => { setTouch(window.matchMedia('(pointer: coarse)').matches) }, [])
 
   const start = () => {
-    const seq = digitsOf(SPAN_LENGTHS[round])
-    setSequence(seq)
     setAnswer('')
     setPhase('showing')
   }
@@ -231,30 +245,44 @@ function SpanBlock({ onDone }: { onDone: (trials: { sequence: string; answer: st
   }, [phase, sequence])
 
   const submit = () => {
-    const all = [...trials, { sequence, answer }]
-    setTrials(all)
-    const misses = all.filter(t => t.answer.replace(/\D/g, '') !== t.sequence).length
-    if (round + 1 >= SPAN_LENGTHS.length || misses >= 2) return onDone(all)
+    const all = [...answers, answer]
+    setAnswers(all)
+    const tryInLength = round % trialsPerLength
+    const lengthMissed = tryInLength === trialsPerLength - 1
+      && all.slice(round - tryInLength).every((a, i) => a !== sequences[round - tryInLength + i])
+    if (round + 1 >= sequences.length || lengthMissed) return onDone(all)
     setRound(round + 1)
     setPhase('ready')
   }
 
+  const press = (key: string) => setAnswer(a => key === 'back' ? a.slice(0, -1) : a.length < 12 ? a + key : a)
+
   return (
     <>
-      <div style={eyebrow}>Memory · round {round + 1} of {SPAN_LENGTHS.length}</div>
+      <div style={eyebrow}>Memory · {sequence.length} digits ({Math.floor(round / trialsPerLength) + 1} of {lengths}), try {round % trialsPerLength + 1} of {trialsPerLength}</div>
       <h2 style={h2}>Remember the digits in order</h2>
-      <p style={p}>Digits appear one at a time. When they stop, type them in the same order. Each round adds one more digit. Don&apos;t write them down.</p>
-      <div style={{ height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '12px 0', borderRadius: '12px', background: '#F6F7FA', border: `1px solid ${LINE}` }}>
-        {phase === 'ready' && <Primary onClick={start}>Show {SPAN_LENGTHS[round]} digits</Primary>}
+      <p style={p}>Digits appear one at a time. When they stop, enter them in the same order. You get {trialsPerLength} tries at each length, then the sequences get one digit longer. Don&apos;t write them down.</p>
+      <div style={{ minHeight: '120px', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '12px 0', borderRadius: '12px', background: '#F6F7FA', border: `1px solid ${LINE}` }}>
+        {phase === 'ready' && <Primary onClick={start}>Show {sequence.length} digits</Primary>}
         {phase === 'showing' && <span aria-live="assertive" style={{ fontSize: '56px', fontWeight: 600, color: NAVY, fontVariantNumeric: 'tabular-nums' }}>{shown ?? ''}</span>}
         {phase === 'recall' && (
-          <form onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: '10px' }}>
-            <input
-              ref={input} value={answer} onChange={e => setAnswer(e.target.value.replace(/\D/g, ''))}
-              inputMode="numeric" autoComplete="off" aria-label="The digits, in order" maxLength={12}
-              style={{ fontSize: '24px', letterSpacing: '6px', width: '220px', padding: '8px 12px', borderRadius: '8px', border: `1px solid ${LINE}`, fontFamily: 'inherit' }}
-            />
-            <Primary disabled={!answer} type="submit">Next</Primary>
+          <form onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                ref={input} value={answer} onChange={e => setAnswer(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                inputMode={touch ? 'none' : 'numeric'} autoComplete="off" aria-label="The digits, in order"
+                style={{ fontSize: '24px', letterSpacing: '6px', width: '220px', maxWidth: '55vw', padding: '8px 12px', borderRadius: '8px', border: `1px solid ${LINE}`, fontFamily: 'inherit' }}
+              />
+              <Primary disabled={!answer} type="submit">Next</Primary>
+            </div>
+            <div role="group" aria-label="Keypad" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 56px)', gap: '8px' }}>
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'].map((k, i) => k === '' ? <span key={i} /> : (
+                <button key={k} type="button" onClick={() => press(k)} aria-label={k === 'back' ? 'Delete last digit' : k} style={{
+                  height: '48px', borderRadius: '10px', border: `1px solid ${LINE}`, background: '#fff', color: NAVY,
+                  fontSize: k === 'back' ? '14px' : '20px', fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+                }}>{k === 'back' ? 'Delete' : k}</button>
+              ))}
+            </div>
           </form>
         )}
       </div>
@@ -262,7 +290,7 @@ function SpanBlock({ onDone }: { onDone: (trials: { sequence: string; answer: st
   )
 }
 
-// ---- Block 3: two passages, two questions each, timed without showing a clock ----
+// ---- Block 3: three passages, two questions each, timed without showing a clock ----
 
 function ReadingBlock({ passages, onDone }: {
   passages: Loaded['passages']; onDone: (a: { id: string; choice: number }[], seconds: number) => void
@@ -389,11 +417,11 @@ function Primary({ children, disabled, onClick, type = 'button' }: { children: R
   )
 }
 
-function Secondary({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+function Secondary({ children, disabled, onClick }: { children: React.ReactNode; disabled?: boolean; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} style={{
+    <button type="button" disabled={disabled} onClick={onClick} style={{
       padding: '11px 20px', borderRadius: '10px', border: `1px solid ${LINE}`, fontSize: '14px', fontFamily: 'inherit',
-      background: '#fff', color: INK, cursor: 'pointer',
+      background: '#fff', color: disabled ? QUIET : INK, cursor: disabled ? 'not-allowed' : 'pointer',
     }}>{children}</button>
   )
 }

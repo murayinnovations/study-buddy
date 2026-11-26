@@ -1,6 +1,7 @@
 // A learner's cognitive profile: how Study Buddy should pitch its teaching and practice
 // for them. Written once per sitting of the onboarding assessment (app/api/assessment)
-// into the cognitive_profiles table; the newest row is the current profile.
+// into the cognitive_profiles table, and again whenever practice moves it (adaptToPractice);
+// the newest row is the current profile.
 //
 // Bands describe how to teach, not how able someone is. Nothing here is a diagnosis,
 // and the learner never sees a raw score.
@@ -50,6 +51,54 @@ export const SET_SIZE: Record<ChunkSize, string> = { small: '3', medium: '5', la
 
 // New flashcards per session, by chunk size.
 export const CARDS_PER_SESSION: Record<ChunkSize, number> = { small: 5, medium: 10, large: 15 }
+
+// Practice answers in a course, since the profile was last written, before it can move.
+export const ADAPT_WINDOW = 10
+
+const BANDS: Band[] = ['foundation', 'developing', 'proficient']
+const CHUNKS: ChunkSize[] = ['small', 'medium', 'large']
+const stepIn = <T,>(scale: T[], value: T, step: number) => scale[Math.min(scale.length - 1, Math.max(0, scale.indexOf(value) + step))]
+
+// Confidence (1 to 5) set against accuracy: more than 20 points apart either way is a gap.
+// Used by the onboarding assessment and by practice.
+export function calibrationOf(answers: { correct: boolean; confidence: number }[]) {
+  const accuracy = answers.filter(a => a.correct).length / answers.length
+  const confidence = answers.reduce((n, a) => n + (a.confidence - 1) / 4, 0) / answers.length
+  const gap = confidence - accuracy
+  const calibration: Calibration = gap > 0.2 ? 'over' : gap < -0.2 ? 'under' : 'calibrated'
+  return { calibration, accuracy, confidence, gap }
+}
+
+// Moves the profile with the learner's practice in a course since it was last written.
+// recent: their last ADAPT_WINDOW answers there. 80% or more correct raises their level and
+// set size one step, 40% or less lowers both. rated: their last answers with a confidence
+// rating; ADAPT_WINDOW of them re-check calibration. Returns null when nothing changes. The
+// caller saves the result as a new profile row, so the next move needs a fresh window.
+export function adaptToPractice(
+  p: CognitiveProfile, course: string,
+  recent: { correct: boolean }[], rated: { correct: boolean; confidence: number }[],
+): { profile: CognitiveProfile; evidence: Record<string, unknown> } | null {
+  const next: CognitiveProfile = { ...p }
+  const evidence: Record<string, unknown> = { source: 'practice', course }
+
+  if (recent.length >= ADAPT_WINDOW) {
+    const correct = recent.filter(r => r.correct).length
+    const step = correct / recent.length >= 0.8 ? 1 : correct / recent.length <= 0.4 ? -1 : 0
+    const band = p.priorKnowledge[course]
+    if (band && step) next.priorKnowledge = { ...p.priorKnowledge, [course]: stepIn(BANDS, band, step) }
+    if (step) next.chunkSize = stepIn(CHUNKS, p.chunkSize, step)
+    evidence.level = { correct, of: recent.length, band: { from: band ?? null, to: next.priorKnowledge[course] ?? null }, chunkSize: { from: p.chunkSize, to: next.chunkSize } }
+  }
+  if (rated.length >= ADAPT_WINDOW) {
+    const c = calibrationOf(rated)
+    next.calibration = c.calibration
+    evidence.calibration = { from: p.calibration, to: c.calibration, of: rated.length, accuracy: Math.round(c.accuracy * 100), confidence: Math.round(c.confidence * 100) }
+  }
+
+  const changed = next.chunkSize !== p.chunkSize || next.calibration !== p.calibration
+    || next.priorKnowledge[course] !== p.priorKnowledge[course]
+  return changed ? { profile: next, evidence } : null
+}
 
 const FORMAT_LABEL: Record<Format, string> = {
   worked_examples: 'worked examples first',

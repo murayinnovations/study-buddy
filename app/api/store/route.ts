@@ -27,7 +27,7 @@ const message = z.object({
 const Action = z.discriminatedUnion('type', [
   z.object({ type: z.literal('setChat'), course, messages: z.array(message).max(200) }),
   z.object({ type: z.literal('clearChat'), course }),
-  z.object({ type: z.literal('recordPractice'), course, topic: text(100), correct: z.boolean(), countSession: z.boolean() }),
+  z.object({ type: z.literal('recordPractice'), course, topic: text(100), correct: z.boolean(), countSession: z.boolean(), confidence: z.number().int().min(1).max(5).optional() }),
   z.object({ type: z.literal('noteMisconception'), id, course, topic: text(100), note: text(300) }),
   z.object({
     type: z.literal('askLecturer'), id, course, topic: text(100), urgency: z.enum(['High', 'Medium', 'Low']),
