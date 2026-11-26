@@ -270,15 +270,10 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
           <div key={i} className="fade-up" style={{ display:'flex', gap:'10px', flexDirection: msg.role==='user' ? 'row-reverse' : 'row', alignItems:'flex-start' }}>
             <div style={{
               width:'32px', height:'32px', borderRadius:'50%', flexShrink:0,
-              background: msg.role==='assistant' ? 'linear-gradient(135deg,#2E4A86,#0D1B3D)' : '#0F172A',
+              background: msg.role==='assistant' ? '#0D1B3D' : '#0F172A',
               display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:700,
             }}>
-              {msg.role==='assistant' ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 4C9 4 7 6 7 9c0 1.8.8 3.4 2 4.4V15h6v-1.6c1.2-1 2-2.6 2-4.4 0-3-2-5-5-5z" fill="white" opacity=".9"/>
-                  <rect x="9" y="15" width="6" height="1.5" rx=".75" fill="white" opacity=".7"/>
-                </svg>
-              ) : initials(member.name)}
+              {msg.role==='assistant' ? 'SB' : initials(member.name)}
             </div>
             <div style={{ display:'flex', flexDirection:'column', alignItems: msg.role==='user' ? 'flex-end' : 'flex-start', maxWidth:'72%' }}>
               <span style={{ fontSize:'10px', fontWeight:700, color:'#94A3B8', marginBottom:'4px', letterSpacing:'.3px' }}>

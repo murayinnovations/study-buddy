@@ -9,6 +9,7 @@ Study Buddy is an AI study companion with three views: student, lecturer and Hea
 | Area | State |
 |---|---|
 | Learner profile | Live. Every student takes a 12-minute onboarding assessment (`app/components/student/Assessment.tsx`, scored in `app/lib/assessment.ts`) and gets a cognitive profile, saved in `cognitive_profiles`. Study Buddy's chat practice follows it (`app/lib/profile.ts`). Students can retake it from Your Progress |
+| Quiz and flashcards | Live. Per topic, written from the course material by `/api/practice` and sized by the profile (3, 5 or 8 questions; 5, 10 or 15 cards). Quiz answers update mastery like chat practice; over-confident learners rate their confidence before each answer is revealed. Flashcard progress is not saved between sessions yet |
 | Student chat | Live. Answers from the course's approved materials in the database and cites them; students can also open the original files |
 | Mastery tracking | Live. Study Buddy records practice results with a tool call and the student's scores update |
 | Ask lecturer → inbox → reply → save to course | Live, shared across browsers |

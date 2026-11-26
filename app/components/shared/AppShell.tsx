@@ -58,19 +58,8 @@ export default function AppShell({ children, isAdmin = false }: { children: Reac
         background:'#0D1B3D', borderBottom:'2px solid #E8D44D', padding:'0 24px', display:'flex',
         alignItems:'center', justifyContent:'space-between', height:'52px', flexShrink:0,
       }}>
-        {/* Study Buddy logo */}
+        {/* Product name */}
         <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-          <div style={{
-            width:'32px', height:'32px', borderRadius:'9px',
-            background:'#E8D44D',
-            display:'flex', alignItems:'center', justifyContent:'center',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 3C8 3 5 6 5 10c0 2.5 1.2 4.7 3 6.1V18h8v-1.9c1.8-1.4 3-3.6 3-6.1 0-4-3-7-7-7z" fill="#0D1B3D"/>
-              <rect x="9" y="18" width="6" height="2" rx="1" fill="#0D1B3D" opacity=".8"/>
-              <rect x="10" y="20" width="4" height="1.5" rx=".75" fill="#0D1B3D" opacity=".6"/>
-            </svg>
-          </div>
           <div>
             <div style={{ color:'#fff', fontWeight:600, fontSize:'15px', lineHeight:1 }}>Study Buddy</div>
             <div style={{ color:'rgba(255,255,255,.45)', fontSize:'10px', letterSpacing:'.3px' }}>Strathmore pilot · by Muray Innovations</div>

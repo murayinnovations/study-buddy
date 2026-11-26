@@ -48,6 +48,9 @@ export const BAND_LABEL: Record<Band, string> = { foundation: 'Foundation', deve
 // Practice questions per set, by chunk size.
 export const SET_SIZE: Record<ChunkSize, string> = { small: '3', medium: '5', large: '8' }
 
+// New flashcards per session, by chunk size.
+export const CARDS_PER_SESSION: Record<ChunkSize, number> = { small: 5, medium: 10, large: 15 }
+
 const FORMAT_LABEL: Record<Format, string> = {
   worked_examples: 'worked examples first',
   explain_then_practice: 'a short explanation, then practice',
