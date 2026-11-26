@@ -9,7 +9,7 @@ const statusCfg: Record<Status,{badge:string;color:string;bg:string}> = {
   'Critical':  { badge:'badge-red',    color:'#DC2626', bg:'#FEF2F2' },
   'At risk':   { badge:'badge-amber',  color:'#D97706', bg:'#FFFBEB' },
   'On track':  { badge:'badge-green',  color:'#059669', bg:'#F0FDF4' },
-  'Excelling': { badge:'badge-blue',   color:'#2563EB', bg:'#EFF6FF' },
+  'Excelling': { badge:'badge-blue',   color:'#0D1B3D', bg:'#F1F3F8' },
 }
 
 const ORDER: Status[] = ['Critical', 'At risk', 'On track', 'Excelling']
@@ -41,9 +41,9 @@ export default function LecturerStudents() {
               {(['all', ...ORDER] as const).map(f=>(
                 <button key={f} onClick={()=>setFilter(f)}
                   style={{ padding:'6px 12px', borderRadius:'7px', border:'1.5px solid', fontSize:'12px', fontWeight:500, fontFamily:'inherit', cursor:'pointer', transition:'all .15s',
-                    borderColor: filter===f ? '#2563EB' : '#E2E8F0',
-                    background: filter===f ? '#EFF6FF' : '#fff',
-                    color: filter===f ? '#2563EB' : '#475569',
+                    borderColor: filter===f ? '#0D1B3D' : '#E2E8F0',
+                    background: filter===f ? '#F1F3F8' : '#fff',
+                    color: filter===f ? '#0D1B3D' : '#475569',
                   }}
                 >
                   {f==='all' ? 'All' : f} ({f==='all' ? cohort.length : cohort.filter(s => s.status === f).length})
@@ -69,13 +69,13 @@ export default function LecturerStudents() {
                   return (
                     <tr key={s.id}
                       onClick={()=>setSelectedId(isSel ? null : s.id)}
-                      style={{ cursor:'pointer', background: isSel?'#EFF6FF':'transparent', borderBottom:'1px solid #F8FAFC', transition:'background .15s' }}
+                      style={{ cursor:'pointer', background: isSel?'#F1F3F8':'transparent', borderBottom:'1px solid #F8FAFC', transition:'background .15s' }}
                       onMouseEnter={e=>{ if(!isSel)(e.currentTarget as HTMLElement).style.background='#F8FAFC' }}
                       onMouseLeave={e=>{ if(!isSel)(e.currentTarget as HTMLElement).style.background='transparent' }}
                     >
                       <td style={{ padding:'12px 14px', fontFamily:'JetBrains Mono,monospace', fontSize:'11px', color:'#64748B', whiteSpace:'nowrap' }}>
                         {s.id}
-                        {s.live && <span className="badge badge-blue" style={{ marginLeft:'6px', fontFamily:'Inter', fontSize:'9px' }}>● Live</span>}
+                        {s.live && <span className="badge badge-blue" style={{ marginLeft:'6px', fontFamily:'Poppins', fontSize:'9px' }}>● Live</span>}
                       </td>
                       <td style={{ padding:'12px 14px', fontSize:'12px', color:'#475569' }}>{daysAgoLabel(s.daysAgo)}</td>
                       <td style={{ padding:'12px 14px' }}>

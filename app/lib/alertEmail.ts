@@ -64,7 +64,7 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden">
         <tr><td style="background:#0F172A;padding:18px 28px">
           <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:32px;height:32px;background:#2563EB;border-radius:9px;text-align:center;vertical-align:middle;color:#FFFFFF;font-weight:700;font-size:15px">S</td>
+            <td style="width:32px;height:32px;background:#0D1B3D;border-radius:9px;text-align:center;vertical-align:middle;color:#FFFFFF;font-weight:700;font-size:15px">S</td>
             <td style="padding-left:10px;color:#FFFFFF;font-weight:600;font-size:15px">Study Buddy</td>
           </tr></table>
         </td></tr>
@@ -86,7 +86,7 @@ export function alertEmail(p: AlertPlatform, siteUrl: string) {
         </td></tr>
 
         <tr><td style="padding:20px 28px 8px">
-          <a href="${escape(reviewUrl)}" style="display:inline-block;background:#2563EB;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;padding:12px 22px;border-radius:8px">Review and approve</a>
+          <a href="${escape(reviewUrl)}" style="display:inline-block;background:#0D1B3D;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;padding:12px 22px;border-radius:8px">Review and approve</a>
         </td></tr>
 
         <tr><td style="padding:16px 28px 28px">

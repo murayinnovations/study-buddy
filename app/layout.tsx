@@ -1,6 +1,6 @@
 import './globals.css'
 export const metadata = {
-  title: 'Study Buddy — Learning Companion · Strathmore University',
+  title: 'Study Buddy · Strathmore pilot by Muray Innovations',
   description: 'A learning companion for university students, lecturers and heads of department.',
 }
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -9,7 +9,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
       </head>
       <body>{children}</body>
     </html>

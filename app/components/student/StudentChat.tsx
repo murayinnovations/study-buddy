@@ -221,7 +221,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
 
   const headerButton = (active = false): React.CSSProperties => ({
     fontSize:'12px', fontWeight:500, padding:'6px 12px', borderRadius:'8px',
-    border:'1.5px solid #E2E8F0', background: active ? '#EFF6FF' : '#fff', color: active ? '#2563EB' : '#475569',
+    border:'1.5px solid #E2E8F0', background: active ? '#F1F3F8' : '#fff', color: active ? '#0D1B3D' : '#475569',
     cursor:'pointer', display:'flex', alignItems:'center', gap:'5px', fontFamily:'inherit',
   })
 
@@ -270,7 +270,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
           <div key={i} className="fade-up" style={{ display:'flex', gap:'10px', flexDirection: msg.role==='user' ? 'row-reverse' : 'row', alignItems:'flex-start' }}>
             <div style={{
               width:'32px', height:'32px', borderRadius:'50%', flexShrink:0,
-              background: msg.role==='assistant' ? 'linear-gradient(135deg,#3B82F6,#1D4ED8)' : '#0F172A',
+              background: msg.role==='assistant' ? 'linear-gradient(135deg,#2E4A86,#0D1B3D)' : '#0F172A',
               display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:700,
             }}>
               {msg.role==='assistant' ? (
@@ -288,7 +288,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
                 className="chat-prose"
                 style={{
                   padding:'12px 16px', borderRadius: msg.role==='assistant' ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
-                  background: msg.role==='assistant' ? '#fff' : '#1E3A5F',
+                  background: msg.role==='assistant' ? '#fff' : '#0D1B3D',
                   border: msg.role==='assistant' ? '1px solid #E2E8F0' : 'none',
                   color: msg.role==='assistant' ? '#1E293B' : '#fff',
                   fontSize:'13px', lineHeight:'1.7',
@@ -307,7 +307,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
                     <div style={{ fontSize:'10px', fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.5px' }}>Sources</div>
                     {msg.sources.map((src, n) => (
                       <div key={n} title={src.quote} style={{ fontSize:'11px', color:'#64748B', lineHeight:1.4, display:'flex', gap:'6px' }}>
-                        <span style={{ fontWeight:700, color:'#2563EB', flexShrink:0 }}>{n+1}</span>
+                        <span style={{ fontWeight:700, color:'#0D1B3D', flexShrink:0 }}>{n+1}</span>
                         <span><strong style={{ color:'#334155', fontWeight:600 }}>{src.title}</strong> — “{src.quote.length > 110 ? src.quote.slice(0,110).trimEnd() + '…' : src.quote}”</span>
                       </div>
                     ))}
@@ -316,7 +316,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
               </div>
               {i === messages.length - 1 && canRegenerate && (
                 <button onClick={regenerate} title="Ask Study Buddy to answer this again"
-                  style={{ marginTop:'6px', fontSize:'11px', color: msg.failed ? '#2563EB' : '#94A3B8', fontWeight: msg.failed ? 600 : 400, background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
+                  style={{ marginTop:'6px', fontSize:'11px', color: msg.failed ? '#0D1B3D' : '#94A3B8', fontWeight: msg.failed ? 600 : 400, background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
                   ↻ {msg.failed ? 'Try again' : 'Regenerate'}
                 </button>
               )}
@@ -347,7 +347,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
                 border:'1.5px solid #E2E8F0', background:'#fff', color:'#475569',
                 cursor:'pointer', fontFamily:'inherit', transition:'all .15s',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor='#93C5FD'; (e.currentTarget as HTMLElement).style.color='#2563EB' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor='#A9B5CF'; (e.currentTarget as HTMLElement).style.color='#0D1B3D' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor='#E2E8F0'; (e.currentTarget as HTMLElement).style.color='#475569' }}
             >
               {q.label}
@@ -382,7 +382,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
               border:'1.5px solid #E2E8F0', background:'#F8FAFC', color:'#0F172A',
               fontFamily:'inherit', maxHeight:'100px', outline:'none', transition:'border-color .15s, background .15s',
             }}
-            onFocus={e => { e.target.style.borderColor='#93C5FD'; e.target.style.background='#fff' }}
+            onFocus={e => { e.target.style.borderColor='#A9B5CF'; e.target.style.background='#fff' }}
             onBlur={e => { e.target.style.borderColor='#E2E8F0'; e.target.style.background='#F8FAFC' }}
           />
           <button
@@ -390,7 +390,7 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
             disabled={streaming || !input.trim()}
             style={{
               width:'40px', height:'40px', borderRadius:'10px', border:'none',
-              background: streaming||!input.trim() ? '#E2E8F0' : '#2563EB',
+              background: streaming||!input.trim() ? '#E2E8F0' : '#0D1B3D',
               color:'#fff', cursor: streaming||!input.trim() ? 'not-allowed' : 'pointer',
               display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'background .15s',
             }}
@@ -430,9 +430,9 @@ export default function StudentChat({ selectedCourse, showProgress, setShowProgr
             <label style={{ fontSize:'11px', fontWeight:600, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.5px' }}>Your question</label>
             <textarea value={flagText} onChange={e => setFlagText(e.target.value)} rows={4} placeholder="What are you stuck on?"
               style={{ width:'100%', margin:'5px 0 12px', fontSize:'13px', padding:'10px 12px', borderRadius:'8px', border:'1.5px solid #E2E8F0', fontFamily:'inherit', resize:'vertical', background:'#F8FAFC', color:'#0F172A', lineHeight:1.5 }}/>
-            <div style={{ background:'#EFF6FF', borderRadius:'8px', padding:'12px', marginBottom:'20px', border:'1px solid #BFDBFE' }}>
-              <div style={{ fontSize:'11px', fontWeight:600, color:'#1D4ED8', marginBottom:'5px', textTransform:'uppercase', letterSpacing:'.5px' }}>Context Study Buddy will include</div>
-              <div style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.5 }}>{flagContext}</div>
+            <div style={{ background:'#F1F3F8', borderRadius:'8px', padding:'12px', marginBottom:'20px', border:'1px solid #D3D9E6' }}>
+              <div style={{ fontSize:'11px', fontWeight:600, color:'#0D1B3D', marginBottom:'5px', textTransform:'uppercase', letterSpacing:'.5px' }}>Context Study Buddy will include</div>
+              <div style={{ fontSize:'12px', color:'#0D1B3D', lineHeight:1.5 }}>{flagContext}</div>
             </div>
             <div style={{ display:'flex', gap:'10px' }}>
               <button onClick={() => setFlagModal(false)} className="btn-ghost" style={{ flex:1 }}>Cancel</button>

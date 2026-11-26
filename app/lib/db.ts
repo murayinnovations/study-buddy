@@ -5,6 +5,7 @@ import {
 } from './demoData'
 import { buildCohort, syntheticCount, TREND_HISTORY } from './cohort'
 import { average } from './format'
+import { learnerContext, type CognitiveProfile } from './profile'
 
 // Server-side database access. Uses the secret key, so import this from API
 // routes and server components only, never from client components. Callers
@@ -223,12 +224,13 @@ async function loadStudent(member: Member, synced = false): Promise<DemoState> {
   const sid = member.studentId!
   const courses = await listCourses()
   const codes = courses.map(c => c.code)
-  const [mastery, practice, chats, questions, files] = await Promise.all([
+  const [mastery, practice, chats, questions, files, profile] = await Promise.all([
     db().from('mastery').select('*').eq('student_id', sid).in('course', codes).then(check),
     db().from('practice_log').select('course, topic, correct, created_at').eq('student_id', sid).in('course', codes).order('created_at').then(check),
     db().from('chats').select('course, messages').eq('student_id', sid).in('course', codes).then(check),
     db().from('questions').select('*').eq('student_id', sid).in('course', codes).order('created_at', { ascending: false }).then(check),
     courseFiles(codes),
+    currentProfile(sid),
   ])
 
   if (!synced && await syncStudent(member, courses, mastery, chats)) return loadStudent(member, true)
@@ -251,6 +253,8 @@ async function loadStudent(member: Member, synced = false): Promise<DemoState> {
     practiceLog: practice.map(p => ({ course: p.course, topic: p.topic, correct: p.correct, at: ms(p.created_at)! })),
     chats: Object.fromEntries(chats.map(c => [c.course, c.messages as ChatMessage[]])),
     questions: questions.map(toQuestion),
+    profile: profile.profile,
+    profileReady: profile.ready,
   }
 }
 
@@ -415,6 +419,31 @@ export async function applyAction(member: Member, a: StoreAction, config: Course
     case 'sendCheckIn':
       return check(await db().from('check_ins').upsert({ course, student_id: a.studentId }, { ignoreDuplicates: true }))
   }
+}
+
+// ---- Cognitive profiles ----
+
+// The student's newest profile. ready is false when the table can't be read (for
+// example schema.sql hasn't been run since the profiles were added): then nobody is
+// sent to the assessment, rather than the whole app failing to load.
+export async function currentProfile(studentId: string): Promise<{ ready: boolean; profile: CognitiveProfile | null }> {
+  const { data, error } = await db().from('cognitive_profiles').select('profile')
+    .eq('student_id', studentId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+  if (error) {
+    console.error('Reading the cognitive profile failed (has supabase/schema.sql been run?):', error.message)
+    return { ready: false, profile: null }
+  }
+  return { ready: true, profile: (data?.profile as CognitiveProfile) ?? null }
+}
+
+export async function saveProfile(studentId: string, profile: CognitiveProfile, evidence: Record<string, unknown>) {
+  check(await db().from('cognitive_profiles').insert({ student_id: studentId, profile, evidence }))
+}
+
+// The profile block Study Buddy reads in this course's chat, or null without a profile.
+export async function getLearnerContext(studentId: string, course: string): Promise<string | null> {
+  const { profile } = await currentProfile(studentId)
+  return profile ? learnerContext(profile, course) : null
 }
 
 // ---- Material for Study Buddy ----

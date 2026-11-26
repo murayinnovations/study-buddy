@@ -7,10 +7,10 @@ import LecturerQuestions from './LecturerQuestions'
 import { useStore } from '../../lib/demoStore'
 
 const TABS = [
-  { id:'overview',   label:'Class overview',    icon:'📊' },
-  { id:'students',   label:'Individual students',icon:'👥' },
-  { id:'content',    label:'Content & approval', icon:'✓' },
-  { id:'questions',  label:'Student questions',  icon:'💬' },
+  { id:'overview',   label:'Class overview' },
+  { id:'students',   label:'Individual students' },
+  { id:'content',    label:'Content & approval' },
+  { id:'questions',  label:'Student questions' },
 ]
 
 export default function LecturerView() {
@@ -33,13 +33,12 @@ export default function LecturerView() {
             style={{
               padding:'13px 16px', border:'none', background:'none', cursor:'pointer',
               fontSize:'13px', fontWeight:500, fontFamily:'inherit',
-              color: tab===t.id ? '#2563EB' : '#64748B',
-              borderBottom: tab===t.id ? '2px solid #2563EB' : '2px solid transparent',
+              color: tab===t.id ? '#0D1B3D' : '#64748B',
+              borderBottom: tab===t.id ? '2px solid #0D1B3D' : '2px solid transparent',
               marginBottom:'-1px', display:'flex', alignItems:'center', gap:'6px',
               transition:'color .15s',
             }}
           >
-            <span style={{ fontSize:'14px' }}>{t.icon}</span>
             {t.label}
             {t.id === 'questions' && unanswered > 0 && (
               <span className="badge badge-red" style={{ fontSize:'10px', padding:'1px 7px' }}>{unanswered}</span>

@@ -1,68 +1,55 @@
-# Study Buddy — 5-minute demo script
+# Study Buddy — demo script: the learner profile
 
-For a live demo to Strathmore staff. One presenter, one laptop, the browser full screen.
+About 8 minutes. Shows that every learner gets a cognitive profile at onboarding, and that Study Buddy's practice follows it. The same steps are in the in-app guide (the **Guide** button, shown to demo-group accounts).
 
 ## Before you start
 
-1. Make three accounts in the same demo group (see Switching views with one click in the README): a student added with `--sample` so she starts from Sara's progress, a lecturer and a Head of Department. Use a new student number for each demo, so rehearsal activity doesn't carry over.
-2. Sign in as any one of the three — the header now shows a **Student / Lecturer / Head of Department** switcher, so the whole demo runs in one window. Sign in before the audience arrives. A demo account that was created with the members script, or before passwords were added, has no password yet: use **Forgot password?** once to set one.
-3. Check the chat works: send one message in SBS 201, then click **New chat**.
-4. Have a short `.md` file ready to upload, for example a one-page note on "Disposals: common mistakes".
-5. Check the venue Wi-Fi reaches Study Buddy: the test message in step 3 should answer within about 20 seconds. Have a phone hotspot ready as a backup.
-6. Know what is real and what isn't (see the last section), in case someone asks.
+1. Run `supabase/schema.sql` in the Supabase SQL Editor, so the `cognitive_profiles` table exists. Until it does, nobody is sent to the assessment.
+2. Open two browser windows, one of them private. Have two new email addresses ready, for Learner A and Learner B. With **Confirm email** on in Supabase, each needs its confirmation link opened first; for a demo it is quicker to turn it off.
+3. Send one test chat message from an existing student account so the course notes are cached. The first reply takes 15 to 20 seconds; later ones are faster.
+4. Have the lecturer account's sign-in ready.
 
-Study Buddy's first answer in a chat takes 15–20 seconds while it reads the course notes, and later answers about 10. The tutorial brief takes 20–30 seconds. The screen says what Study Buddy is doing; talk the audience through it rather than waiting in silence.
+## 1. Learner A takes the assessment (2 minutes)
 
-## 1. The student (2 minutes)
+**Say:** "Every learner starts with a 12-minute assessment, so Study Buddy knows how to teach them."
 
-**Say:** "This is Sara, a second-year BCom student. Study Buddy is her study companion for each course."
+1. In window 1, sign up as Learner A.
+2. Accept the consent screen.
+3. Course questions: get the easy ones right and the harder ones wrong, and rate yourself "Unsure" or "Guessing".
+4. Memory: recall 3 or 4 digits, then miss two rounds.
+5. Reading: answer normally.
+6. About you: 20-minute sessions, "Seeing a worked example first".
+7. Show the profile card: Foundation start, short sections.
 
-1. Point at the sidebar: courses with mastery rings, and **Study Buddy suggests** pointing at her weakest topic, Depreciation (38%).
-2. Click **Start a session →**. Study Buddy checks what she knows before teaching.
-3. Ask: *"Why do we subtract the residual value in straight-line depreciation?"*
-   - **Point out the numbered sources** under the answer. "Study Buddy answers only from the lecturer's approved notes, and shows where each point came from."
-4. Click **Give me a practice question** and answer it, for example: *"(240,000 − 40,000) ÷ 4 = 50,000 a year"*.
-   - **Point out the chip** under Study Buddy's feedback ("Depreciation: 38% → 54%") and the progress panel updating.
-5. Click **Ask lecturer**. Show that the question arrives with context: mastery, practice attempts, any misconception Study Buddy noticed. Send it.
+## 2. Learner A practises (1 minute)
 
-## 2. The lecturer (2 minutes)
+**Say:** "Same course, pitched for her."
 
-Click **Lecturer** in the header switcher.
+Click **Start a session** on a topic. Point out the 3-question set, asked one at a time, in plain wording. Answer one question to show the mastery score move.
 
-**Say:** "This is Prof. Mwangi's view of the whole class. Sara is a real signed-in student; the other 30 are a synthetic class for the demo."
+## 3. Learner B (2 minutes)
 
-1. **Class overview:** the heatmap shows which topics the class is struggling with. Click **Draft with Study Buddy** to turn it into a plan for the next tutorial.
-2. **Individual students:** Sara is marked **● Live**. Click her row to show her topic scores, which include the practice question she just answered.
-3. **Student questions:** Sara's question is at the top with Study Buddy's context. Type a short reply and send it, then click **Save answer to course material**.
-   - "From now on Study Buddy uses this answer for every SBS 201 student."
-4. **Content & approval:** click **Upload material**, add the prepared note, and show it sitting as **Pending review**. Click **Approve**. "Nothing reaches students until the lecturer approves it."
+**Say:** "A learner with more experience gets a different profile."
 
-## 3. Back to the student (1 minute)
+1. In window 2 (the header switcher swaps roles, not students), sign up as Learner B.
+2. Answer the course questions well, rating yourself "Certain" even on one you get wrong. Recall 6 or 7 digits. Choose 40-minute sessions.
+3. Show the profile card, then **Start a session** on the same topic.
 
-Click **Student** in the header switcher. The sidebar shows **Lecturer replies · 1 new**. Open it to show Prof. Mwangi's answer.
+Compare with window 1: a longer, harder set, and if B came out over-confident, Study Buddy asks how sure they were before saying whether an answer is right.
 
-Then click **New chat** and ask the same question again, for example *"Why is residual value subtracted in straight-line but not in reducing balance?"*. One of the sources under Study Buddy's answer is now **Lecturer answer — Depreciation**. "One student asked, the lecturer answered once, and now Study Buddy teaches it to every student."
+## 4. The lecturer (1 minute)
 
-## 4. Head of Department (30 seconds)
+Sign in as the lecturer. Open **Individual students**: both learners appear as live students with their topic scores.
 
-Click **Head of Department** in the header switcher.
+## 5. Close
 
-**Say:** "This is what the department dashboard will report during the pilot: engagement and at-risk students across courses, and CUE compliance. It's illustrative today; the numbers become real once the pilot runs."
+**Say:** "Every learner gets a profile on day one, and every practice set is pitched to it. Next: quiz and flashcard screens and impact reports on the same profile."
 
-## What's real and what isn't
+**Retake** in a learner's Your Progress panel runs the assessment again.
 
-| Real in the demo | Illustrative or synthetic |
-|---|---|
-| Study Buddy's answers, citations and practice marking (live Claude calls) | The 30 other students in SBS 201 |
-| Mastery changes from practice questions | Weeks 1–8 of the comprehension trend |
-| Ask lecturer → inbox → reply → saved to course material | The whole Head of Department view |
-| Material upload and approval | Course notes are sample material written for the demo |
-| The tutorial brief Study Buddy drafts | Check-in messages are recorded but not delivered |
+## What is real
 
-Everyone signs in, and everything is saved in Supabase, so the Lecturer view shows the student's activity within a few seconds.
-
-## If something goes wrong
-
-- **Study Buddy doesn't answer:** click **↻ Try again** under the message. If it fails again, check the connection (switch to the hotspot) and the API key in `.env.local` or the Vercel settings, and carry on with the lecturer view, which works without Study Buddy.
-- **Leftover data from a rehearsal:** add a new student account with `--sample` and sign in as them. Replies and saved answers from rehearsals stay in the lecturer's inbox.
-- **Landed in the student view when you expected lecturer or HoD:** the email isn't on the members list with that role, so it joined as a student. Add it with the right role (`scripts/members.mjs add …`); the change shows within a minute.
+- The assessment, its scoring and the profile are live and saved in Supabase (`cognitive_profiles`, newest row per student).
+- The profile is sent to Study Buddy with each chat, after the course notes. It sets the starting level, practice set size, wording, pacing and the confidence check.
+- Course questions exist for the Power BI course only. Other courses use the learner's own rating of how familiar they are.
+- Lecturer dashboards can include 30 synthetic students for a course with `synthetic_class` set. Turn it off on the demo course to show only real learners.

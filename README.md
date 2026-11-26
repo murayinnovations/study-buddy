@@ -1,4 +1,6 @@
-# Study Buddy — Learning Companion for Strathmore University
+# Study Buddy — Learning Companion, by Muray Innovations
+
+Piloting with Strathmore University.
 
 Study Buddy is an AI study companion with three views: student, lecturer and Head of Department. The pilot course is Business Intelligence with Power BI (BI-Apr-26), with materials imported from Strathmore's data science learning platform. Courses, their topics, Study Buddy's instructions for each course and all course material live in the database, not in the code
 
@@ -6,12 +8,13 @@ Study Buddy is an AI study companion with three views: student, lecturer and Hea
 
 | Area | State |
 |---|---|
+| Learner profile | Live. Every student takes a 12-minute onboarding assessment (`app/components/student/Assessment.tsx`, scored in `app/lib/assessment.ts`) and gets a cognitive profile, saved in `cognitive_profiles`. Study Buddy's chat practice follows it (`app/lib/profile.ts`). Students can retake it from Your Progress |
 | Student chat | Live. Answers from the course's approved materials in the database and cites them; students can also open the original files |
 | Mastery tracking | Live. Study Buddy records practice results with a tool call and the student's scores update |
 | Ask lecturer → inbox → reply → save to course | Live, shared across browsers |
 | Lecturer dashboards | Computed from the signed-up students in the lecturer's course (plus a synthetic class of 30 for courses with `synthetic_class` set) |
 | Material upload and approval | Live (.md and .txt). Imported platform material is approved on import |
-| Head of Department view | Illustrative data, labelled as such |
+| Head of Department view | Live courses only, from the same class data lecturers see |
 | Sign-in | Email and password (Supabase Auth). Anyone can create an account. New people join as students; lecturer and HoD access is granted from the members list. People can also open Study Buddy from a Moodle course (LTI 1.3). Each person sees only their role's view, and each student their own work |
 | Storage | Supabase, through the app's `/api/store` route (`app/lib/db.ts`), which checks the member's role |
 

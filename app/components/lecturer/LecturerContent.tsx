@@ -57,7 +57,7 @@ export default function LecturerContent() {
               </div>
             ))}
             {newGoal && (
-              <div style={{ display:'flex', gap:'8px', padding:'11px 14px', background:'#EFF6FF', borderRadius:'9px', border:'1.5px solid #BFDBFE', flexWrap:'wrap' }}>
+              <div style={{ display:'flex', gap:'8px', padding:'11px 14px', background:'#F1F3F8', borderRadius:'9px', border:'1.5px solid #D3D9E6', flexWrap:'wrap' }}>
                 <input autoFocus value={newGoal.goal} onChange={e => setNewGoal({ ...newGoal, goal: e.target.value })} placeholder="e.g. Prepare a bank reconciliation statement" style={{ ...input, flex:'1 1 260px' }}/>
                 <input value={newGoal.week} onChange={e => setNewGoal({ ...newGoal, week: e.target.value })} placeholder="By Week 10" style={{ ...input, width:'110px' }}/>
                 <button onClick={() => { addGoal(newGoal.goal.trim(), newGoal.week.trim() || 'No deadline'); setNewGoal(null) }} disabled={!newGoal.goal.trim()} className="btn-primary" style={{ fontSize:'12px', padding:'6px 14px' }}>Add</button>
@@ -82,7 +82,7 @@ export default function LecturerContent() {
           {uploadError && <div style={{ marginBottom:'12px', fontSize:'12px', color:'#B91C1C', background:'#FEF2F2', padding:'8px 12px', borderRadius:'8px' }}>{uploadError}</div>}
 
           {pendingFile && (
-            <div style={{ marginBottom:'14px', padding:'12px 14px', background:'#EFF6FF', borderRadius:'9px', border:'1.5px solid #BFDBFE', display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+            <div style={{ marginBottom:'14px', padding:'12px 14px', background:'#F1F3F8', borderRadius:'9px', border:'1.5px solid #D3D9E6', display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
               <input value={pendingFile.title} onChange={e => setPendingFile({ ...pendingFile, title: e.target.value })} style={{ ...input, flex:'1 1 220px' }} aria-label="Title"/>
               <select value={pendingFile.type} onChange={e => setPendingFile({ ...pendingFile, type: e.target.value })} style={input} aria-label="Type">
                 {['Lecture notes','Reading list','Past paper','Supplement'].map(t => <option key={t}>{t}</option>)}

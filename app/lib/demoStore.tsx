@@ -161,7 +161,7 @@ function useDemoState(member: Member) {
       update(s => ({ ...s, checkIns: Array.from(new Set([...s.checkIns, studentId])) }), { type: 'sendCheckIn', studentId }),
   }), [update, member])
 
-  return { member, state, status, ...actions }
+  return { member, state, status, refresh, ...actions }
 }
 
 type Store = ReturnType<typeof useDemoState>

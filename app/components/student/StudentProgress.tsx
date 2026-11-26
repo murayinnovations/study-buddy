@@ -1,6 +1,7 @@
 'use client'
 import { useStore, type Course } from '../../lib/demoStore'
 import { average, daysAgoLabel, masteryColor } from '../../lib/format'
+import { BAND_LABEL, SET_SIZE } from '../../lib/profile'
 
 function MasteryBar({ score }: { score: number }) {
   return (
@@ -10,7 +11,7 @@ function MasteryBar({ score }: { score: number }) {
   )
 }
 
-export default function StudentProgress({ selectedCourse, onClose }: { selectedCourse: Course; onClose: () => void }) {
+export default function StudentProgress({ selectedCourse, onClose, onRetake }: { selectedCourse: Course; onClose: () => void; onRetake: () => void }) {
   const { state } = useStore()
   const topics = state.mastery[selectedCourse.code] || []
   const sorted = [...topics].sort((a,b) => a.score - b.score)
@@ -37,16 +38,29 @@ export default function StudentProgress({ selectedCourse, onClose }: { selectedC
       </div>
 
       <div style={{ flex:1, overflowY:'auto', padding:'14px 16px', display:'flex', flexDirection:'column', gap:'16px' }}>
+        {state.profile && (
+          <section style={{ border:'1px solid #E2E8F0', borderRadius:'10px', padding:'12px', background:'#F6F7FA' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px' }}>
+              <div style={{ fontSize:'12px', fontWeight:600, color:'#0D1B3D' }}>Your learning profile</div>
+              <button onClick={onRetake} style={{ fontSize:'11px', color:'#0D1B3D', background:'none', border:'none', textDecoration:'underline', cursor:'pointer', fontFamily:'inherit', padding:0 }}>Retake</button>
+            </div>
+            <dl style={{ margin:0, display:'grid', gridTemplateColumns:'auto 1fr', gap:'4px 10px', fontSize:'11.5px', color:'#334155' }}>
+              {state.profile.priorKnowledge[selectedCourse.code] && <><dt style={{ color:'#64748B' }}>Starting level</dt><dd style={{ margin:0 }}>{BAND_LABEL[state.profile.priorKnowledge[selectedCourse.code]]}</dd></>}
+              <dt style={{ color:'#64748B' }}>Practice sets</dt><dd style={{ margin:0 }}>{SET_SIZE[state.profile.chunkSize]} questions</dd>
+              <dt style={{ color:'#64748B' }}>Sessions</dt><dd style={{ margin:0 }}>About {state.profile.pace.sessionMinutes} minutes</dd>
+            </dl>
+          </section>
+        )}
 
         {/* Overall score */}
-        <div style={{ background:'linear-gradient(135deg,#EFF6FF,#F0F9FF)', borderRadius:'12px', padding:'16px', border:'1px solid #BFDBFE', textAlign:'center' }}>
-          <div style={{ fontSize:'36px', fontWeight:800, color:'#1D4ED8', lineHeight:1 }}>{avgScore}%</div>
-          <div style={{ fontSize:'12px', color:'#3B82F6', fontWeight:500, marginTop:'4px' }}>Overall mastery</div>
+        <div style={{ background:'linear-gradient(135deg,#F1F3F8,#F0F9FF)', borderRadius:'12px', padding:'16px', border:'1px solid #D3D9E6', textAlign:'center' }}>
+          <div style={{ fontSize:'36px', fontWeight:800, color:'#0D1B3D', lineHeight:1 }}>{avgScore}%</div>
+          <div style={{ fontSize:'12px', color:'#2E4A86', fontWeight:500, marginTop:'4px' }}>Overall mastery</div>
           <div style={{ fontSize:'11px', color:'#64748B', marginTop:'8px' }}>
             {avgScore >= 75 ? '✓ On track for the exam' : avgScore >= 50 ? '⚠ Some areas need work' : '↗ Focus on your weak topics'}
           </div>
           {practice.length > 0 && (
-            <div style={{ fontSize:'11px', color:'#2563EB', marginTop:'6px', fontWeight:500 }}>
+            <div style={{ fontSize:'11px', color:'#0D1B3D', marginTop:'6px', fontWeight:500 }}>
               {practice.length} practice question{practice.length === 1 ? '' : 's'} this session · {practice.filter(p => p.correct).length} correct
             </div>
           )}
@@ -108,24 +122,24 @@ export default function StudentProgress({ selectedCourse, onClose }: { selectedC
               <div key={t.topic} style={{
                 display:'flex', alignItems:'center', gap:'10px', padding:'9px 12px',
                 borderRadius:'8px', border:'1.5px solid', transition:'all .15s',
-                borderColor: i===0 ? '#93C5FD' : '#E2E8F0',
-                background: i===0 ? '#EFF6FF' : '#F8FAFC',
+                borderColor: i===0 ? '#A9B5CF' : '#E2E8F0',
+                background: i===0 ? '#F1F3F8' : '#F8FAFC',
               }}>
                 <div style={{
                   width:'20px', height:'20px', borderRadius:'50%', flexShrink:0,
-                  background: i===0 ? '#2563EB' : '#E2E8F0',
+                  background: i===0 ? '#0D1B3D' : '#E2E8F0',
                   display:'flex', alignItems:'center', justifyContent:'center',
                   color: i===0 ? '#fff' : '#94A3B8', fontSize:'10px', fontWeight:700,
                 }}>
                   {i+1}
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:'12px', fontWeight: i===0 ? 600 : 400, color: i===0 ? '#1D4ED8' : '#475569', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                  <div style={{ fontSize:'12px', fontWeight: i===0 ? 600 : 400, color: i===0 ? '#0D1B3D' : '#475569', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                     {t.topic}
                   </div>
                   <div style={{ fontSize:'10px', color:'#94A3B8' }}>{t.score}% · {t.sessions} session{t.sessions!==1?'s':''}</div>
                 </div>
-                {i===0 && <span style={{ fontSize:'10px', fontWeight:600, color:'#2563EB' }}>Next →</span>}
+                {i===0 && <span style={{ fontSize:'10px', fontWeight:600, color:'#0D1B3D' }}>Next →</span>}
               </div>
             ))}
           </div>

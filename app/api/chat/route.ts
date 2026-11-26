@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 import { z } from 'zod/v4'
 import { MODEL, EFFORT, FALLBACK, getClient, logUsage } from '../../lib/claude'
-import { getCourse, courseMaterials, type Material } from '../../lib/db'
+import { getCourse, courseMaterials, getLearnerContext, type Material } from '../../lib/db'
 import { requireMember } from '../../lib/auth'
 
 const MAX_MESSAGES = 40
@@ -173,6 +173,8 @@ PROGRESS TRACKING: You have two tools that update the student's progress and inf
 - When the student's reasoning shows a genuine misconception, call note_misconception.
 Never mention these tools to the student.
 
+The student's first message may come with a learner profile from Study Buddy's onboarding assessment. Follow it for the level, practice set size, wording and pacing, unless the student asks for something different.
+
 Student messages may end with a progress snapshot showing their topic mastery at that moment. Use the latest one to gently steer revision toward weak areas when natural. Don't quote it back unless asked.`
 
 const MAX_TOOL_ROUNDS = 4
@@ -200,9 +202,10 @@ export async function POST(req: NextRequest) {
   // The course, its instructions and its material all come from the database.
   let course: Awaited<ReturnType<typeof getCourse>> = null
   let materials: Awaited<ReturnType<typeof courseMaterials>> | undefined
+  let learner: string | null = null
   try {
     course = typeof body.courseCode === 'string' ? await getCourse(body.courseCode) : null
-    if (course) materials = await courseMaterials(course.code)
+    if (course) [materials, learner] = await Promise.all([courseMaterials(course.code), getLearnerContext(member.studentId!, course.code)])
   } catch (err) {
     console.error('Loading the course failed:', err)
     return jsonError(502, 'Study Buddy could not load this course. Try again in a moment.')
@@ -215,8 +218,12 @@ export async function POST(req: NextRequest) {
   const notes = materials.notes.map(toDocument)
   if (notes.length > 0) notes[notes.length - 1].cache_control = { type: 'ephemeral' }
   const docs = [...notes, ...materials.extra.map(toDocument)]
-  if (docs.length > 0) {
-    messages[0] = { role: 'user', content: [...docs, ...(messages[0].content as Anthropic.Beta.BetaContentBlockParam[])] }
+  // The learner's profile goes after the notes, never in the system prompt: tools, system
+  // and notes are one cached prefix shared by every student in the course, and a
+  // per-student system prompt would make every first reply slow again.
+  const profile: Anthropic.Beta.BetaContentBlockParam[] = learner ? [{ type: 'text', text: learner }] : []
+  if (docs.length > 0 || profile.length > 0) {
+    messages[0] = { role: 'user', content: [...docs, ...profile, ...(messages[0].content as Anthropic.Beta.BetaContentBlockParam[])] }
   }
 
   const topics = course.topics.map(t => t.topic)

@@ -1,6 +1,8 @@
 // Shapes of the state shared by the student, lecturer and HoD views.
 // Used by the browser store and the database layer.
 
+import type { CognitiveProfile } from './profile'
+
 export type Role = 'student' | 'lecturer' | 'hod' | 'admin'
 
 // A signed-in person, from the members table.
@@ -119,9 +121,11 @@ export interface DemoState {
   briefs: Record<string, SavedBrief>
   students: ClassStudent[]   // lecturers only
   summaries: CourseSummary[] // HoD only: every active course
+  profile: CognitiveProfile | null  // students only: the current cognitive profile, if they have one
+  profileReady: boolean      // the profile table could be read; false sends nobody to the assessment
 }
 
-const FIRST_WELCOME = `Hi {name} 👋 I'm Study Buddy, your study companion for **{course}**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?`
+const FIRST_WELCOME = `Hi {name}, I'm Study Buddy, your study companion for **{course}**.\n\nI answer from your lecturer's approved course material and show you where each answer comes from. I can also set you practice questions, and I'll keep track of how you're doing on each topic.\n\nWhat would you like to work on first?`
 
 // Study Buddy's opening message, addressed to the student by first name.
 export function welcomeChat(courseName: string, student: Pick<Member, 'name'>): ChatMessage[] {
@@ -151,6 +155,8 @@ export function initialState(): DemoState {
     briefs: {},
     students: [],
     summaries: [],
+    profile: null,
+    profileReady: false,
   }
 }
 

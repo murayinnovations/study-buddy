@@ -85,17 +85,17 @@ export default function LecturerOverview() {
           datasets:[{
             label:'Comprehension %',
             data,
-            borderColor:'#2563EB', backgroundColor:'rgba(37,99,235,.07)',
-            borderWidth:2.5, pointBackgroundColor:'#2563EB', pointRadius:5,
+            borderColor:'#0D1B3D', backgroundColor:'rgba(13,27,61,.07)',
+            borderWidth:2.5, pointBackgroundColor:'#0D1B3D', pointRadius:5,
             tension:.4, fill:true,
           }],
         },
         options:{
           responsive:true, maintainAspectRatio:false,
-          plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1E3A5F', titleColor:'#fff', bodyColor:'#93C5FD', padding:10 } },
+          plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#0D1B3D', titleColor:'#fff', bodyColor:'#A9B5CF', padding:10 } },
           scales:{
-            x:{ticks:{color:'#94A3B8',font:{size:11,family:'Inter'}},grid:{color:'rgba(0,0,0,.04)'}},
-            y:{min:0,max:100,ticks:{color:'#94A3B8',font:{size:11,family:'Inter'},callback:(v:any)=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},
+            x:{ticks:{color:'#94A3B8',font:{size:11,family:'Poppins'}},grid:{color:'rgba(0,0,0,.04)'}},
+            y:{min:0,max:100,ticks:{color:'#94A3B8',font:{size:11,family:'Poppins'},callback:(v:any)=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},
           },
         },
       })
@@ -176,7 +176,7 @@ export default function LecturerOverview() {
                 <span className="badge badge-teal" style={{ alignSelf:'flex-start', flexShrink:0 }}>{b.minutes} min</span>
               </div>
             ))}
-            <div style={{ marginTop:'12px', padding:'10px 12px', background: briefState === 'error' ? '#FEF2F2' : outOfDate && briefState !== 'loading' ? '#FFFBEB' : '#EFF6FF', borderRadius:'8px', fontSize:'11px', color: briefState === 'error' ? '#B91C1C' : outOfDate && briefState !== 'loading' ? '#92400E' : '#1D4ED8', fontWeight:500 }}>
+            <div style={{ marginTop:'12px', padding:'10px 12px', background: briefState === 'error' ? '#FEF2F2' : outOfDate && briefState !== 'loading' ? '#FFFBEB' : '#F1F3F8', borderRadius:'8px', fontSize:'11px', color: briefState === 'error' ? '#B91C1C' : outOfDate && briefState !== 'loading' ? '#92400E' : '#0D1B3D', fontWeight:500 }}>
               {briefState === 'loading'
                 ? '✦ Study Buddy is drafting from class mastery, misconceptions and student questions. This takes about 20–30 seconds.'
                 : briefState === 'error'

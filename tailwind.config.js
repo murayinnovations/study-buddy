@@ -4,17 +4,13 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Poppins', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
-        arthur: {
-          50:  '#F0F7FF',
-          100: '#E0EFFF',
-          500: '#3B82F6',
-          600: '#2563EB',
-          700: '#1D4ED8',
-          900: '#1E3A5F',
+        brand: {
+          navy:   '#0D1B3D',
+          yellow: '#E8D44D',
         },
         warm: {
           50:  '#FFFBF5',

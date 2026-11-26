@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 <style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#F8FAFC;font-family:system-ui,sans-serif}
 div{max-width:420px;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:28px}
 h1{font-size:17px;color:#0F172A;margin:0}p{font-size:13px;color:#64748B;line-height:1.6;margin:8px 0 18px}
-button{font:inherit;font-size:13px;font-weight:600;padding:9px 16px;border:0;border-radius:8px;background:#2563EB;color:#fff;cursor:pointer}
+button{font:inherit;font-size:13px;font-weight:600;padding:9px 16px;border:0;border-radius:8px;background:#0D1B3D;color:#fff;cursor:pointer}
 a{display:inline-block;margin-left:12px;font-size:13px;color:#64748B}</style></head>
 <body><div><h1>This page is for Study Buddy admins</h1>
 <p>You're signed in as ${escape(real.email)}, which isn't an admin account. Sign out, then sign in with your admin account to review learning platforms.</p>

@@ -49,8 +49,8 @@ export default function LecturerQuestions() {
               onClick={()=>{ setSelectedId(q.id); setReply('') }}
               style={{
                 padding:'14px 18px', borderBottom:'1px solid #F1F5F9', cursor:'pointer',
-                background: selectedId===q.id ? '#EFF6FF' : 'transparent',
-                borderLeft: selectedId===q.id ? '3px solid #2563EB' : '3px solid transparent',
+                background: selectedId===q.id ? '#F1F3F8' : 'transparent',
+                borderLeft: selectedId===q.id ? '3px solid #0D1B3D' : '3px solid transparent',
                 transition:'all .15s',
               }}
             >
@@ -94,11 +94,11 @@ export default function LecturerQuestions() {
           </div>
 
           {/* Context from Study Buddy */}
-          <div style={{ padding:'14px 16px', background:'#EFF6FF', borderRadius:'10px', border:'1px solid #BFDBFE' }}>
-            <div style={{ fontSize:'10px', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'6px' }}>
+          <div style={{ padding:'14px 16px', background:'#F1F3F8', borderRadius:'10px', border:'1px solid #D3D9E6' }}>
+            <div style={{ fontSize:'10px', fontWeight:700, color:'#0D1B3D', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'6px' }}>
               Context Study Buddy collected
             </div>
-            <p style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.6, margin:0 }}>{selected.context}</p>
+            <p style={{ fontSize:'12px', color:'#0D1B3D', lineHeight:1.6, margin:0 }}>{selected.context}</p>
           </div>
 
           {/* Answer */}
@@ -137,7 +137,7 @@ export default function LecturerQuestions() {
                   border:'1.5px solid #E2E8F0', background:'#F8FAFC', color:'#0F172A',
                   fontFamily:'inherit', resize:'vertical', outline:'none', lineHeight:1.6,
                 }}
-                onFocus={e=>{ e.target.style.borderColor='#93C5FD'; e.target.style.background='#fff' }}
+                onFocus={e=>{ e.target.style.borderColor='#A9B5CF'; e.target.style.background='#fff' }}
                 onBlur={e=>{ e.target.style.borderColor='#E2E8F0'; e.target.style.background='#F8FAFC' }}
               />
               <button onClick={sendReply} className="btn-primary" style={{ width:'100%', marginTop:'12px' }} disabled={!reply.trim()}>

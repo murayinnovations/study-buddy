@@ -6,7 +6,7 @@ import type { Role } from '../../lib/demoData'
 import DemoGuide from './DemoGuide'
 
 const ROLE_LABEL = { student: 'Student', lecturer: 'Lecturer', hod: 'Head of Department', admin: 'Admin' }
-const ROLE_COLOR = { student: '#3B82F6', lecturer: '#0D9488', hod: '#D97706', admin: '#475569' }
+const ROLE_COLOR = { student: '#2E4A86', lecturer: '#0D9488', hod: '#D97706', admin: '#475569' }
 const ROLE_ORDER: Role[] = ['student', 'lecturer', 'hod']
 
 function ViewSwitcher({ role, isAdmin }: { role: Role; isAdmin: boolean }) {
@@ -55,25 +55,25 @@ export default function AppShell({ children, isAdmin = false }: { children: Reac
     <div style={{ display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden' }}>
       {/* Top bar */}
       <header style={{
-        background:'#1E3A5F', padding:'0 24px', display:'flex',
+        background:'#0D1B3D', borderBottom:'2px solid #E8D44D', padding:'0 24px', display:'flex',
         alignItems:'center', justifyContent:'space-between', height:'52px', flexShrink:0,
       }}>
         {/* Study Buddy logo */}
         <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
           <div style={{
             width:'32px', height:'32px', borderRadius:'9px',
-            background:'linear-gradient(135deg,#3B82F6,#2563EB)',
+            background:'#E8D44D',
             display:'flex', alignItems:'center', justifyContent:'center',
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 3C8 3 5 6 5 10c0 2.5 1.2 4.7 3 6.1V18h8v-1.9c1.8-1.4 3-3.6 3-6.1 0-4-3-7-7-7z" fill="white" opacity=".9"/>
-              <rect x="9" y="18" width="6" height="2" rx="1" fill="white" opacity=".7"/>
-              <rect x="10" y="20" width="4" height="1.5" rx=".75" fill="white" opacity=".5"/>
+              <path d="M12 3C8 3 5 6 5 10c0 2.5 1.2 4.7 3 6.1V18h8v-1.9c1.8-1.4 3-3.6 3-6.1 0-4-3-7-7-7z" fill="#0D1B3D"/>
+              <rect x="9" y="18" width="6" height="2" rx="1" fill="#0D1B3D" opacity=".8"/>
+              <rect x="10" y="20" width="4" height="1.5" rx=".75" fill="#0D1B3D" opacity=".6"/>
             </svg>
           </div>
           <div>
             <div style={{ color:'#fff', fontWeight:600, fontSize:'15px', lineHeight:1 }}>Study Buddy</div>
-            <div style={{ color:'rgba(255,255,255,.45)', fontSize:'10px', letterSpacing:'.3px' }}>Strathmore University · Pilot</div>
+            <div style={{ color:'rgba(255,255,255,.45)', fontSize:'10px', letterSpacing:'.3px' }}>Strathmore pilot · by Muray Innovations</div>
           </div>
         </div>
 

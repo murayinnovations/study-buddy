@@ -18,7 +18,7 @@ function ProgressRing({ value, color, size = 36 }: { value: number; color: strin
         style={{ transform:'rotate(-90deg)', transformOrigin:'center', transition:'stroke-dashoffset .5s ease' }}
       />
       <text x="50%" y="54%" textAnchor="middle" dominantBaseline="middle"
-        style={{ fontSize:'9px', fontWeight:700, fill:color, fontFamily:'Inter' }}>
+        style={{ fontSize:'9px', fontWeight:700, fill:color, fontFamily:'Poppins' }}>
         {value}
       </text>
     </svg>
@@ -62,7 +62,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
       <div style={{ padding:'16px', borderBottom:'1px solid #E2E8F0' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
           <div style={{
-            width:'40px', height:'40px', borderRadius:'50%', background:'linear-gradient(135deg,#3B82F6,#1D4ED8)',
+            width:'40px', height:'40px', borderRadius:'50%', background:'linear-gradient(135deg,#2E4A86,#0D1B3D)',
             display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:'14px',
           }}>{initials(member.name)}</div>
           <div>
@@ -73,7 +73,7 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
           <div style={{ background:'#F8FAFC', borderRadius:'8px', padding:'8px 10px' }}>
             <div style={{ fontSize:'10px', color:'#94A3B8', fontWeight:600, textTransform:'uppercase', letterSpacing:'.5px' }}>Avg mastery</div>
-            <div style={{ fontSize:'18px', fontWeight:700, color:'#2563EB', lineHeight:1.2 }}>{avgProgress}%</div>
+            <div style={{ fontSize:'18px', fontWeight:700, color:'#0D1B3D', lineHeight:1.2 }}>{avgProgress}%</div>
           </div>
           <div style={{ background:'#F8FAFC', borderRadius:'8px', padding:'8px 10px' }}>
             <div style={{ fontSize:'10px', color:'#94A3B8', fontWeight:600, textTransform:'uppercase', letterSpacing:'.5px' }}>Credits</div>
@@ -96,17 +96,17 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
               style={{
                 width:'100%', textAlign:'left', padding:'10px 12px',
                 borderRadius:'10px', border:'none', cursor:'pointer',
-                background: isActive ? '#EFF6FF' : 'transparent',
-                outline: isActive ? '1.5px solid #BFDBFE' : '1.5px solid transparent',
+                background: isActive ? '#F1F3F8' : 'transparent',
+                outline: isActive ? '1.5px solid #D3D9E6' : '1.5px solid transparent',
                 marginBottom:'4px', transition:'all .15s',
               }}
               onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background='#F8FAFC' }}
               onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background='transparent' }}
             >
               <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                <ProgressRing value={courseProgress(c.code)} color={isActive ? '#2563EB' : c.color} />
+                <ProgressRing value={courseProgress(c.code)} color={isActive ? '#0D1B3D' : c.color} />
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:'13px', fontWeight:600, color: isActive ? '#1D4ED8' : '#0F172A', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                  <div style={{ fontSize:'13px', fontWeight:600, color: isActive ? '#0D1B3D' : '#0F172A', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                     {c.name}
                   </div>
                   <div style={{ fontSize:'11px', color:'#94A3B8', marginTop:'1px' }}>
@@ -148,18 +148,18 @@ export default function StudentSidebar({ selectedCourse, setSelectedCourse, onSt
         {suggestion && (
           <div style={{
             marginTop:'16px', padding:'12px', borderRadius:'10px',
-            background:'linear-gradient(135deg,#EFF6FF,#F0F9FF)',
-            border:'1px solid #BFDBFE',
+            background:'linear-gradient(135deg,#F1F3F8,#F0F9FF)',
+            border:'1px solid #D3D9E6',
           }}>
             <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'6px' }}>
-              <span className="ai-pulse" style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#2563EB', display:'inline-block' }}/>
-              <span style={{ fontSize:'10px', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'.5px' }}>Study Buddy suggests</span>
+              <span className="ai-pulse" style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#0D1B3D', display:'inline-block' }}/>
+              <span style={{ fontSize:'10px', fontWeight:700, color:'#0D1B3D', textTransform:'uppercase', letterSpacing:'.5px' }}>Study Buddy suggests</span>
             </div>
-            <p style={{ fontSize:'12px', color:'#1E40AF', lineHeight:1.5, margin:0 }}>
+            <p style={{ fontSize:'12px', color:'#0D1B3D', lineHeight:1.5, margin:0 }}>
               Your <strong>{suggestion.topic}</strong> score in {suggestion.course.code} is {suggestion.score}%, your lowest so far. Let&apos;s work on it today.
             </p>
             <button
-              style={{ marginTop:'8px', fontSize:'11px', fontWeight:600, color:'#2563EB', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}
+              style={{ marginTop:'8px', fontSize:'11px', fontWeight:600, color:'#0D1B3D', background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:'inherit' }}
               onClick={() => onStartSession(suggestion.course, suggestion.topic)}
             >
               Start a session →

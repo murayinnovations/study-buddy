@@ -154,6 +154,18 @@ create table if not exists briefs (
   signature    text not null
 );
 
+-- Each learner's cognitive profile, from the onboarding assessment (app/api/assessment).
+-- One row per sitting; the newest row is the current profile. profile is what Study Buddy
+-- uses to pitch teaching and practice; evidence is the scoring behind it, for staff only.
+create table if not exists cognitive_profiles (
+  id         bigint generated always as identity primary key,
+  student_id text not null,
+  profile    jsonb not null,
+  evidence   jsonb not null default '{}',
+  created_at timestamptz not null default now()
+);
+create index if not exists cognitive_profiles_student on cognitive_profiles (student_id, created_at desc);
+
 -- ---- Opening Study Buddy from a learning platform (LTI 1.3, see app/lti) ----
 
 -- Each learning platform registered with /lti/register, e.g. a university's Moodle site.
@@ -221,6 +233,7 @@ alter table lti_platforms      enable row level security;
 alter table lti_identities     enable row level security;
 alter table lti_courses        enable row level security;
 alter table lti_nonces         enable row level security;
+alter table cognitive_profiles enable row level security;
 
 -- The old "Reset demo" button emptied every table. With real accounts that would wipe
 -- students' work, so it's gone.

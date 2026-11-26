@@ -16,7 +16,7 @@ export const inputStyle: React.CSSProperties = {
 }
 export const labelStyle: React.CSSProperties = { fontSize:'12px', fontWeight:600, color:'#475569' }
 const linkStyle: React.CSSProperties = {
-  background:'none', border:'none', padding:0, color:'#2563EB', fontSize:'13px', cursor:'pointer', fontFamily:'inherit',
+  background:'none', border:'none', padding:0, color:'#0D1B3D', fontSize:'13px', cursor:'pointer', fontFamily:'inherit',
 }
 
 export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
@@ -58,8 +58,8 @@ export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
       <p style={{ fontSize:'13px', color:'#64748B', margin:'6px 0 20px', lineHeight:1.5 }}>{t.blurb}</p>
 
       {sent ? (
-        <div style={{ background:'#EFF6FF', border:'1px solid #BFDBFE', borderRadius:'10px', padding:'16px' }}>
-          <div style={{ fontSize:'14px', fontWeight:600, color:'#1E3A5F' }}>Check your email</div>
+        <div style={{ background:'#F1F3F8', border:'1px solid #D3D9E6', borderRadius:'10px', padding:'16px' }}>
+          <div style={{ fontSize:'14px', fontWeight:600, color:'#0D1B3D' }}>Check your email</div>
           <p style={{ fontSize:'13px', color:'#475569', margin:'6px 0 0', lineHeight:1.5 }}>
             {sent === 'confirm'
               ? <>We sent a link to <strong>{email.trim()}</strong>. Open it to confirm your email and you&apos;ll be signed in.</>
