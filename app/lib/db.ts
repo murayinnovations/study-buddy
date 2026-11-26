@@ -458,7 +458,10 @@ export async function currentProfile(studentId: string): Promise<{ ready: boolea
 // A new sitting's profile. Taking the assessment ends any earlier opt-out.
 export async function saveProfile(studentId: string, profile: CognitiveProfile, evidence: Record<string, unknown>) {
   check(await db().from('cognitive_profiles').insert({ student_id: studentId, profile, evidence }))
-  if (evidence.source === 'assessment') check(await db().from('profile_opt_outs').delete().eq('student_id', studentId))
+  if (evidence.source !== 'assessment') return
+  // The profile is saved either way: a missing opt-outs table (schema.sql not yet run) has no row to clear.
+  const { error } = await db().from('profile_opt_outs').delete().eq('student_id', studentId)
+  if (error) console.error('Clearing the profile opt-out failed (has supabase/schema.sql been run?):', error.message)
 }
 
 // Study without a profile. With deleteAnswers, every profile row (and the scoring behind
