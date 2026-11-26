@@ -22,6 +22,27 @@ export interface CognitiveProfile {
   accessibility: { largerText: boolean; captions: boolean; extraTime: boolean }
 }
 
+// What a lecturer sees of a student's profile in their course: bands only, never the
+// answers behind them.
+export interface ProfileBands {
+  band: Band | null
+  chunkSize: ChunkSize
+  readingLevel: ReadingLevel
+  calibration: Calibration
+  sessionMinutes: number
+}
+
+export function profileBands(p: CognitiveProfile, course: string): ProfileBands {
+  return { band: p.priorKnowledge[course] ?? null, chunkSize: p.chunkSize, readingLevel: p.readingLevel, calibration: p.calibration, sessionMinutes: p.pace.sessionMinutes }
+}
+
+export const READING_LABEL: Record<ReadingLevel, string> = { plain: 'Plain wording', standard: 'Standard wording', advanced: 'Technical wording' }
+export const CALIBRATION_LABEL: Record<Calibration, string> = {
+  over: 'More sure than accurate; asked for confidence before answers are revealed',
+  under: 'Often unsure of correct answers; told when reasoning is sound',
+  calibrated: 'Confidence matches accuracy',
+}
+
 export const BAND_LABEL: Record<Band, string> = { foundation: 'Foundation', developing: 'Developing', proficient: 'Proficient' }
 
 // Practice questions per set, by chunk size.

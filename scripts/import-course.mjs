@@ -163,7 +163,7 @@ if (prepareOnly) {
 // The course itself.
 check(await db.from('courses').upsert({
   code: course.code, name: course.name, lecturer: course.lecturer, credits: course.credits ?? 3,
-  color: course.color ?? '#2563EB', prompt: course.prompt, topics: course.topics ?? [],
+  color: course.color ?? '#0D1B3D', prompt: course.prompt, topics: course.topics ?? [],
   current_week: course.current_week ?? null, total_weeks: course.total_weeks ?? null,
   starters: course.starters ?? [], synthetic_class: course.synthetic_class ?? false,
   position: course.position ?? 0, active: course.active ?? true,

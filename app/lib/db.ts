@@ -5,7 +5,7 @@ import {
 } from './demoData'
 import { buildCohort, syntheticCount, TREND_HISTORY } from './cohort'
 import { average } from './format'
-import { learnerContext, type CognitiveProfile } from './profile'
+import { learnerContext, profileBands, type CognitiveProfile } from './profile'
 
 // Server-side database access. Uses the secret key, so import this from API
 // routes and server components only, never from client components. Callers
@@ -299,15 +299,25 @@ async function loadLecturer(member: Member): Promise<DemoState> {
 async function classStudents(course: Course): Promise<ClassStudent[]> {
   const ids = check(await db().from('members').select('student_id').eq('role', 'student')).map(m => m.student_id as string)
   if (ids.length === 0) return []
-  const [mastery, practice] = await Promise.all([
+  const [mastery, practice, profiles] = await Promise.all([
     db().from('mastery').select('*').eq('course', course.code).in('student_id', ids).order('position').then(check),
     db().from('practice_log').select('student_id, created_at').eq('course', course.code).in('student_id', ids).then(check),
+    // Newest first, so the first row seen per student is their current profile.
+    // Left out, rather than failing the dashboard, if the table can't be read.
+    db().from('cognitive_profiles').select('student_id, profile').in('student_id', ids).order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) console.error('Reading profiles for the class failed:', error.message)
+        return data ?? []
+      }),
   ])
+  const current = new Map<string, CognitiveProfile>()
+  for (const p of profiles) if (!current.has(p.student_id)) current.set(p.student_id, p.profile as CognitiveProfile)
   const topics = new Set(course.topics.map(t => t.topic))
   const byStudent = new Map<string, ClassStudent>()
   for (const m of mastery) {
     if (!topics.has(m.topic)) continue
-    const s = byStudent.get(m.student_id) ?? { id: m.student_id, mastery: [], practiceCount: 0, lastActive: null }
+    const profile = current.get(m.student_id)
+    const s = byStudent.get(m.student_id) ?? { id: m.student_id, mastery: [], practiceCount: 0, lastActive: null, profile: profile ? profileBands(profile, course.code) : null }
     s.mastery.push(toMastery(m))
     const at = ms(m.practised_at) ?? null
     if (at !== null && (s.lastActive === null || at > s.lastActive)) s.lastActive = at

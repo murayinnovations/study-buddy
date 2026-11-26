@@ -114,7 +114,7 @@ export default function Assessment({ onDone, onCancel }: { onDone: () => Promise
                 <li>Two short reading passages, to set how explanations are worded</li>
                 <li>A few questions about your time, device and preferences</li>
               </ul>
-              <p style={p}>Study Buddy uses the result to set the level, length and wording of your practice. You see a plain summary at the end. Your lecturer does not see your individual answers. You can retake it at any time, and ask for your answers to be deleted.</p>
+              <p style={p}>Study Buddy uses the result to set the level, length and wording of your practice. You see a plain summary at the end. Your lecturer sees the summary (your starting level and how Study Buddy pitches your practice), not your individual answers. You can retake it at any time, and ask for your answers to be deleted.</p>
               <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '14px', color: INK, margin: '8px 0 20px', cursor: 'pointer' }}>
                 <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} style={{ marginTop: '3px' }} />
                 I understand what is collected and why, and I agree to take part.

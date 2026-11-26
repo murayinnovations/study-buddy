@@ -1,5 +1,6 @@
 import { type ClassStudent, type Course, taughtTopics } from './demoData'
 import { average } from './format'
+import type { ProfileBands } from './profile'
 
 // The class for the lecturer dashboards: the students who have signed up, plus,
 // for courses that ask for it (synthetic_class in the courses table), a synthetic
@@ -19,6 +20,7 @@ export interface CohortStudent {
   weakTopic: string
   status: Status
   trend: '↑' | '→' | '↓'
+  profile: ProfileBands | null  // live students who have taken the assessment
 }
 
 // How hard a topic is for the synthetic class, as a typical score: a fixed
@@ -72,6 +74,7 @@ function synthetic(taught: string[]): CohortStudent[] {
       sessions: Math.max(1, Math.round(engagement / 6 + noise() * 2)),
       scores,
       trend: trendRoll < 0.3 ? '↓' : trendRoll < 0.55 ? '→' : '↑',
+      profile: null,
     }, taught)
   })
 }
@@ -97,6 +100,7 @@ export function buildCohort(students: ClassStudent[], course: Course): CohortStu
       sessions: s.mastery.reduce((n, t) => n + t.sessions, 0),
       scores,
       trend: '→',
+      profile: s.profile,
     }, taught)
   })
   return course.syntheticClass ? [...live, ...synthetic(taught)] : live

@@ -13,7 +13,7 @@ create table if not exists courses (
   name            text not null,
   lecturer        text not null,                 -- as students see it, e.g. 'T. Andambi & E. Chemekeki'
   credits         int  not null default 3,
-  color           text not null default '#2563EB',
+  color           text not null default '#0D1B3D',
   prompt          text not null,                 -- Study Buddy's instructions for this course
   topics          jsonb not null default '[]',   -- [{ "topic": "…", "week": 1 }] in teaching order
   current_week    int,                           -- taught up to this week; null means every topic

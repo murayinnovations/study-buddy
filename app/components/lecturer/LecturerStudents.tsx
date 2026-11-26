@@ -4,6 +4,7 @@ import { useStore } from '../../lib/demoStore'
 import { buildCohort, syntheticCount, type CohortStudent, type Status } from '../../lib/cohort'
 import { taughtTopics } from '../../lib/demoData'
 import { daysAgoLabel, masteryColor } from '../../lib/format'
+import { BAND_LABEL, SET_SIZE, READING_LABEL, CALIBRATION_LABEL } from '../../lib/profile'
 
 const statusCfg: Record<Status,{badge:string;color:string;bg:string}> = {
   'Critical':  { badge:'badge-red',    color:'#DC2626', bg:'#FEF2F2' },
@@ -56,7 +57,7 @@ export default function LecturerStudents() {
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
                 <tr style={{ background:'#F8FAFC' }}>
-                  {['Student ID','Last active','Engagement','Weakest topic','Sessions','Score','Status'].map(h=>(
+                  {['Student ID','Starting level','Last active','Engagement','Weakest topic','Sessions','Score','Status'].map(h=>(
                     <th key={h} style={{ padding:'11px 14px', textAlign:'left', fontSize:'10px', fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.6px', borderBottom:'1px solid #E2E8F0' }}>{h}</th>
                   ))}
                 </tr>
@@ -76,6 +77,9 @@ export default function LecturerStudents() {
                       <td style={{ padding:'12px 14px', fontFamily:'JetBrains Mono,monospace', fontSize:'11px', color:'#64748B', whiteSpace:'nowrap' }}>
                         {s.id}
                         {s.live && <span className="badge badge-blue" style={{ marginLeft:'6px', fontFamily:'Poppins', fontSize:'9px' }}>● Live</span>}
+                      </td>
+                      <td style={{ padding:'12px 14px', fontSize:'12px', color: s.profile?.band ? '#0F172A' : '#94A3B8' }}>
+                        {s.profile?.band ? BAND_LABEL[s.profile.band] : s.live ? 'Not taken' : '—'}
                       </td>
                       <td style={{ padding:'12px 14px', fontSize:'12px', color:'#475569' }}>{daysAgoLabel(s.daysAgo)}</td>
                       <td style={{ padding:'12px 14px' }}>
@@ -120,6 +124,26 @@ export default function LecturerStudents() {
               <div style={{ fontSize:'12px', color:'#64748B' }}>Mastery across topics taught · {selected.trend} trend</div>
               <span className={`badge ${statusCfg[selected.status].badge}`} style={{ marginTop:'8px', display:'inline-flex' }}>{selected.status}</span>
             </div>
+
+            {selected.live && (
+              <section style={{ padding:'12px', border:'1px solid #E2E8F0', borderRadius:'10px' }}>
+                <div style={{ fontSize:'10px', fontWeight:700, color:'#0D1B3D', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'8px' }}>Learning profile</div>
+                {selected.profile ? (
+                  <>
+                    <dl style={{ margin:0, display:'grid', gridTemplateColumns:'auto 1fr', gap:'6px 10px', fontSize:'12px', color:'#334155' }}>
+                      <dt style={{ color:'#64748B' }}>Starting level</dt><dd style={{ margin:0 }}>{selected.profile.band ? BAND_LABEL[selected.profile.band] : 'Not assessed for this course'}</dd>
+                      <dt style={{ color:'#64748B' }}>Practice sets</dt><dd style={{ margin:0 }}>{SET_SIZE[selected.profile.chunkSize]} questions</dd>
+                      <dt style={{ color:'#64748B' }}>Explanations</dt><dd style={{ margin:0 }}>{READING_LABEL[selected.profile.readingLevel]}</dd>
+                      <dt style={{ color:'#64748B' }}>Confidence</dt><dd style={{ margin:0 }}>{CALIBRATION_LABEL[selected.profile.calibration]}</dd>
+                      <dt style={{ color:'#64748B' }}>Sessions</dt><dd style={{ margin:0 }}>About {selected.profile.sessionMinutes} minutes</dd>
+                    </dl>
+                    <p style={{ fontSize:'11px', color:'#94A3B8', margin:'8px 0 0', lineHeight:1.4 }}>From the onboarding assessment. Study Buddy pitches this student&apos;s practice to it. Individual answers are not shown.</p>
+                  </>
+                ) : (
+                  <p style={{ fontSize:'12px', color:'#64748B', margin:0 }}>Not taken yet. The student is asked to take it the next time they open Study Buddy.</p>
+                )}
+              </section>
+            )}
 
             {taughtTopics(course).sort((a, b) => selected.scores[a] - selected.scores[b]).map(t => {
               const score = selected.scores[t]

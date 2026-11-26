@@ -1,7 +1,7 @@
 // Shapes of the state shared by the student, lecturer and HoD views.
 // Used by the browser store and the database layer.
 
-import type { CognitiveProfile } from './profile'
+import type { CognitiveProfile, ProfileBands } from './profile'
 
 export type Role = 'student' | 'lecturer' | 'hod' | 'admin'
 
@@ -90,6 +90,7 @@ export interface ClassStudent {
   mastery: TopicMastery[]
   practiceCount: number
   lastActive: number | null
+  profile: ProfileBands | null   // from their onboarding assessment, if taken
 }
 
 // A live course as the HoD sees it, worked out from the same class the lecturer sees.
